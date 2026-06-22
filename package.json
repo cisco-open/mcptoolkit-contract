@@ -57,7 +57,7 @@
     "openid-client": "^6.1.4",
     "semver": "^7.7.3",
     "snarkdown": "^2.0.0",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.1",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
