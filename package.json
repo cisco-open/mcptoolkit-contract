@@ -61,7 +61,7 @@
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
+    "@jest/globals": "^30.4.1",
     "@types/handlebars": "^4.1.0",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.0.0",
