@@ -47,18 +47,18 @@
   "dependencies": {
     "@inquirer/prompts": "^8.1.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "ajv": "^8.17.1",
+    "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "commander": "^12.1.0",
-    "handlebars": "^4.7.8",
-    "markdown-it": "^14.1.1",
+    "handlebars": "^4.7.9",
+    "markdown-it": "^14.2.0",
     "marked": "^17.0.0",
     "omelette": "^0.4.17",
     "openid-client": "^6.1.4",
     "semver": "^7.7.3",
     "snarkdown": "^2.0.0",
-    "uuid": "^13.0.0",
-    "yaml": "^2.6.1"
+    "uuid": "^14.0.0",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
