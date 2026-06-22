@@ -1,0 +1,59 @@
+changeType: parameter-removed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Removed
+description: |
+  Detects when a parameter is removed from a tool. Generally compatible if the
+  server properly ignores unknown parameters (as MCP servers should).
+
+variants:
+  - id: parameter-removed-compatible
+    breaking: false
+    severity: info
+    message: Removing an unused parameter is backward compatible
+    rationale: |
+      Server can ignore extra parameters sent by old clients, following Postel's Law:
+      "Be liberal in what you accept from others."
+      
+      This is only safe if:
+      1. The parameter was truly optional
+      2. The server ignores unknown/unexpected parameters
+      3. The parameter removal doesn't change behavior
+    migration: null
+    examples:
+      pass:
+        - name: Unused parameter removed
+          description: Removing a parameter is compatible if server ignores unknowns
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440009
+            category: tools
+            changeType: parameter-removed
+            path: tools[get_weather].parameters.properties.legacy_format
+            description: "Parameter 'legacy_format' removed"
+            from:
+              required: false
+              type: boolean
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-added
+  - parameter-made-optional
+  - prompt-argument-removed
+
+references:
+  - title: "Postel's Law (Robustness Principle)"
+    url: https://en.wikipedia.org/wiki/Robustness_principle
+  - title: MCP Parameter Handling
+    url: https://spec.modelcontextprotocol.io/specification/server/tools/
+
+tags:
+  - parameters
+  - removals
+  - backward-compatible
+  - postel-law

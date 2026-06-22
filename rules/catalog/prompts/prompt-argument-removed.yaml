@@ -1,0 +1,46 @@
+changeType: prompt-argument-removed
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Argument Removed
+description: |
+  Detects when a prompt argument is removed. Compatible if server ignores
+  unknown arguments.
+
+variants:
+  - id: prompt-argument-removed-compatible
+    breaking: false
+    severity: info
+    message: Removing an optional prompt argument is backward compatible
+    rationale: |
+      Server can ignore extra arguments sent by old clients.
+      This follows Postel's Law: be liberal in what you accept.
+    migration: null
+    examples:
+      pass:
+        - name: Argument removed
+          description: Removing an argument is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441009
+            category: prompts
+            changeType: prompt-argument-removed
+            path: prompts[summarize].arguments.format
+            description: "Argument 'format' removed"
+            from:
+              required: false
+              description: Output format
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-argument-added
+  - parameter-removed
+
+tags:
+  - prompts
+  - arguments
+  - backward-compatible

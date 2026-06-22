@@ -1,0 +1,52 @@
+changeType: resourcetemplate-removed
+category: resourceTemplates
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Template Removed
+description: |
+  Detects when a resource template is removed from an MCP server. Removing
+  templates is breaking because existing clients may depend on them.
+
+variants:
+  - id: resourcetemplate-removed-breaking
+    breaking: true
+    severity: major
+    message: Removing a resource template breaks clients that depend on it
+    rationale: |
+      Clients using the template will fail when trying to construct resource
+      URIs. This breaks existing integrations that rely on the template.
+    migration: |
+      To remove a resource template safely:
+      1. Deprecate the template for at least one major version
+      2. Document alternative templates or URIs
+      3. Monitor usage and notify affected clients
+      4. Remove in next major version
+    examples:
+      pass:
+        - name: Template removed
+          description: Removing a resource template is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655443002
+            category: resourceTemplates
+            changeType: resourcetemplate-removed
+            path: resourceTemplates[legacy://{type}/{id}]
+            description: "Resource template 'legacy://{type}/{id}' was removed"
+            from:
+              uriTemplate: legacy://{type}/{id}
+              name: Legacy Resource Pattern
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resourcetemplate-added
+  - resourcetemplate-uritemplate-changed
+  - resource-removed
+
+tags:
+  - resource-templates
+  - removals
+  - breaking-changes

@@ -1,0 +1,55 @@
+changeType: prompt-removed
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Removed
+description: |
+  Detects when a prompt is removed from an MCP server. Removing prompts is
+  breaking because existing clients may depend on them.
+
+variants:
+  - id: prompt-removed-breaking
+    breaking: true
+    severity: major
+    message: Removing a prompt breaks clients that depend on it
+    rationale: |
+      Clients requesting the removed prompt will get errors. This breaks existing
+      integrations that rely on the prompt.
+      
+      Proper deprecation practices should be followed before removal.
+    migration: |
+      To remove a prompt safely:
+      1. Deprecate the prompt for at least one major version
+      2. Add deprecation warnings to the description
+      3. Document migration path (alternative prompts)
+      4. Monitor usage and notify affected clients
+      5. Remove in next major version
+    examples:
+      pass:
+        - name: Prompt removed
+          description: Removing a prompt is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441002
+            category: prompts
+            changeType: prompt-removed
+            path: prompts[legacy_format]
+            description: "Prompt 'legacy_format' was removed"
+            from:
+              name: legacy_format
+              description: Generate output in legacy format
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-added
+  - prompt-renamed
+  - tool-removed
+
+tags:
+  - prompts
+  - removals
+  - breaking-changes

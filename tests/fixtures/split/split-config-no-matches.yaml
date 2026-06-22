@@ -1,0 +1,15 @@
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+
+info:
+  version: "1.0.0"
+  name: "No match test"
+  description: "Config with patterns that won't match anything"
+
+categories:
+  - name: "nonexistent-service"
+    outputFile: "dump-nonexistent"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^nonexistent-service_"
+          description: "This won't match any tools"

@@ -1,0 +1,123 @@
+changeType: parameter-enum-values-changed
+category: tools
+version: 1.0.0
+introduced: 0.9.0
+rulesFile: rules/strict-compatibility.yaml
+title: Parameter Enum Values Changed (Strict Mode)
+description: |
+  STRICT MODE: In strict compatibility mode, ANY change to enum values is considered
+  breaking, including additions. This is appropriate for:
+  
+  - Highly regulated environments requiring strict validation
+  - APIs with explicit contract guarantees
+  - Systems where enum changes require approval processes
+  - Scenarios where clients perform exhaustive validation
+  
+  This differs from the default MCP compatibility rules which allow enum additions
+  per Postel's Law and the open-world assumption.
+
+variants:
+  - id: enum-any-change
+    breaking: true
+    severity: major
+    message: ANY enum change is breaking in strict mode
+    rationale: |
+      Strict compatibility mode treats all enum changes as breaking because:
+      
+      1. **Explicit Contracts**: Some systems require explicit documentation and
+         approval for ALL schema changes, even compatible ones.
+      
+      2. **Exhaustive Validation**: Clients may perform strict validation that
+         rejects unknown values rather than gracefully ignoring them.
+      
+      3. **Regulatory Requirements**: Regulated industries may require change
+         control processes for any schema modification.
+      
+      4. **Testing Requirements**: Even compatible changes may require full
+         regression testing in some environments.
+      
+      This is more conservative than the default MCP compatibility rules, which
+      allow enum additions as compatible changes.
+    migration: |
+      For strict mode enum changes:
+      
+      1. Increment MAJOR or MINOR version (per your versioning policy)
+      2. Document the change in release notes
+      3. Complete change control/approval process
+      4. Notify all clients of the schema change
+      5. Plan migration timeline with stakeholders
+      6. Update all client validation logic
+      
+      Alternative: Consider using string types instead of enums for maximum
+      flexibility, with validation happening at runtime rather than schema level.
+    examples:
+      pass:
+        - name: Enum value added (strict breaking)
+          description: Even adding enum values is breaking in strict mode
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440400
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit'] → ['celsius', 'fahrenheit', 'kelvin']"
+            from: ['celsius', 'fahrenheit']
+            to: ['celsius', 'fahrenheit', 'kelvin']
+          expectedResult:
+            breaking: true
+            severity: major
+            ruleMessage: ANY enum change is breaking in strict mode
+            matchesThisVariant: true
+
+        - name: Enum value removed (strict breaking)
+          description: Removing enum values is always breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440401
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit', 'kelvin'] → ['celsius', 'fahrenheit']"
+            from: ['celsius', 'fahrenheit', 'kelvin']
+            to: ['celsius', 'fahrenheit']
+          expectedResult:
+            breaking: true
+            severity: major
+            ruleMessage: ANY enum change is breaking in strict mode
+            matchesThisVariant: true
+
+        - name: Enum values replaced (strict breaking)
+          description: Replacing enum values is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440402
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[sort].parameters.properties.order.enum
+            description: "Parameter 'order' enum values changed: ['asc', 'desc'] → ['ascending', 'descending']"
+            from: ['asc', 'desc']
+            to: ['ascending', 'descending']
+          expectedResult:
+            breaking: true
+            severity: major
+            ruleMessage: ANY enum change is breaking in strict mode
+            matchesThisVariant: true
+
+      fail: []
+
+relatedRules:
+  - parameter-type-changed
+  - parameter-required-changed
+  - parameter-removed
+
+references:
+  - title: Strict Compatibility Rules Documentation
+    url: https://github.com/cisco/mcpcontract/rules/strict-compatibility.yaml
+  - title: Default MCP Compatibility Guidelines
+    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+  - title: When to Use Strict Mode
+    url: https://github.com/cisco/mcpcontract/docs/build/17-rules-catalog.md
+
+tags:
+  - parameters
+  - enums
+  - strict-mode
+  - breaking-changes
+  - regulatory-compliance

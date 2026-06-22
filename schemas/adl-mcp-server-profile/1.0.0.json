@@ -1,0 +1,541 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/adl-mcp-server-profile/schema/1.0.0",
+  "title": "ADL MCP Server Profile",
+  "description": "JSON Schema for ADL documents conforming to the MCP Server Profile (urn:adl:profile:mcp_server:1.0). Describes an MCP server's identity, capabilities, transport, and metadata.",
+  "type": "object",
+  "required": [
+    "adl_spec",
+    "name",
+    "description",
+    "version",
+    "data_classification",
+    "profiles",
+    "mcp"
+  ],
+  "not": {
+    "anyOf": [
+      { "required": ["model"] },
+      { "required": ["system_prompt"] },
+      { "required": ["permissions"] },
+      { "required": ["runtime"] }
+    ]
+  },
+  "anyOf": [
+    { "required": ["tools"] },
+    { "required": ["resources"] },
+    { "required": ["resource_templates"] },
+    { "required": ["prompts"] }
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional JSON Schema URI for IDE validation"
+    },
+    "adl_spec": {
+      "type": "string",
+      "const": "0.1.0",
+      "description": "ADL specification version. MUST be 0.1.0 for this profile version."
+    },
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional unique identifier for the server (HTTPS URI, DID, or URN)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable server name"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description of server purpose and capabilities"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Server version (SHOULD follow semver MAJOR.MINOR.PATCH)"
+    },
+    "profiles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "contains": { "const": "urn:adl:profile:mcp_server:1.0" },
+      "description": "MUST contain 'urn:adl:profile:mcp_server:1.0'"
+    },
+    "data_classification": {
+      "type": "object",
+      "required": ["sensitivity"],
+      "properties": {
+        "sensitivity": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "restricted"],
+          "description": "Information sensitivity level (FIPS 199 aligned)"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["pii", "phi", "financial", "credentials", "intellectual_property", "regulatory"]
+          },
+          "description": "Broad information categories handled"
+        },
+        "retention": {
+          "type": "object",
+          "properties": {
+            "min_days": { "type": "number", "minimum": 0 },
+            "max_days": { "type": "number", "minimum": 0 },
+            "policy_uri": { "type": "string", "format": "uri" }
+          }
+        },
+        "handling": {
+          "type": "object",
+          "properties": {
+            "encryption_required": { "type": "boolean" },
+            "anonymization_required": { "type": "boolean" },
+            "cross_border_restricted": { "type": "boolean" },
+            "logging_required": { "type": "boolean" }
+          }
+        }
+      },
+      "description": "Data sensitivity classification (ADL Section 10.4)"
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["draft", "active", "deprecated", "retired"],
+          "description": "Lifecycle state of the server"
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the current status took effect"
+        },
+        "sunset_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Planned or actual retirement date"
+        },
+        "successor": {
+          "type": "string",
+          "description": "URI or URN of the replacement server"
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Provider organization name" },
+        "url": { "type": "string", "format": "uri", "description": "Provider website" },
+        "contact": { "type": "string", "format": "email", "description": "Contact email" }
+      }
+    },
+    "cryptographic_identity": {
+      "type": "object",
+      "properties": {
+        "did": { "type": "string", "description": "Decentralized Identifier" },
+        "public_key": {
+          "type": "object",
+          "properties": {
+            "algorithm": { "type": "string" },
+            "value": { "type": "string" }
+          },
+          "required": ["algorithm", "value"]
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "required": ["protocol_version", "transport"],
+      "description": "MCP-specific server configuration (added by this profile)",
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "description": "MCP protocol version supported by the server (e.g., '2025-06-18')"
+        },
+        "transport": {
+          "type": "object",
+          "required": ["type"],
+          "description": "Transport configuration. Each description document describes exactly one transport.",
+          "oneOf": [
+            {
+              "properties": {
+                "type": { "const": "streamable-http" },
+                "url": { "type": "string", "format": "uri", "description": "HTTP endpoint URL" }
+              },
+              "required": ["type", "url"]
+            },
+            {
+              "properties": {
+                "type": { "const": "stdio" },
+                "command": { "type": "string", "description": "Command to execute" },
+                "args": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Command arguments"
+                },
+                "env": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "description": "Environment variables (MUST NOT contain secrets)"
+                }
+              },
+              "required": ["type", "command"]
+            },
+            {
+              "properties": {
+                "type": { "const": "sse" },
+                "url": { "type": "string", "format": "uri", "description": "SSE endpoint URL" }
+              },
+              "required": ["type", "url"]
+            }
+          ]
+        },
+        "auth": {
+          "type": "object",
+          "required": ["type"],
+          "description": "Authentication requirements for connecting to the server",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["none", "api_key", "oauth2", "bearer"],
+              "description": "Authentication type"
+            },
+            "in": {
+              "type": "string",
+              "enum": ["header", "query"],
+              "description": "Where the credential is sent (for api_key type)"
+            },
+            "name": {
+              "type": "string",
+              "description": "Header or query parameter name (for api_key type)"
+            },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "OAuth2 scopes"
+            },
+            "token_endpoint": {
+              "type": "string",
+              "format": "uri",
+              "description": "OAuth2 token endpoint"
+            }
+          }
+        },
+        "server_capabilities": {
+          "type": "object",
+          "description": "MCP capabilities object from server initialization response",
+          "properties": {
+            "tools": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              }
+            },
+            "resources": {
+              "type": "object",
+              "properties": {
+                "subscribe": { "type": "boolean" },
+                "listChanged": { "type": "boolean" }
+              }
+            },
+            "prompts": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              }
+            },
+            "logging": { "type": "object" },
+            "experimental": { "type": "object" }
+          }
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Server instructions text from MCP initialization"
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools exposed by the MCP server",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique tool name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "JSON Schema for tool input (maps to MCP inputSchema)"
+          },
+          "returns": {
+            "type": "object",
+            "description": "JSON Schema for tool output (maps to MCP outputSchema)"
+          },
+          "examples": {
+            "type": "array",
+            "description": "Example input/output pairs",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "input": { "type": "object" },
+                "output": {}
+              }
+            }
+          },
+          "requires_confirmation": { "type": "boolean" },
+          "idempotent": { "type": "boolean" },
+          "read_only": { "type": "boolean" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags (MCP extension)"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether this tool is deprecated (MCP extension)"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Additional metadata (open object)"
+          },
+          "data_classification": {
+            "type": "object",
+            "properties": {
+              "sensitivity": {
+                "type": "string",
+                "enum": ["public", "internal", "confidential", "restricted"]
+              },
+              "categories": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "response_examples": {
+            "type": "array",
+            "description": "Named examples of tool responses (MCP enrichment)",
+            "items": {
+              "type": "object",
+              "required": ["name", "data"],
+              "properties": {
+                "name": { "type": "string" },
+                "description": { "type": "string" },
+                "data": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "description": "Resources exposed by the MCP server",
+      "items": {
+        "type": "object",
+        "required": ["uri", "name"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "MCP resource URI (REQUIRED by this profile)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name"
+          },
+          "type": {
+            "type": "string",
+            "description": "ADL resource type (OPTIONAL under this profile)",
+            "enum": ["vector_store", "knowledge_base", "file", "api", "database"]
+          },
+          "description": { "type": "string" },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type of the resource content"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "deprecated": { "type": "boolean" },
+          "annotations": {
+            "type": "object",
+            "description": "Additional metadata (may include audience, priority)"
+          },
+          "data_classification": {
+            "type": "object",
+            "properties": {
+              "sensitivity": {
+                "type": "string",
+                "enum": ["public", "internal", "confidential", "restricted"]
+              },
+              "categories": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resource_templates": {
+      "type": "array",
+      "description": "Resource templates (RFC 6570 URI templates) exposed by the MCP server. Added by this profile — no ADL core equivalent.",
+      "items": {
+        "type": "object",
+        "required": ["uri_template", "name"],
+        "properties": {
+          "uri_template": {
+            "type": "string",
+            "description": "RFC 6570 URI template for dynamic resources"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name"
+          },
+          "description": { "type": "string" },
+          "mime_type": {
+            "type": "string",
+            "description": "Expected MIME type of resources from this template"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "deprecated": { "type": "boolean" },
+          "annotations": { "type": "object" }
+        }
+      }
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Prompts exposed by the MCP server",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique prompt name"
+          },
+          "description": { "type": "string" },
+          "template": {
+            "type": "string",
+            "description": "Prompt template with {{variable}} placeholders (ADL format)"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "JSON Schema for prompt arguments (ADL format)"
+          },
+          "mcp_arguments": {
+            "type": "array",
+            "description": "MCP-style named argument list (added by this profile)",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string", "description": "Argument name" },
+                "description": { "type": "string" },
+                "required": { "type": "boolean", "default": false }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "deprecated": { "type": "boolean" }
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "description": "Security requirements (ADL Section 10)",
+      "properties": {
+        "authentication": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["none", "api_key", "oauth2", "oidc", "mtls"]
+            },
+            "required": { "type": "boolean" },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "token_endpoint": { "type": "string", "format": "uri" }
+          }
+        },
+        "encryption": {
+          "type": "object",
+          "properties": {
+            "in_transit": {
+              "type": "object",
+              "properties": {
+                "required": { "type": "boolean" },
+                "min_version": { "type": "string" }
+              }
+            },
+            "at_rest": {
+              "type": "object",
+              "properties": {
+                "required": { "type": "boolean" },
+                "algorithm": { "type": "string" }
+              }
+            }
+          }
+        },
+        "attestation": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["self", "third_party", "verifiable_credential"]
+            },
+            "issuer": { "type": "string" },
+            "issued_at": { "type": "string", "format": "date-time" },
+            "expires_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata (ADL Section 12)",
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "url": { "type": "string", "format": "uri" }
+            }
+          }
+        },
+        "license": { "type": "string", "description": "SPDX license identifier" },
+        "documentation": { "type": "string", "format": "uri" },
+        "repository": { "type": "string", "format": "uri" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,50 @@
+changeType: prompt-argument-made-required
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Argument Made Required
+description: |
+  Detects when an optional prompt argument becomes required. Breaking because
+  existing clients don't send it.
+
+variants:
+  - id: prompt-argument-made-required-breaking
+    breaking: true
+    severity: major
+    message: Making a prompt argument required breaks existing clients
+    rationale: |
+      Old clients don't send the argument (it was optional) and will now fail.
+      This requires all clients to update their code.
+    migration: |
+      To make an argument required safely:
+      1. Keep it optional with server-side warnings
+      2. Document it will become required
+      3. Give clients time to migrate
+      4. Make required in MAJOR version
+    examples:
+      pass:
+        - name: Optional to required
+          description: Making an argument required is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441010
+            category: prompts
+            changeType: prompt-argument-made-required
+            path: prompts[translate].arguments.target_lang
+            description: "Argument 'target_lang' changed to required"
+            from: { required: false }
+            to: { required: true }
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-argument-made-optional
+  - parameter-made-required
+
+tags:
+  - prompts
+  - arguments
+  - breaking-changes

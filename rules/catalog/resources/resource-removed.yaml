@@ -1,0 +1,54 @@
+changeType: resource-removed
+category: resources
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Removed
+description: |
+  Detects when a resource is removed from an MCP server. Removing resources is
+  breaking because existing clients may depend on them.
+
+variants:
+  - id: resource-removed-breaking
+    breaking: true
+    severity: major
+    message: Removing a resource breaks clients that depend on it
+    rationale: |
+      Clients requesting the removed resource will get errors. This breaks
+      existing integrations that rely on the resource.
+      
+      Proper deprecation should precede removal.
+    migration: |
+      To remove a resource safely:
+      1. Deprecate the resource for at least one major version
+      2. Add deprecation notices to the description
+      3. Document migration path (alternative resources)
+      4. Monitor usage and notify affected clients
+      5. Remove in next major version
+    examples:
+      pass:
+        - name: Resource removed
+          description: Removing a resource is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442002
+            category: resources
+            changeType: resource-removed
+            path: resources[legacy://data/old-format]
+            description: "Resource 'legacy://data/old-format' was removed"
+            from:
+              uri: legacy://data/old-format
+              name: Legacy Data Format
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resource-added
+  - resource-uri-changed
+
+tags:
+  - resources
+  - removals
+  - breaking-changes

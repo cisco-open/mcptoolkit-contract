@@ -1,0 +1,80 @@
+# Example MCP Server Configuration with Bearer Token Authentication
+#
+# This is the most common pattern for HTTP-based MCP servers that require authentication.
+# Use this when connecting to API servers that require Bearer tokens, API keys, or custom headers.
+#
+# Usage:
+#   mcpcontract dump --config http-with-auth-config.yaml --output dump.json
+#
+# CLI Alternative (curl-style):
+#   mcpcontract dump \
+#     --transport streamable-http \
+#     --url "https://api.example.com/mcp" \
+#     -H "Authorization: Bearer ${TOKEN}" \
+#     -H "X-API-Version: 2024-11-05"
+#
+# Environment Variables:
+#   You can use ${VAR_NAME} to reference environment variables for sensitive values.
+#   Example: export TOKEN="your-secret-token-here"
+
+mcpServers:
+  # Example: MCP server with Bearer token authentication
+  my-api-server:
+    type: streamable-http
+    url: https://api.example.com/mcp
+    headers:
+      Authorization: Bearer ${TOKEN}
+      X-API-Version: "2024-11-05"
+  
+  # Example: Public MCP server (no authentication)
+  public-server:
+    type: streamable-http
+    url: https://public-api.example.com/mcp
+  
+  # Example: Server with custom headers
+  custom-headers-server:
+    type: streamable-http
+    url: https://api.example.com/mcp
+    headers:
+      Authorization: Bearer ${TOKEN}
+      X-Client-ID: mcpcontract
+      X-Request-ID: "${USER}-${HOSTNAME}"
+  
+  # Example: SSE transport with headers (alternative to streamable-http)
+  sse-server:
+    type: sse
+    url: https://api.example.com/sse
+    headers:
+      Authorization: Bearer ${TOKEN}
+  
+  # Example: Local stdio server (no authentication needed)
+  local-stdio-server:
+    type: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-everything"
+    env:
+      NODE_ENV: development
+
+# Notes:
+# - For multiple servers in one config, use --mcp-server flag to select:
+#     mcpcontract dump --config http-with-auth-config.yaml --mcp-server my-api-server
+# - Environment variable interpolation supports both ${VAR} and $VAR formats
+# - Headers are optional for streamable-http and sse transports
+# - CLI curl-style headers: -H "Key: Value" (repeatable, like curl)
+# - Common header patterns:
+#   * Authorization: Bearer <token>  (OAuth/JWT tokens)
+#   * Authorization: Token <token>   (API tokens)
+#   * X-API-Key: <key>               (API keys)
+#   * Custom headers for rate limiting, tracking, versioning, etc.
+#
+# CLI Examples:
+#   # Single header
+#   mcpcontract dump -t streamable-http -u URL -H "Authorization: Bearer TOKEN"
+#
+#   # Multiple headers (curl-style, repeatable)
+#   mcpcontract dump -t streamable-http -u URL \
+#     -H "Authorization: Bearer TOKEN" \
+#     -H "X-API-Key: secret123" \
+#     -H "X-Client-ID: mcpcontract"

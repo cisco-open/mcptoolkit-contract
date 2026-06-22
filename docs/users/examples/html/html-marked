@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Inventory MCP Server v2.9.0</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #111827;
+      background: #f9fafb;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 0.875em;
+      background: #f3f4f6;
+      padding: 0.125em 0.375em;
+      border-radius: 0.25rem;
+    }
+    pre {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* Info card */
+    .info-card .title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .info-card h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    .info-card .description { margin-top: 0.75rem; color: #374151; }
+    .info-card .meta { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.875rem; color: #6b7280; }
+    .info-card .meta-item { display: flex; align-items: center; gap: 0.25rem; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      vertical-align: middle;
+    }
+    .badge.version { background: #dbeafe; color: #1e40af; }
+    .badge.protocol { background: #e0e7ff; color: #3730a3; }
+    .badge.transport { background: #fef3c7; color: #92400e; }
+    .badge.tool { background: #d1fae5; color: #065f46; }
+    .badge.prompt { background: #ede9fe; color: #5b21b6; }
+    .badge.resource { background: #fce7f3; color: #9d174d; }
+    .badge.template { background: #ffedd5; color: #9a3412; }
+    .badge.deprecated { background: #fef2f2; color: #991b1b; font-style: italic; }
+    .badge.required { background: #fee2e2; color: #991b1b; font-size: 0.625rem; }
+    .badge.tag { background: #f3f4f6; color: #374151; font-size: 0.625rem; font-weight: 500; text-transform: none; }
+    .badge.cors-ready { background: #d1fae5; color: #065f46; }
+    .badge.cors-fail { background: #fef2f2; color: #991b1b; }
+    .badge.security { background: #fef9c3; color: #854d0e; }
+    .badge.hint { background: #f3f4f6; color: #6b7280; font-weight: 500; text-transform: none; }
+
+    /* Section headers */
+    h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #111827;
+      display: inline;
+    }
+    .section-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .count { font-size: 0.8125rem; color: #9ca3af; font-weight: 400; }
+    .section-icon { font-size: 1.125rem; }
+
+    /* Details / collapsible */
+    details { border: none; }
+    details > summary {
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before {
+      content: '▶';
+      display: inline-block;
+      font-size: 0.625rem;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+      color: #9ca3af;
+    }
+    details[open] > summary::before { transform: rotate(90deg); }
+
+    /* Item cards (tools, prompts, etc.) */
+    .item-detail {
+      border: 1px solid #f3f4f6;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+    .item-detail > summary {
+      padding: 0.625rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background: #fafafa;
+    }
+    .item-detail > summary:hover { background: #f3f4f6; }
+    .item-detail > summary .name { font-weight: 600; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; font-size: 0.875rem; }
+    .item-detail > summary .title-text { color: #6b7280; font-size: 0.875rem; }
+    .item-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid #f3f4f6; }
+    .item-body .description { color: #374151; font-size: 0.875rem; margin-bottom: 0.75rem; }
+
+    /* Annotations / hints row */
+    .hints { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
+
+    /* Tags row */
+    .tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+
+    /* Schema tables */
+    .schema-section { margin-top: 0.5rem; }
+    .schema-toggle {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 0.25rem 0;
+    }
+    .schema-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      margin-top: 0.375rem;
+    }
+    .schema-table th {
+      text-align: left;
+      color: #9ca3af;
+      font-weight: 500;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .schema-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: top;
+    }
+    .schema-table td:first-child { font-weight: 500; }
+    .type-pill {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 0.25rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    }
+    .schema-json { margin-top: 0.5rem; }
+
+    /* Transport items */
+    .transport-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f9fafb;
+      font-size: 0.875rem;
+    }
+    .transport-item:last-child { border-bottom: none; }
+    .transport-url { color: #6b7280; word-break: break-all; }
+
+    /* URI display */
+    .uri { color: #6b7280; font-size: 0.8125rem; word-break: break-all; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+
+    /* Resource / prompt argument list */
+    .arg-list { margin: 0; padding: 0; list-style: none; }
+    .arg-list li {
+      padding: 0.25rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .arg-list li:last-child { border-bottom: none; }
+    .arg-name { font-weight: 600; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body { padding: 1rem 0.5rem; }
+      .card { padding: 1rem; }
+      .info-card h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Info Card -->
+    <div class="card info-card">
+      <div class="title-row">
+        <h1>API Inventory MCP Server</h1>
+        <span class="badge version">v2.9.0</span>
+        <span class="badge protocol">MCP 2025-06-18</span>
+      </div>
+      
+      <div class="meta">
+        <span class="meta-item"><strong>Name:</strong>&nbsp;mcp-inventory</span>
+        
+        
+        
+        
+      </div>
+    </div>
+
+    <!-- Transports -->
+    <div class="card">
+      <div class="section-header">
+        <span class="section-icon">🔌</span>
+        <h2>Transports</h2>
+        <span class="count">(1)</span>
+      </div>
+      <div class="transport-item">
+        <span class="badge transport">streamable-http</span>
+        <span class="transport-url">http://localhost:3000/mcp</span>
+        
+      </div>
+    </div>
+
+    <!-- Security -->
+
+    <!-- Tools -->
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">🔧</span>
+            <h2>Tools</h2>
+            <span class="count">(6)</span>
+          </div>
+        </summary>
+        <details class="item-detail" open>
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">search</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">query</span>
+            </div>
+            <div class="description"><p>Search and filter Cisco&#39;s API/SDK inventory. Supports filtering by kind (API/SDK/GROUP), organization (CN, SBG, CTG, CX, etc.), and name with partial matching. Returns paginated results with optional field selection.</p>
+<p>Common Usage Patterns:</p>
+<ol>
+<li>Search by name: {&quot;name&quot;: &quot;Nexus Dashboard&quot;, &quot;partial&quot;: true}</li>
+<li>Filter by organization: {&quot;organization&quot;: &quot;SBG&quot;}</li>
+<li>Find APIs only: {&quot;kind&quot;: &quot;API&quot;}</li>
+<li>Combine filters: {&quot;kind&quot;: &quot;API&quot;, &quot;organization&quot;: &quot;SBG&quot;, &quot;name&quot;: &quot;defense&quot;}</li>
+<li>Get specific details: {&quot;name&quot;: &quot;API name&quot;, &quot;details&quot;: &quot;contacts&quot;}</li>
+<li>Pagination: {&quot;pageSize&quot;: 20, &quot;cursor&quot;: &quot;previous_cursor&quot;}</li>
+</ol>
+<p>Parameter Details:</p>
+<ul>
+<li>name: Search card names (case-insensitive, partial matching by default)</li>
+<li>kind: API, SDK, or GROUP</li>
+<li>organization: CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales</li>
+<li>partial: true (default) for substring match, false for exact match</li>
+<li>details: contacts, releases, api_quality, api_insights, info</li>
+<li>pageSize: 1-100 (default: 10)</li>
+<li>cursor: from previous response for next page</li>
+</ul>
+<p>Related Prompts: Use &quot;search&quot; prompt for guided API discovery</p>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32602 (InvalidParams) for invalid parameters with detailed validation errors</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><code>kind</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by card type: API (REST, gRPC, GraphQL, etc.), SDK (JavaScript, Python, Swift, etc.), MCP (Model Context Protocol servers), or GROUP (logical collections). **Required when using organization filter**.
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>audience</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                         &quot;EXTERNAL&quot; | &quot;INTERNAL&quot;
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by target audience: EXTERNAL (public customer/partner facing) or INTERNAL (Cisco-internal). Default: EXTERNAL. GROUP cards are automatically included if they contain any matching API/SDK/MCP cards.
+                         <em>Default: EXTERNAL</em>
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>organization</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by organization code (CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales). **Requires kind to be &quot;API&quot;, &quot;SDK&quot;, or &quot;MCP&quot;**. GROUP cards do not have organization. Supports partial matching when partial&#x3D;true
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>name</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by card name or alternate names. Case-insensitive with partial matching by default. Example: &quot;defense&quot; matches &quot;AI Defense API&quot;
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>partial</code></td>
+                      <td>
+                        <span class="type-pill">boolean</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Enable partial/substring matching for name and organization (default: true). Set to false for exact matches only
+                         <em>Default: true</em>
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>details</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Return only specific section: contacts (team info), releases (versions/phase and reviews; note: deprecated &#x60;status&#x60; field mirrors &#x60;phase&#x60; for backward compatibility), api_quality (metrics), api_insights (org mapping), or info (basic metadata)
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>cursor</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Pagination cursor from previous response. Use the &quot;cursor&quot; value returned in results to fetch next page
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>pageSize</code></td>
+                      <td>
+                        <span class="type-pill">number</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Number of results per page. Default is from config (typically 10), maximum 100. Returns hasMore&#x3D;true if more results available
+                        
+                         <em>Range: 1-100</em>
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">refresh-cache</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>Manually trigger an inventory refresh from the remote URL. The server automatically refreshes every 15 minutes, but this tool allows on-demand updates. Returns the new version number and update status. Note: Updates only occur if the remote version is different from the cached version.</p>
+<p>Common Usage Pattern:</p>
+<ol>
+<li>Check for updates: {} (no parameters needed)</li>
+</ol>
+<p>Parameter Details:</p>
+<ul>
+<li>No parameters required</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>success: true/false</li>
+<li>message: Status description</li>
+<li>version: Current inventory version</li>
+</ul>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32001 (ServiceUnavailable) if remote inventory URL is unreachable (retryable)</li>
+<li>Returns -32603 (InternalError) for other server-side issues</li>
+</ul>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">stats</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>Generate statistical analysis of the inventory with optional grouping. Get aggregate counts and distributions grouped by: organization (CN, SBG, CTG, etc.), status (ACTIVE, EOL, ONBOARDING), kind (API, SDK, GROUP), deployment (Cloud, On-prem), or lifecycle (Product-led, API-led, etc.). Without grouping, returns overall counts.</p>
+<p>Common Usage Patterns:</p>
+<ol>
+<li>Overall statistics: {} (no parameters)</li>
+<li>By organization: {&quot;groupBy&quot;: &quot;organization&quot;}</li>
+<li>By status: {&quot;groupBy&quot;: &quot;status&quot;}</li>
+<li>By kind: {&quot;groupBy&quot;: &quot;kind&quot;}</li>
+<li>By deployment: {&quot;groupBy&quot;: &quot;deployment&quot;}</li>
+<li>By lifecycle: {&quot;groupBy&quot;: &quot;lifecycle&quot;}</li>
+</ol>
+<p>Parameter Details:</p>
+<ul>
+<li>groupBy (optional): organization, status, kind, deployment, lifecycle</li>
+<li>Omit groupBy for overall totals</li>
+</ul>
+<p>Related Prompts: Use &quot;organization-report&quot; prompt for detailed org analysis</p>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32602 (InvalidParams) for invalid groupBy values</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><code>groupBy</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Group statistics by: organization (CN, SBG, CTG, etc.), status (ACTIVE, EOL, ONBOARDING), kind (API, SDK, MCP), deployment (Cloud, On-prem), lifecycle (Product-led, API-led, etc.), or audience (EXTERNAL, INTERNAL). Omit to get default grouping by kind. Returns total count and breakdown with counts per group
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>audience</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                         &quot;EXTERNAL&quot; | &quot;INTERNAL&quot;
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter statistics by target audience: EXTERNAL (public customer/partner facing) or INTERNAL (Cisco-internal). Default: EXTERNAL. GROUP cards are always excluded from statistics as they do not have an audience field.
+                         <em>Default: EXTERNAL</em>
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">list-organizations</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>List all Cisco organizations present in the inventory. Returns an array of organization codes (e.g., CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales). Useful for agent discoverability and UI dropdowns.</p>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">schema-version</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>Get information about inventory schema version compatibility. Returns the supported schema version, current inventory version, and compatibility status. Use this to check if the loaded inventory is compatible with the MCP server.</p>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">get-card</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">query</span>
+            </div>
+            <div class="description"><p>Retrieve detailed information for a specific card by its ID. This tool provides the same functionality as the card:/// resource but is compatible with MCP clients that do not support resource fetching (e.g., GitHub Copilot). Returns complete card metadata including name, description, contacts, releases, and quality metrics.</p>
+<p>Common Usage Patterns:</p>
+<ol>
+<li>Get full card details: {&quot;id&quot;: &quot;cisco-secure-network-analytics-api&quot;}</li>
+<li>Get specific section: {&quot;id&quot;: &quot;card-id&quot;, &quot;details&quot;: &quot;contacts&quot;}</li>
+<li>Check releases: {&quot;id&quot;: &quot;card-id&quot;, &quot;details&quot;: &quot;releases&quot;}</li>
+</ol>
+<p>Parameter Details:</p>
+<ul>
+<li>id: Card identifier (use search tool to find IDs)</li>
+<li>details (optional): contacts, releases, api_quality, api_insights, info</li>
+</ul>
+<p>Note: For MCP clients with resource support, use card:///{id} resource instead.</p>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32602 (InvalidParams) for invalid parameters</li>
+<li>Returns -32603 (InternalError) if card not found or server error</li>
+</ul>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><code>id</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td><span class="badge required">required</span></td>
+                      <td>
+                        The unique identifier of the card to retrieve (e.g., &quot;cisco-secure-network-analytics-api&quot;)
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>details</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+                        
+                      </td>
+                      <td></td>
+                      <td>
+                        Return only specific section: contacts (team info), releases (versions/phase and reviews; note: deprecated &#x60;status&#x60; field mirrors &#x60;phase&#x60; for backward compatibility), api_quality (metrics), api_insights (org mapping), or info (basic metadata)
+                        
+                        
+                        
+                        
+                        
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+      </details>
+    </div>
+
+    <!-- Prompts -->
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">💬</span>
+            <h2>Prompts</h2>
+            <span class="count">(5)</span>
+          </div>
+        </summary>
+        <details class="item-detail" open>
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">search</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">query</span>
+            </div>
+            <div class="description"><p>Guided API discovery with intelligent filtering. Find APIs by organization (CN, SBG, CTG, CX, etc.), style (REST, gRPC, GraphQL), deployment type (Cloud, On-prem), or status (ACTIVE, EOL, ONBOARDING). Returns a curated summary with names, descriptions, and key characteristics. Use this for exploratory API searches when you need context and recommendations.</p>
+</div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">api-quality-metrics</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">governance</span>
+            </div>
+            <div class="description"><p>Comprehensive API quality analysis with metrics and governance insights. Analyzes quality champions, initiative enrollments, approval thresholds, and DevX reviews. Provides actionable recommendations for quality improvements. Use this for API governance, quality audits, and continuous improvement planning.</p>
+</div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">list-deprecated-apis</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">governance</span>
+            </div>
+            <div class="description"><p>Track deprecated and end-of-life APIs with sunset timelines and migration paths. Identifies APIs with DEPRECATED or EOL status, provides sunset timeline information from releases, and suggests migration alternatives. Essential for API lifecycle management, customer communication, and technical debt planning.</p>
+</div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">organization-report</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">governance</span>
+            </div>
+            <div class="description"><p>Comprehensive organization analysis across the API Inventory. Provides statistical breakdown of API styles, deployment types, lifecycle stages, and status distribution. Optionally includes SDK information with platform and language analysis. Highlights key APIs, notable trends, and strategic focus areas. Perfect for portfolio reviews, strategic planning, and stakeholder reporting.</p>
+</div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">getting-started</span>
+            
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">query</span>
+            </div>
+            <div class="description"><p>Complete guide to using the API Inventory MCP Server effectively. Explains available tools, their parameters, common workflows, and best practices. Shows real examples for each tool and how to combine them for complex queries. Perfect for first-time users or when you need a refresher on capabilities. Use this prompt when you&#39;re unsure which tool to use or how to structure your query.</p>
+</div>
+          </div>
+        </details>
+      </details>
+    </div>
+
+    <!-- Resources -->
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">📦</span>
+            <h2>Resources</h2>
+            <span class="count">(4)</span>
+          </div>
+        </summary>
+        <details class="item-detail" open>
+          <summary>
+            <span class="badge resource">resource</span>
+            <span class="name">schema://API</span>
+            <span class="title-text">— API Card Schema</span>
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>JSON Schema for API cards (REST, gRPC, GraphQL, etc.)</p>
+<p>Retrieve the JSON Schema for API card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
+<p>Usage Pattern:</p>
+<ul>
+<li>URI: schema://API</li>
+<li>Schema version: 2.0.1</li>
+</ul>
+<p>Use Cases:</p>
+<ul>
+<li>Validate custom inventory data</li>
+<li>Generate types for other programming languages</li>
+<li>Understand card structure and validation rules</li>
+<li>Reference for developing inventory producers</li>
+</ul>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32000 (NotFound) if schema file is missing</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://API</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge resource">resource</span>
+            <span class="name">schema://SDK</span>
+            <span class="title-text">— SDK Card Schema</span>
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>JSON Schema for SDK cards (JavaScript, Python, Swift, etc.)</p>
+<p>Retrieve the JSON Schema for SDK card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
+<p>Usage Pattern:</p>
+<ul>
+<li>URI: schema://SDK</li>
+<li>Schema version: 2.0.1</li>
+</ul>
+<p>Use Cases:</p>
+<ul>
+<li>Validate custom inventory data</li>
+<li>Generate types for other programming languages</li>
+<li>Understand card structure and validation rules</li>
+<li>Reference for developing inventory producers</li>
+</ul>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32000 (NotFound) if schema file is missing</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://SDK</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge resource">resource</span>
+            <span class="name">schema://MCP</span>
+            <span class="title-text">— MCP Card Schema</span>
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>JSON Schema for MCP cards (Model Context Protocol servers)</p>
+<p>Retrieve the JSON Schema for MCP card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
+<p>Usage Pattern:</p>
+<ul>
+<li>URI: schema://MCP</li>
+<li>Schema version: 2.0.1</li>
+</ul>
+<p>Use Cases:</p>
+<ul>
+<li>Validate custom inventory data</li>
+<li>Generate types for other programming languages</li>
+<li>Understand card structure and validation rules</li>
+<li>Reference for developing inventory producers</li>
+</ul>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32000 (NotFound) if schema file is missing</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://MCP</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge resource">resource</span>
+            <span class="name">schema://GROUP</span>
+            <span class="title-text">— GROUP Card Schema</span>
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">operations</span>
+            </div>
+            <div class="description"><p>JSON Schema for GROUP cards (logical collections)</p>
+<p>Retrieve the JSON Schema for GROUP card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
+<p>Usage Pattern:</p>
+<ul>
+<li>URI: schema://GROUP</li>
+<li>Schema version: 2.0.1</li>
+</ul>
+<p>Use Cases:</p>
+<ul>
+<li>Validate custom inventory data</li>
+<li>Generate types for other programming languages</li>
+<li>Understand card structure and validation rules</li>
+<li>Reference for developing inventory producers</li>
+</ul>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32000 (NotFound) if schema file is missing</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://GROUP</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+          </div>
+        </details>
+      </details>
+    </div>
+
+    <!-- Resource Templates -->
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">📋</span>
+            <h2>Resource Templates</h2>
+            <span class="count">(1)</span>
+          </div>
+        </summary>
+        <details class="item-detail" open>
+          <summary>
+            <span class="badge template">template</span>
+            <span class="name">card</span>
+            <span class="title-text">— Card Resource</span>
+            
+          </summary>
+          <div class="item-body">
+            <div class="tags">
+              <span class="badge tag">query</span>
+            </div>
+            <div class="description"><p>Retrieve comprehensive details for a specific card by its numeric ID. Returns complete metadata including: name, description, organization, contacts (roles, emails), releases (versions, status, documentation), quality metrics (champions, initiatives), and insights (organization mapping). Works for all card types: API (REST, gRPC, GraphQL, etc.), SDK (JavaScript, Python, Swift, etc.), and GROUP (logical collections).</p>
+<p>Usage Pattern:</p>
+<ul>
+<li>URI format: card:///{id} where {id} is a numeric card ID</li>
+<li>Example: card:///52 returns full details for card ID 52</li>
+<li>Use search tool first to find card IDs</li>
+</ul>
+<p>Workflow:</p>
+<ol>
+<li>Search for cards: search tool with {&quot;name&quot;: &quot;API name&quot;}</li>
+<li>Get ID from search results</li>
+<li>Fetch full details: card:///{id} resource</li>
+</ol>
+<p>Error Handling:</p>
+<ul>
+<li>Returns -32602 (InvalidParams) if ID is not a valid number</li>
+<li>Returns -32000 (NotFound) if card with specified ID does not exist</li>
+<li>Returns -32603 (InternalError) for server-side issues</li>
+</ul>
+</div>
+            <div style="margin-bottom:0.5rem;"><strong>URI Template:</strong> <span class="uri">card:///{id}</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/json</code></div>
+          </div>
+        </details>
+      </details>
+    </div>
+
+    <!-- Tags -->
+    <div class="card">
+      <div class="section-header">
+        <span class="section-icon">🏷️</span>
+        <h2>Tags</h2>
+        <span class="count">(3)</span>
+      </div>
+      <div class="tags" style="margin-top: 0.5rem;">
+        <span class="badge tag" style="font-size:0.75rem;" title="Quality, lifecycle, and compliance">governance</span>
+        <span class="badge tag" style="font-size:0.75rem;" title="Server management, schemas, and statistics">operations</span>
+        <span class="badge tag" style="font-size:0.75rem;" title="Search, browse, and onboarding">query</span>
+      </div>
+    </div>
+
+    <!-- Extraction Details (CORS, Session, etc.) -->
+
+    <!-- Footer -->
+    <div class="footer">
+      Generated by <a href="https://github.com/cisco-open/mcp-contract">mcp-contract</a> v0.26.1 · 2026-03-18
+    </div>
+
+  </div>
+
+</body>
+</html>

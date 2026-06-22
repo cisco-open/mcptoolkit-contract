@@ -1,0 +1,63 @@
+changeType: tool-renamed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Tool Renamed
+description: |
+  Detects when a tool's name changes. Renaming is breaking because clients
+  reference tools by name, and the old name will no longer be found.
+
+variants:
+  - id: tool-renamed-breaking
+    breaking: true
+    severity: critical
+    message: Renaming a tool breaks clients calling the old name
+    rationale: |
+      Client calls to the old name will fail with 'tool not found' errors.
+      Even if the functionality is identical, the name change breaks the API contract.
+      
+      Tool names are part of the public API and changing them affects all client code.
+    migration: |
+      To rename a tool safely:
+      1. Add a new tool with the new name (same implementation)
+      2. Keep the old tool name as an alias/wrapper
+      3. Deprecate the old name for at least one major version
+      4. Document the rename and migration path
+      5. Remove old name in next major version
+      
+      Alternative: Never rename - create new tool and deprecate old one.
+    examples:
+      pass:
+        - name: Tool renamed
+          description: Changing a tool's name is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440003
+            category: tools
+            changeType: tool-renamed
+            path: tools[get_weather]
+            description: "Tool renamed from 'get_weather' to 'fetch_weather'"
+            from: { name: get_weather }
+            to: { name: fetch_weather }
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-removed
+  - parameter-renamed
+  - resource-renamed
+
+references:
+  - title: MCP Tools Specification
+    url: https://spec.modelcontextprotocol.io/specification/server/tools/
+  - title: API Naming Best Practices
+    url: https://swagger.io/blog/api-design/api-design-best-practices/
+
+tags:
+  - tools
+  - naming
+  - breaking-changes
+  - migration

@@ -1,0 +1,50 @@
+changeType: capability-removed
+category: serverInfo
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Capability Removed
+description: |
+  Detects when server capabilities are removed. Removing capabilities is
+  breaking because clients expecting those capabilities will fail.
+
+variants:
+  - id: capability-removed-breaking
+    breaking: true
+    severity: major
+    message: Removing capabilities breaks clients that depend on them
+    rationale: |
+      Clients expecting certain capabilities will fail when trying to use
+      features that depend on them. This breaks existing integrations.
+    migration: |
+      To remove a capability safely:
+      1. Deprecate the capability for at least one major version
+      2. Document alternative approaches
+      3. Monitor usage and notify affected clients
+      4. Remove in next major version
+    examples:
+      pass:
+        - name: Capability removed
+          description: Removing a capability is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444005
+            category: serverInfo
+            changeType: capability-removed
+            path: serverInfo.capabilities.experimental
+            description: "Capability 'experimental' was removed"
+            from:
+              enabled: true
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - capability-added
+  - capability-property-changed
+
+tags:
+  - server-info
+  - capabilities
+  - breaking-changes

@@ -1,0 +1,379 @@
+# Changelog: {{comparison.from.serverVersion}} → {{comparison.to.serverVersion}}
+
+**Generated**: {{formatDate metadata.generatedAt}}  
+**Status**: {{#if summary.breakingChanges}}⚠️ **BREAKING CHANGES**{{else}}✅ Backward Compatible{{/if}}  
+**Total Changes**: {{summary.totalChanges}} ({{summary.breakingChanges}} breaking, {{summary.compatibleChanges}} compatible)
+
+---
+
+## Summary
+
+{{#if summary.breakingChanges}}
+This release contains **{{summary.breakingChanges}} breaking change{{#if (ne summary.breakingChanges 1)}}s{{/if}}** that require client updates.
+
+### ⚠️ Action Required
+
+The following changes will break existing clients:
+
+{{#each breakingChanges}}
+- **{{capitalize category}}** / {{severity}}: {{{description}}}
+{{/each}}
+
+Refer to the detailed sections below for migration guidance.
+{{else}}
+This release is **backward compatible** with version {{comparison.from.serverVersion}}. No client changes required.
+{{/if}}
+
+---
+
+## Changes by Category
+
+{{#if toolChanges}}
+### 🔧 Tools
+
+{{#each toolChanges}}
+#### {{#if (eq changeType "tool-added")}}➕{{else if (eq changeType "tool-removed")}}➖{{else}}🔄{{/if}} {{{description}}} {{#if breaking}}**[{{uppercase severity}}]**{{/if}}
+
+{{#if breaking}}
+**Severity**: {{severity}}  
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+{{#if migration}}
+**Migration Guide**: {{{migration}}}
+{{/if}}
+
+{{#if from}}
+<details>
+<summary>Previous implementation (v{{../comparison.from.serverVersion}})</summary>
+
+```json
+{{json from}}
+```
+</details>
+{{/if}}
+
+{{#if to}}
+<details>
+<summary>New implementation (v{{../comparison.to.serverVersion}})</summary>
+
+```json
+{{json to}}
+```
+</details>
+{{/if}}
+{{else}}
+{{#if (eq severity "major")}}
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+<details>
+<summary>View details</summary>
+
+{{#if from}}
+**Before:**
+```json
+{{json from}}
+```
+{{/if}}
+
+{{#if to}}
+**After:**
+```json
+{{json to}}
+```
+{{/if}}
+</details>
+{{else}}
+*{{{ruleMessage}}}*
+{{/if}}
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
+{{#if promptChanges}}
+### 💬 Prompts
+
+{{#each promptChanges}}
+#### {{#if (eq changeType "prompt-added")}}➕{{else if (eq changeType "prompt-removed")}}➖{{else}}🔄{{/if}} {{{description}}} {{#if breaking}}**[{{uppercase severity}}]**{{/if}}
+
+{{#if breaking}}
+**Severity**: {{severity}}  
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+{{#if migration}}
+**Migration Guide**: {{{migration}}}
+{{/if}}
+
+{{#if from}}
+<details>
+<summary>Previous implementation</summary>
+
+```json
+{{json from}}
+```
+</details>
+{{/if}}
+
+{{#if to}}
+<details>
+<summary>New implementation</summary>
+
+```json
+{{json to}}
+```
+</details>
+{{/if}}
+{{else}}
+{{#if (eq severity "major")}}
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+<details>
+<summary>View details</summary>
+
+{{#if from}}
+**Before:**
+```json
+{{json from}}
+```
+{{/if}}
+
+{{#if to}}
+**After:**
+```json
+{{json to}}
+```
+{{/if}}
+</details>
+{{else}}
+*{{{ruleMessage}}}*
+{{/if}}
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
+{{#if resourceChanges}}
+### 📦 Resources
+
+{{#each resourceChanges}}
+#### {{#if (eq changeType "resource-added")}}➕{{else if (eq changeType "resource-removed")}}➖{{else}}🔄{{/if}} {{{description}}} {{#if breaking}}**[{{uppercase severity}}]**{{/if}}
+
+{{#if breaking}}
+**Severity**: {{severity}}  
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+{{#if migration}}
+**Migration Guide**: {{{migration}}}
+{{/if}}
+
+{{#if from}}
+<details>
+<summary>Previous implementation</summary>
+
+```json
+{{json from}}
+```
+</details>
+{{/if}}
+
+{{#if to}}
+<details>
+<summary>New implementation</summary>
+
+```json
+{{json to}}
+```
+</details>
+{{/if}}
+{{else}}
+{{#if (eq severity "major")}}
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+<details>
+<summary>View details</summary>
+
+{{#if from}}
+**Before:**
+```json
+{{json from}}
+```
+{{/if}}
+
+{{#if to}}
+**After:**
+```json
+{{json to}}
+```
+{{/if}}
+</details>
+{{else}}
+*{{{ruleMessage}}}*
+{{/if}}
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
+{{#if resourceTemplateChanges}}
+### 📋 Resource Templates
+
+{{#each resourceTemplateChanges}}
+#### {{#if (eq changeType "resourcetemplate-added")}}➕{{else if (eq changeType "resourcetemplate-removed")}}➖{{else}}🔄{{/if}} {{{description}}} {{#if breaking}}**[{{uppercase severity}}]**{{/if}}
+
+{{#if breaking}}
+**Severity**: {{severity}}  
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+{{#if migration}}
+**Migration Guide**: {{{migration}}}
+{{/if}}
+
+{{#if from}}
+<details>
+<summary>Previous implementation</summary>
+
+```json
+{{json from}}
+```
+</details>
+{{/if}}
+
+{{#if to}}
+<details>
+<summary>New implementation</summary>
+
+```json
+{{json to}}
+```
+</details>
+{{/if}}
+{{else}}
+{{#if (eq severity "major")}}
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+<details>
+<summary>View details</summary>
+
+{{#if from}}
+**Before:**
+```json
+{{json from}}
+```
+{{/if}}
+
+{{#if to}}
+**After:**
+```json
+{{json to}}
+```
+{{/if}}
+</details>
+{{else}}
+*{{{ruleMessage}}}*
+{{/if}}
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
+{{#if serverInfoChanges}}
+### ⚙️ Server Information
+
+{{#each serverInfoChanges}}
+#### {{{description}}} {{#if breaking}}**[{{uppercase severity}}]**{{/if}}
+
+{{#if breaking}}
+**Severity**: {{severity}}  
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+{{#if migration}}
+**Migration Guide**: {{{migration}}}
+{{/if}}
+
+**Change**: `{{from}}` → `{{to}}`
+{{else}}
+{{#if (eq severity "major")}}
+**Impact**: {{{ruleMessage}}}
+
+{{#if rationale}}
+**Rationale**: {{{rationale}}}
+{{/if}}
+
+**Change**: `{{from}}` → `{{to}}`
+{{else}}
+*{{{ruleMessage}}}* - `{{from}}` → `{{to}}`
+{{/if}}
+{{/if}}
+
+---
+
+{{/each}}
+{{/if}}
+
+## Statistics
+
+| Category | Added | Removed | Modified |
+|----------|-------|---------|----------|
+| Tools | {{statistics.tools.added}} | {{statistics.tools.removed}} | {{statistics.tools.modified}} |
+| Prompts | {{statistics.prompts.added}} | {{statistics.prompts.removed}} | {{statistics.prompts.modified}} |
+| Resources | {{statistics.resources.added}} | {{statistics.resources.removed}} | {{statistics.resources.modified}} |
+| Resource Templates | {{statistics.resourceTemplates.added}} | {{statistics.resourceTemplates.removed}} | {{statistics.resourceTemplates.modified}} |
+| Capabilities | {{statistics.capabilities.added}} | {{statistics.capabilities.removed}} | {{statistics.capabilities.modified}} |
+
+---
+
+## Version Information
+
+- **From**: {{comparison.from.serverVersion}} (Schema: {{comparison.from.schemaVersion}})
+- **To**: {{comparison.to.serverVersion}} (Schema: {{comparison.to.schemaVersion}})
+{{#if comparison.from.sessionIdSupported}}
+- **Session Support**: {{comparison.from.sessionIdSupported}} → {{comparison.to.sessionIdSupported}}
+{{/if}}
+
+---
+
+*Generated by mcpcontract v{{metadata.toolVersion}}*

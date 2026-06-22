@@ -1,0 +1,327 @@
+# {{info.name}}
+
+**Server Version:** {{info.version}}  
+{{#if info.protocolVersion}}**MCP Specifications:** {{info.protocolVersion}}{{/if}}
+
+---
+
+## Overview
+
+{{#if info.description}}
+{{{info.description}}}
+{{else}}
+This document describes the capabilities of the **{{info.name}}** MCP server.
+{{/if}}
+
+{{#if transports}}
+**Transports:**
+{{#each transports}}
+- `{{type}}`{{#if url}} — {{url}}{{/if}}{{#if command}} — `{{command}}{{#if args}} {{join args " "}}{{/if}}`{{/if}}
+{{/each}}
+{{/if}}
+
+---
+
+{{#if tools}}
+## Tools ({{count tools}})
+
+{{#each tools}}
+### Tool `{{name}}`{{#if deprecated}} {{deprecatedBadge deprecated}}{{/if}}
+
+{{#if tags}}
+**Tags:** {{join tags ", "}}
+
+{{/if}}
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if inputSchema}}
+{{#if inputSchema.properties}}
+**Parameters:**
+
+{{#each inputSchema.properties}}
+- **`{{@key}}`**{{#if this.type}} ({{this.type}}){{/if}}{{#if ../inputSchema.required}}{{#if (contains ../inputSchema.required @key)}} - *required*{{/if}}{{/if}}
+{{#if this.description}}
+  {{{this.description}}}
+{{/if}}
+{{#if (inlineEnum this.enum)}}
+  Options: {{inlineEnum this.enum}}
+{{else}}
+{{#if this.enum}}
+  Options: {{join this.enum ", "}}
+{{/if}}
+{{/if}}
+{{#if this.default}}
+  Default: `{{this.default}}`
+{{/if}}
+{{#if this.examples}}
+  Examples: {{formatExamples this.examples}}
+{{/if}}
+{{#if (eq this.type "number")}}
+{{#if (formatNumberConstraints this)}}
+  {{formatNumberConstraints this}}
+{{/if}}
+{{/if}}
+{{#if (eq this.type "integer")}}
+{{#if (formatNumberConstraints this)}}
+  {{formatNumberConstraints this}}
+{{/if}}
+{{/if}}
+{{#if (eq this.type "string")}}
+{{#if (formatStringConstraints this)}}
+  {{formatStringConstraints this}}
+{{/if}}
+{{/if}}
+{{#if (eq this.type "array")}}
+{{#if (formatArrayConstraints this)}}
+  {{formatArrayConstraints this}}
+{{/if}}
+{{/if}}
+
+{{/each}}
+{{else}}
+**Parameters:** None required
+{{/if}}
+{{/if}}
+
+{{#if outputSchema}}
+**Response Schema:**
+
+{{#if outputSchema.type}}
+Type: `{{outputSchema.type}}`
+{{/if}}
+{{#if outputSchema.properties}}
+{{#each outputSchema.properties}}
+- **`{{@key}}`**{{#if this.type}} ({{this.type}}){{/if}}{{#if this.description}} - {{{this.description}}}{{/if}}
+{{/each}}
+{{/if}}
+{{/if}}
+{{#if responseExamples}}
+**Response Examples:**
+
+{{#each responseExamples}}
+*{{name}}*{{#if description}} - {{description}}{{/if}}
+```json
+{{json data 2}}
+```
+
+{{/each}}
+{{/if}}
+---
+
+{{/each}}
+{{/if}}
+
+{{#if prompts}}
+## Prompts ({{count prompts}})
+
+{{#each prompts}}
+### Prompt `{{name}}`{{#if deprecated}} {{deprecatedBadge deprecated}}{{/if}}
+
+{{#if tags}}
+**Tags:** {{join tags ", "}}
+
+{{/if}}
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if arguments}}
+**Arguments:**
+
+{{#each arguments}}
+- **`{{name}}`**{{#if required}} - *required*{{/if}}
+{{#if description}}
+  {{{description}}}
+{{/if}}
+{{#if examples}}
+  Examples: {{formatExamples examples}}
+{{/if}}
+
+{{/each}}
+{{/if}}
+---
+
+{{/each}}
+{{/if}}
+
+{{#if resources}}
+## Resources ({{count resources}})
+
+{{#each resources}}
+### Resource `{{name}}`{{#if deprecated}} {{deprecatedBadge deprecated}}{{/if}}
+
+{{#if tags}}
+**Tags:** {{join tags ", "}}
+
+{{/if}}
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if uri}}
+**URI:** `{{uri}}`
+{{/if}}
+
+{{#if mimeType}}
+**MIME Type:** `{{mimeType}}`
+{{/if}}
+
+{{#if annotations}}
+**Capabilities:**
+{{#if annotations.audience}}
+- Audience: {{join annotations.audience ", "}}
+{{/if}}
+{{#if annotations.priority}}
+- Priority: {{annotations.priority}}
+{{/if}}
+{{/if}}
+
+{{#if contentExamples}}
+**Content Examples:**
+
+{{#each contentExamples}}
+*{{name}}*{{#if description}} - {{description}}{{/if}}
+```json
+{{json data 2}}
+```
+
+{{/each}}
+{{/if}}
+---
+
+{{/each}}
+{{/if}}
+
+{{#if resourceTemplates}}
+## Resource Templates ({{count resourceTemplates}})
+
+{{#each resourceTemplates}}
+### Resource Template `{{name}}`{{#if deprecated}} {{deprecatedBadge deprecated}}{{/if}}
+
+{{#if tags}}
+**Tags:** {{join tags ", "}}
+
+{{/if}}
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+**URI Template:** `{{uriTemplate}}`
+
+{{#if mimeType}}
+**MIME Type:** `{{mimeType}}`
+{{/if}}
+
+{{#if annotations}}
+**Capabilities:**
+{{#if annotations.audience}}
+- Audience: {{join annotations.audience ", "}}
+{{/if}}
+{{#if annotations.priority}}
+- Priority: {{annotations.priority}}
+{{/if}}
+{{/if}}
+
+{{#if contentExamples}}
+**Content Examples:**
+
+{{#each contentExamples}}
+*{{name}}*{{#if description}} - {{description}}{{/if}}
+```json
+{{json data 2}}
+```
+
+{{/each}}
+{{/if}}
+---
+
+{{/each}}
+{{/if}}
+
+{{#if showDumpInformation}}
+## Session Information
+
+{{#if _meta.dump.runtimeObservations}}
+- **Protocol Version:** {{_meta.dump.runtimeObservations.mcpProtocolUsed}}
+{{#if _meta.dump.runtimeObservations.sessionIdSupported}}
+- **Session ID Support:** Yes
+{{#if _meta.dump.runtimeObservations.sessionIdHeader}}
+- **Session Header Name:** {{_meta.dump.runtimeObservations.sessionIdHeader}}
+{{/if}}
+{{/if}}
+{{#if _meta.dump.clientCapabilities}}
+- **Client Capabilities:** Sent during connection
+{{/if}}
+{{#if _meta.dump.runtimeObservations.pingSupported}}
+- **Ping Support:** {{#if _meta.dump.runtimeObservations.pingSupported}}✓ Server responds to ping{{#if _meta.dump.runtimeObservations.pingLatencyMs}} (latency: {{_meta.dump.runtimeObservations.pingLatencyMs}}ms){{/if}}{{else}}✗ Server does not respond to ping{{/if}}
+{{/if}}
+{{/if}}
+
+---
+
+{{#if _meta.dump.cors}}
+## Browser Compatibility (CORS)
+
+{{#if _meta.dump.cors.browserReady}}
+✓ **Browser-Ready:** This server can be used from browser-based MCP clients (like MCP Inspector).
+{{else}}
+{{#if (eq _meta.dump.cors.browserReady false)}}
+✗ **Not Browser-Ready:** This server has CORS configuration issues that prevent use from browsers.
+{{else}}
+⚠ **Unknown:** CORS detection was incomplete or skipped.
+{{/if}}
+{{/if}}
+
+{{#if _meta.dump.cors.responseHeaders}}
+### CORS Response Headers
+{{#if _meta.dump.cors.responseHeaders.accessControlAllowOrigin}}
+- **Allow-Origin:** `{{_meta.dump.cors.responseHeaders.accessControlAllowOrigin}}`
+{{/if}}
+{{#if _meta.dump.cors.responseHeaders.accessControlExposeHeaders}}
+- **Expose-Headers:** {{join _meta.dump.cors.responseHeaders.accessControlExposeHeaders ", "}}
+{{/if}}
+{{/if}}
+
+{{#if _meta.dump.cors.preflight}}
+{{#if _meta.dump.cors.preflight.tested}}
+### Preflight (OPTIONS) Test
+- **Status:** {{_meta.dump.cors.preflight.status}}
+{{#if _meta.dump.cors.preflight.accessControlAllowOrigin}}
+- **Allow-Origin:** `{{_meta.dump.cors.preflight.accessControlAllowOrigin}}`
+{{/if}}
+{{#if _meta.dump.cors.preflight.accessControlAllowMethods}}
+- **Allow-Methods:** {{join _meta.dump.cors.preflight.accessControlAllowMethods ", "}}
+{{/if}}
+{{#if _meta.dump.cors.preflight.accessControlAllowHeaders}}
+- **Allow-Headers:** {{join _meta.dump.cors.preflight.accessControlAllowHeaders ", "}}
+{{/if}}
+{{/if}}
+{{/if}}
+
+{{/if}}
+
+---
+
+## Extraction Information
+
+- **Tool:** {{_meta.dump.toolName}} v{{_meta.dump.toolVersion}}
+- **Created:** {{formatDate _meta.dump.createdAt}}
+{{#if transports.[0].type}}
+- **Transport:** {{transports.[0].type}}
+{{/if}}
+{{#if _meta.dump.runtimeObservations.sessionIdSupported}}
+- **Session Management:** {{#if _meta.dump.runtimeObservations.sessionIdSupported}}Yes ({{_meta.dump.runtimeObservations.sessionIdHeader}}){{else}}No{{/if}}
+{{/if}}
+{{#if _meta.dump.cors}}
+- **Browser Compatibility:** {{#if _meta.dump.cors.browserReady}}✓ Ready{{else}}✗ Issues Detected{{/if}}
+{{/if}}
+{{#if _meta.dump.runtimeObservations.pingSupported}}
+- **Ping Support:** {{#if _meta.dump.runtimeObservations.pingSupported}}✓ Yes{{#if _meta.dump.runtimeObservations.pingLatencyMs}} ({{_meta.dump.runtimeObservations.pingLatencyMs}}ms){{/if}}{{else}}✗ Not Supported{{/if}}
+{{/if}}
+
+---
+{{/if}}
+
+*Generated with [mcpcontract](https://github.com/cisco-open/mcptoolkit-contract){{#if _meta.dump.toolVersion}} v{{_meta.dump.toolVersion}}{{/if}}*

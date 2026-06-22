@@ -1,0 +1,61 @@
+changeType: protocol-version-changed
+category: serverInfo
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Protocol Version Changed
+description: |
+  Detects when the MCP protocol version changes. Protocol version changes are
+  breaking because different versions have different semantics and capabilities.
+
+variants:
+  - id: protocol-version-changed-breaking
+    breaking: true
+    severity: critical
+    message: Changing MCP protocol version is breaking
+    rationale: |
+      Different protocol versions have different semantics, message formats,
+      and capabilities. Clients designed for one protocol version may not
+      work correctly with another.
+      
+      Protocol version is a fundamental contract between client and server.
+    migration: |
+      Protocol version changes require careful planning:
+      1. Increment MAJOR version
+      2. Support multiple protocol versions during transition if possible
+      3. Document all breaking changes between versions
+      4. Provide clear migration path
+      5. Test extensively with different client versions
+    examples:
+      pass:
+        - name: Protocol version upgrade
+          description: Upgrading protocol version is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444003
+            category: serverInfo
+            changeType: protocol-version-changed
+            path: serverInfo.protocolVersion
+            description: "Protocol version changed from '2024-11-05' to '2025-06-18'"
+            from: "2024-11-05"
+            to: "2025-06-18"
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - session-support-changed
+  - capability-added
+
+references:
+  - title: MCP Protocol Specification
+    url: https://spec.modelcontextprotocol.io/
+  - title: Semantic Versioning
+    url: https://semver.org/
+
+tags:
+  - server-info
+  - protocol-version
+  - breaking-changes
+  - critical

@@ -1,0 +1,129 @@
+changeType: parameter-added
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Added
+description: |
+  Detects when a new parameter is added to a tool. Compatibility depends on
+  whether the new parameter is optional or required.
+
+variants:
+  - id: parameter-added-optional
+    breaking: false
+    severity: info
+    message: Adding an optional parameter is backward compatible
+    rationale: |
+      Old clients don't send the new parameter, and the server uses its default value.
+      This allows servers to extend tool capabilities while maintaining compatibility.
+      
+      The server must handle the absence of the parameter gracefully.
+    migration: null
+    conditions:
+      - field: to.required
+        operator: equals
+        value: false
+    examples:
+      pass:
+        - name: Optional parameter added
+          description: Adding an optional parameter is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440005
+            category: tools
+            changeType: parameter-added
+            path: tools[get_weather].parameters.properties.units
+            description: "Optional parameter 'units' added"
+            to:
+              required: false
+              type: string
+              enum: [celsius, fahrenheit]
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail:
+        - name: Required parameter should not match
+          description: Required parameters should match different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440006
+            category: tools
+            changeType: parameter-added
+            path: tools[send_email].parameters.properties.to
+            description: "Required parameter 'to' added"
+            to:
+              required: true
+              type: string
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: false
+
+  - id: parameter-added-required
+    breaking: true
+    severity: critical
+    message: Adding a required parameter breaks existing clients
+    rationale: |
+      Old clients don't send the required parameter and will fail validation.
+      This is a breaking change that forces all clients to update their code.
+    migration: |
+      To add a required parameter safely:
+      1. Add as optional parameter first (MINOR version)
+      2. Update documentation showing it will become required
+      3. Give clients time to adopt (at least one major version cycle)
+      4. Make it required in next MAJOR version
+      
+      Alternative: Create a new tool version (e.g., send_email_v2).
+    conditions:
+      - field: to.required
+        operator: equals
+        value: true
+    examples:
+      pass:
+        - name: Required parameter added
+          description: Adding a required parameter is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440007
+            category: tools
+            changeType: parameter-added
+            path: tools[send_email].parameters.properties.to
+            description: "Required parameter 'to' added"
+            to:
+              required: true
+              type: string
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail:
+        - name: Optional parameter should not match
+          description: Optional parameters should match different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440008
+            category: tools
+            changeType: parameter-added
+            path: tools[get_weather].parameters.properties.units
+            description: "Optional parameter 'units' added"
+            to:
+              required: false
+              type: string
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: false
+
+relatedRules:
+  - parameter-removed
+  - parameter-made-required
+  - prompt-argument-added
+
+references:
+  - title: JSON Schema - Required Properties
+    url: https://json-schema.org/understanding-json-schema/reference/object.html#required-properties
+  - title: API Evolution Best Practices
+    url: https://cloud.google.com/apis/design/compatibility
+
+tags:
+  - parameters
+  - additions
+  - required-vs-optional
+  - schema-evolution

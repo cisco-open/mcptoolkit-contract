@@ -1,0 +1,58 @@
+changeType: resource-mimetype-changed
+category: resources
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource MIME Type Changed
+description: |
+  Detects when a resource's MIME type changes. MIME type changes can break
+  clients that parse content based on the declared type.
+
+variants:
+  - id: resource-mimetype-changed-breaking
+    breaking: true
+    severity: major
+    message: Changing resource MIME type can break clients
+    rationale: |
+      Clients may parse content based on declared MIME type. Changing from
+      application/json to text/plain means clients expecting JSON will fail
+      to parse the content.
+      
+      MIME types declare content format contracts.
+    migration: |
+      To change MIME type safely:
+      1. Ensure new type is compatible with content
+      2. Increment MAJOR version
+      3. Document the change clearly
+      4. Consider supporting multiple MIME types via content negotiation
+    examples:
+      pass:
+        - name: JSON to plain text
+          description: Changing MIME type from JSON to text is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442006
+            category: resources
+            changeType: resource-mimetype-changed
+            path: resources[file://data/config].mimeType
+            description: "Resource MIME type changed from 'application/json' to 'text/plain'"
+            from: application/json
+            to: text/plain
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-type-changed
+  - resource-uri-changed
+
+references:
+  - title: MIME Types
+    url: https://www.iana.org/assignments/media-types/media-types.xhtml
+
+tags:
+  - resources
+  - mime-types
+  - breaking-changes
+  - content-type

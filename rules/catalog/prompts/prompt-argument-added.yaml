@@ -1,0 +1,115 @@
+changeType: prompt-argument-added
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Argument Added
+description: |
+  Detects when a new argument is added to a prompt. Compatibility depends on
+  whether the argument is optional or required.
+
+variants:
+  - id: prompt-argument-added-optional
+    breaking: false
+    severity: info
+    message: Adding an optional prompt argument is backward compatible
+    rationale: |
+      Old clients don't send the new argument, and the server uses its default.
+      This allows extending prompt capabilities while maintaining compatibility.
+    migration: null
+    conditions:
+      - field: to.required
+        operator: equals
+        value: false
+    examples:
+      pass:
+        - name: Optional argument added
+          description: Adding an optional argument is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441005
+            category: prompts
+            changeType: prompt-argument-added
+            path: prompts[summarize].arguments.length
+            description: "Optional argument 'length' added"
+            to:
+              required: false
+              description: Target summary length
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail:
+        - name: Required argument should not match
+          description: Required arguments match different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441006
+            category: prompts
+            changeType: prompt-argument-added
+            path: prompts[translate].arguments.target_lang
+            description: "Required argument 'target_lang' added"
+            to:
+              required: true
+              description: Target language
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: false
+
+  - id: prompt-argument-added-required
+    breaking: true
+    severity: major
+    message: Adding a required prompt argument breaks existing clients
+    rationale: |
+      Old clients don't send the required argument and will fail.
+      This forces all clients to update their code.
+    migration: |
+      To add a required argument safely:
+      1. Add as optional first (MINOR version)
+      2. Document it will become required
+      3. Give clients time to migrate
+      4. Make required in next MAJOR version
+    conditions:
+      - field: to.required
+        operator: equals
+        value: true
+    examples:
+      pass:
+        - name: Required argument added
+          description: Adding a required argument is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441007
+            category: prompts
+            changeType: prompt-argument-added
+            path: prompts[translate].arguments.target_lang
+            description: "Required argument 'target_lang' added"
+            to:
+              required: true
+              description: Target language
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail:
+        - name: Optional argument should not match
+          description: Optional arguments match different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441008
+            category: prompts
+            changeType: prompt-argument-added
+            path: prompts[summarize].arguments.length
+            description: "Optional argument 'length' added"
+            to:
+              required: false
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: false
+
+relatedRules:
+  - prompt-argument-removed
+  - parameter-added
+
+tags:
+  - prompts
+  - arguments
+  - required-vs-optional

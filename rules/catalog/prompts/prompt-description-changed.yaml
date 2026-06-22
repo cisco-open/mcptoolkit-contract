@@ -1,0 +1,45 @@
+changeType: prompt-description-changed
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Description Changed
+description: |
+  Detects when a prompt's description changes. Description changes are compatible
+  because they are informational only.
+
+variants:
+  - id: prompt-description-changed-compatible
+    breaking: false
+    severity: info
+    message: Changing prompt description is backward compatible
+    rationale: |
+      Descriptions are informational and don't affect functionality.
+      Improving descriptions is encouraged and safe.
+    migration: null
+    examples:
+      pass:
+        - name: Description improved
+          description: Improving prompt description is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441004
+            category: prompts
+            changeType: prompt-description-changed
+            path: prompts[summarize].description
+            description: "Prompt 'summarize' description changed"
+            from: Summarize text
+            to: Generate a concise summary of the provided text
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-description-changed
+  - parameter-description-changed
+
+tags:
+  - prompts
+  - documentation
+  - backward-compatible

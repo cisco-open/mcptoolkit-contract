@@ -1,0 +1,116 @@
+{
+  "$schema": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.4",
+  "version": "0.3.4",
+  "serverInfo": {
+    "name": "design",
+    "version": "0.2.0",
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+      "tools": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "create_wireframe",
+      "description": "Create an interactive wireframe for a UI component",
+      "tags": ["design", "wireframe", "interactive"],
+      "deprecated": false,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "string",
+            "description": "Name of the component",
+            "examples": ["button", "modal", "navbar", "card"]
+          },
+          "width": {
+            "type": "integer",
+            "description": "Width in pixels",
+            "minimum": 100,
+            "maximum": 1920
+          }
+        },
+        "required": ["component"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL to the generated wireframe"
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "width": { "type": "integer" },
+              "height": { "type": "integer" }
+            }
+          },
+          "interactive": {
+            "type": "boolean",
+            "description": "Whether the wireframe is interactive"
+          }
+        }
+      },
+      "responseExamples": [
+        {
+          "name": "Interactive button",
+          "description": "Example of an interactive button wireframe",
+          "data": {
+            "url": "https://example.com/wireframes/button-123.svg",
+            "dimensions": {
+              "width": 200,
+              "height": 50
+            },
+            "interactive": true
+          }
+        },
+        {
+          "name": "Modal wireframe",
+          "description": "Example of a modal dialog wireframe",
+          "data": {
+            "url": "https://example.com/wireframes/modal-456.svg",
+            "dimensions": {
+              "width": 600,
+              "height": 400
+            },
+            "interactive": true
+          }
+        }
+      ]
+    }
+  ],
+  "prompts": [],
+  "resources": [
+    {
+      "name": "design-system",
+      "uri": "design://system/tokens",
+      "description": "Comprehensive design system tokens and guidelines",
+      "tags": ["design-system", "tokens", "colors"],
+      "deprecated": false,
+      "contentExamples": [
+        {
+          "name": "Color tokens with opacity",
+          "description": "Extended color token structure with opacity variants",
+          "data": {
+            "colors": {
+              "primary": "#0066CC",
+              "primary-90": "#1A75D1",
+              "secondary": "#6C757D",
+              "success": "#28A745"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "resourceTemplates": [],
+  "dumpDetails": {
+    "toolName": "mcpcontract",
+    "toolVersion": "0.18.0",
+    "dumpExecution": {
+      "serverConfig": {},
+      "timestamp": "2026-01-23T11:00:00Z"
+    }
+  }
+}

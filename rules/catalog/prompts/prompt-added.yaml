@@ -1,0 +1,50 @@
+changeType: prompt-added
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Added
+description: |
+  Detects when a new prompt is added to an MCP server. Adding prompts is backward
+  compatible because clients discover prompts dynamically and only use the ones
+  they recognize.
+
+variants:
+  - id: prompt-added-compatible
+    breaking: false
+    severity: info
+    message: Adding a new prompt is backward compatible
+    rationale: |
+      Clients only use prompts they know about. Old clients ignore new prompts
+      and continue using existing ones. New clients can discover and use the
+      new prompt via prompts/list.
+      
+      This follows the discovery-based design of MCP.
+    migration: null
+    examples:
+      pass:
+        - name: New prompt added
+          description: Adding a new prompt is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441001
+            category: prompts
+            changeType: prompt-added
+            path: prompts[code_review]
+            description: "Prompt 'code_review' was added"
+            to:
+              name: code_review
+              description: Generate code review comments
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-removed
+  - tool-added
+
+tags:
+  - prompts
+  - additions
+  - backward-compatible

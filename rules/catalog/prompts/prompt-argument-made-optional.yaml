@@ -1,0 +1,45 @@
+changeType: prompt-argument-made-optional
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Argument Made Optional
+description: |
+  Detects when a required prompt argument becomes optional. Compatible because
+  it makes the API more permissive.
+
+variants:
+  - id: prompt-argument-made-optional-compatible
+    breaking: false
+    severity: info
+    message: Making a prompt argument optional is backward compatible
+    rationale: |
+      More permissive changes are safe. Old clients continue sending the
+      argument, and new clients can choose to omit it.
+    migration: null
+    examples:
+      pass:
+        - name: Required to optional
+          description: Making an argument optional is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441011
+            category: prompts
+            changeType: prompt-argument-made-optional
+            path: prompts[summarize].arguments.text
+            description: "Argument 'text' changed to optional"
+            from: { required: true }
+            to: { required: false }
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-argument-made-required
+  - parameter-made-optional
+
+tags:
+  - prompts
+  - arguments
+  - backward-compatible

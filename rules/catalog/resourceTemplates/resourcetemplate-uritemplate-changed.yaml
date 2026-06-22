@@ -1,0 +1,76 @@
+changeType: resourcetemplate-uritemplate-changed
+category: resourceTemplates
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Template URI Changed
+description: |
+  Detects when a resource template's URI template pattern changes. Template
+  changes are critical breaking changes because clients use them to construct
+  resource URIs.
+
+variants:
+  - id: resourcetemplate-uritemplate-changed-breaking
+    breaking: true
+    severity: critical
+    message: Changing resource template URI breaks clients
+    rationale: |
+      Clients use the URI template pattern to construct requests. Changing the
+      template means all client code using the old pattern will generate
+      invalid URIs.
+      
+      URI templates are the contract for how to access resources dynamically.
+    migration: |
+      URI template changes require major version bump:
+      1. Increment MAJOR version
+      2. Support both old and new templates during transition
+      3. Provide clear migration documentation with examples
+      4. Consider template aliases if possible
+      
+      Example: Changing file://{path} to file://data/{path} breaks clients.
+    examples:
+      pass:
+        - name: Template pattern changed
+          description: Changing URI template pattern is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655443003
+            category: resourceTemplates
+            changeType: resourcetemplate-uritemplate-changed
+            path: resourceTemplates[file://{path}].uriTemplate
+            description: "Template changed from 'file://{path}' to 'file://data/{path}'"
+            from: file://{path}
+            to: file://data/{path}
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+        
+        - name: Template variable renamed
+          description: Renaming template variables is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655443004
+            category: resourceTemplates
+            changeType: resourcetemplate-uritemplate-changed
+            path: resourceTemplates[card/{id}].uriTemplate
+            description: "Template changed from 'card/{id}' to 'card/{cardId}'"
+            from: card/{id}
+            to: card/{cardId}
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resource-uri-changed
+  - resourcetemplate-removed
+
+references:
+  - title: URI Template RFC 6570
+    url: https://www.rfc-editor.org/rfc/rfc6570
+
+tags:
+  - resource-templates
+  - uri-templates
+  - breaking-changes
+  - critical

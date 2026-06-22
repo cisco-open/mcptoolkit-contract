@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/mcpcontract/schema/diff/1.0.0",
+  "title": "MCP Contract Diff",
+  "description": "Structural diff between two MCP dumps or manifests",
+  "type": "object",
+  "required": ["schemaVersion", "metadata", "comparison", "changes", "statistics"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Reference to the diff schema version",
+      "const": "https://developer.cisco.com/mcpcontract/schema/diff/1.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Extracted serverInfo metadata for easy consumption",
+      "required": ["old", "new"],
+      "properties": {
+        "old": {
+          "type": "object",
+          "description": "Server info from old dump/manifest",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "MCP server name (from serverInfo.name)"
+            },
+            "version": {
+              "type": "string",
+              "description": "MCP server version (from serverInfo.version)"
+            },
+            "protocolVersion": {
+              "type": "string",
+              "description": "MCP protocol version (from serverInfo.protocolVersion)"
+            },
+            "capabilities": {
+              "type": "array",
+              "description": "List of supported capability categories (e.g., ['tools', 'resources', 'prompts'])",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "new": {
+          "type": "object",
+          "description": "Server info from new dump/manifest",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "MCP server name (from serverInfo.name)"
+            },
+            "version": {
+              "type": "string",
+              "description": "MCP server version (from serverInfo.version)"
+            },
+            "protocolVersion": {
+              "type": "string",
+              "description": "MCP protocol version (from serverInfo.protocolVersion)"
+            },
+            "capabilities": {
+              "type": "array",
+              "description": "List of supported capability categories (e.g., ['tools', 'resources', 'prompts'])",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "description": "Metadata about the files being compared",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "type": "object",
+          "required": ["file", "serverVersion"],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Path to the source file"
+            },
+            "schemaVersion": {
+              "type": "string",
+              "description": "Schema version (for dumps only)"
+            },
+            "serverVersion": {
+              "type": "string",
+              "description": "MCP server version"
+            },
+            "sessionIdSupported": {
+              "type": "boolean",
+              "description": "Whether session IDs are supported (dumps only)"
+            }
+          }
+        },
+        "to": {
+          "type": "object",
+          "required": ["file", "serverVersion"],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Path to the target file"
+            },
+            "schemaVersion": {
+              "type": "string",
+              "description": "Schema version (for dumps only)"
+            },
+            "serverVersion": {
+              "type": "string",
+              "description": "MCP server version"
+            },
+            "sessionIdSupported": {
+              "type": "boolean",
+              "description": "Whether session IDs are supported (dumps only)"
+            }
+          }
+        }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "description": "List of all detected changes",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "changeType", "path", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this change (UUID)",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["tools", "prompts", "resources", "resourceTemplates", "serverInfo"],
+            "description": "Category of the capability that changed"
+          },
+          "changeType": {
+            "type": "string",
+            "description": "Type of change (e.g., tool-added, parameter-removed, etc.)"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSONPath-like path to the changed element"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the change"
+          },
+          "from": {
+            "description": "Value before the change (null if added)"
+          },
+          "to": {
+            "description": "Value after the change (null if removed)"
+          }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "description": "Summary statistics of changes by category",
+      "required": ["tools", "prompts", "resources", "resourceTemplates"],
+      "properties": {
+        "tools": {
+          "type": "object",
+          "required": ["added", "removed", "renamed", "modified"],
+          "properties": {
+            "added": {"type": "number"},
+            "removed": {"type": "number"},
+            "renamed": {"type": "number"},
+            "modified": {"type": "number"}
+          }
+        },
+        "prompts": {
+          "type": "object",
+          "required": ["added", "removed", "renamed", "modified"],
+          "properties": {
+            "added": {"type": "number"},
+            "removed": {"type": "number"},
+            "renamed": {"type": "number"},
+            "modified": {"type": "number"}
+          }
+        },
+        "resources": {
+          "type": "object",
+          "required": ["added", "removed", "renamed", "modified"],
+          "properties": {
+            "added": {"type": "number"},
+            "removed": {"type": "number"},
+            "renamed": {"type": "number"},
+            "modified": {"type": "number"}
+          }
+        },
+        "resourceTemplates": {
+          "type": "object",
+          "required": ["added", "removed", "renamed", "modified"],
+          "properties": {
+            "added": {"type": "number"},
+            "removed": {"type": "number"},
+            "renamed": {"type": "number"},
+            "modified": {"type": "number"}
+          }
+        }
+      }
+    }
+  }
+}

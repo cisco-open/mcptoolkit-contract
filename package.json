@@ -1,0 +1,83 @@
+{
+  "name": "@cisco-open/mcptoolkit-contract",
+  "version": "1.0.0-rc1",
+  "description": "CLI toolkit for MCP server contract management: dumps capabilities, generates changelogs and renders documentation",
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "mcpcontract": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "npm run build && node build/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:generate": "node tests/generators/catalog-test-generator.ts",
+    "test:manual": "tests/run-manual-tests.sh",
+    "test:links": "tests/check-doc-links.sh",
+    "prerelease": "npm run test:links && npm run build && npm test",
+    "clean": "rm -rf build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "contract",
+    "manifest",
+    "validation",
+    "documentation"
+  ],
+  "author": "Cisco Systems, Inc.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cisco-open/mcptoolkit-contract.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cisco-open/mcptoolkit-contract/issues"
+  },
+  "homepage": "https://github.com/cisco-open/mcptoolkit-contract#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.1.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "commander": "^12.1.0",
+    "handlebars": "^4.7.8",
+    "markdown-it": "^14.1.1",
+    "marked": "^17.0.0",
+    "omelette": "^0.4.17",
+    "openid-client": "^6.1.4",
+    "semver": "^7.7.3",
+    "snarkdown": "^2.0.0",
+    "uuid": "^13.0.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/handlebars": "^4.1.0",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.0.0",
+    "@types/omelette": "^0.4.5",
+    "@types/semver": "^7.7.1",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.6.3"
+  },
+  "files": [
+    "build/",
+    "schemas/",
+    "templates/",
+    "rules/",
+    "LICENSE",
+    "README.md"
+  ]
+}

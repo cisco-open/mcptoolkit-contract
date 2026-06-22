@@ -1,0 +1,71 @@
+changeType: tool-removed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Tool Removed
+description: |
+  Detects when a tool is removed from an MCP server. Removing tools is breaking
+  because existing clients may depend on those tools and will receive errors
+  when attempting to call them.
+
+variants:
+  - id: tool-removed-breaking
+    breaking: true
+    severity: critical
+    message: Removing a tool breaks clients that depend on it
+    rationale: |
+      Clients calling the removed tool will receive 'tool not found' errors.
+      This breaks existing integrations and workflows that rely on the tool.
+      
+      Even if usage analytics show low usage, removing a tool should follow
+      proper deprecation practices to give clients time to migrate.
+    migration: |
+      To remove a tool safely:
+      1. Deprecate the tool for at least one major version
+      2. Add deprecation warnings to the tool description
+      3. Document the migration path (alternative tools, workarounds)
+      4. Monitor usage and notify affected clients
+      5. Remove in next major version increment
+      
+      Alternative: Keep the tool indefinitely but mark as deprecated.
+    examples:
+      pass:
+        - name: Tool removed
+          description: Removing an existing tool is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440002
+            category: tools
+            changeType: tool-removed
+            path: tools[send_fax]
+            description: "Tool 'send_fax' was removed"
+            from:
+              name: send_fax
+              description: Send a fax message
+              inputSchema:
+                type: object
+                properties:
+                  to: { type: string }
+                  message: { type: string }
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-added
+  - tool-renamed
+  - capability-removed
+
+references:
+  - title: Semantic Versioning - Breaking Changes
+    url: https://semver.org/spec/v2.0.0.html#spec-item-8
+  - title: API Deprecation Best Practices
+    url: https://swagger.io/blog/api-strategy/api-versioning/
+
+tags:
+  - tools
+  - removals
+  - breaking-changes
+  - deprecation

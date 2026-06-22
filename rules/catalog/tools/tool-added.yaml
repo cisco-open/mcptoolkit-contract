@@ -1,0 +1,63 @@
+changeType: tool-added
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Tool Added
+description: |
+  Detects when a new tool is added to an MCP server. New tools are backward
+  compatible because clients discover tools dynamically at runtime and only
+  use the tools they recognize.
+
+variants:
+  - id: tool-added-compatible
+    breaking: false
+    severity: info
+    message: Adding a new tool is backward compatible - clients ignore unknown tools
+    rationale: |
+      Old clients don't know about new tools and will continue using existing ones.
+      New clients can discover the tool via tools/list and begin using it.
+      
+      This follows the open-world assumption: clients should gracefully handle
+      the presence of unknown capabilities and only use what they understand.
+    migration: null
+    examples:
+      pass:
+        - name: New tool added
+          description: Adding a completely new tool is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440001
+            category: tools
+            changeType: tool-added
+            path: tools[send_email]
+            description: "Tool 'send_email' was added"
+            to:
+              name: send_email
+              description: Send an email message
+              inputSchema:
+                type: object
+                properties:
+                  to: { type: string }
+                  subject: { type: string }
+                  body: { type: string }
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-removed
+  - capability-added
+
+references:
+  - title: MCP Tools Specification
+    url: https://spec.modelcontextprotocol.io/specification/server/tools/
+  - title: MCP Compatibility Guidelines
+    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+
+tags:
+  - tools
+  - additions
+  - backward-compatible
+  - discovery

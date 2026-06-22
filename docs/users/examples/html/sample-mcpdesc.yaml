@@ -1,0 +1,163 @@
+mcpdesc: 0.7.0
+info:
+  name: com.example/catalog-server
+  title: Example Catalog MCP Server
+  version: 1.2.0
+  protocolVersion: "2025-06-18"
+  description: |-
+    Sample MCP server exposing a generic catalog of items with search, detail
+    retrieval, and subscription prompts. Used to demonstrate mcpcontract
+    documentation generation (card-view template).
+transports:
+  - type: streamable-http
+    url: https://catalog.example.com/mcp
+capabilities:
+  completions: {}
+  prompts:
+    listChanged: false
+  resources:
+    listChanged: false
+  tools:
+    listChanged: false
+tools:
+  - name: search
+    description: |-
+      Search the catalog by name, category, or tag.
+
+      Common patterns:
+      1. Find by name: `{"name": "widget", "partial": true}`
+      2. Filter by category: `{"category": "hardware"}`
+      3. Paginate: `{"pageSize": 20, "cursor": "prev_cursor"}`
+
+      Error codes:
+      - `-32602` InvalidParams — missing or invalid parameter
+      - `-32603` InternalError — server-side failure
+    inputSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Filter by item name (case-insensitive, partial match by default)
+        category:
+          type: string
+          description: Filter by category slug (e.g. `hardware`, `software`, `service`)
+        tag:
+          type: string
+          description: Filter by tag (exact match)
+        partial:
+          type: boolean
+          default: true
+          description: "When true, `name` and `category` use substring matching"
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Results per page (1–100, default 10)
+        cursor:
+          type: string
+          description: Pagination cursor from a previous response
+      additionalProperties: false
+
+  - name: get-item
+    description: |-
+      Retrieve full details for a single catalog item by its ID.
+
+      Returns all fields including description, tags, category, contacts,
+      and release history.
+    inputSchema:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Unique item identifier
+        fields:
+          type: array
+          items:
+            type: string
+            enum:
+              - contacts
+              - releases
+              - tags
+              - description
+          description: Optional subset of fields to return (all returned by default)
+      additionalProperties: false
+
+  - name: list-categories
+    description: List all available categories with item counts.
+    inputSchema:
+      type: object
+      properties:
+        includeEmpty:
+          type: boolean
+          default: false
+          description: Include categories that contain no items
+      additionalProperties: false
+
+  - name: subscribe-updates
+    description: |-
+      Register a webhook to receive change notifications for matching items.
+
+      The server POSTs a JSON payload to `callbackUrl` whenever a matching
+      item is created, updated, or deleted.
+    inputSchema:
+      type: object
+      required:
+        - callbackUrl
+      properties:
+        callbackUrl:
+          type: string
+          format: uri
+          description: HTTPS endpoint to receive change notifications
+        filter:
+          type: object
+          description: Same filter fields as `search` — only matching changes trigger callbacks
+          properties:
+            category:
+              type: string
+            tag:
+              type: string
+          additionalProperties: false
+        secret:
+          type: string
+          description: HMAC-SHA256 signing secret; if provided, notifications include an `X-Signature` header
+      additionalProperties: false
+
+prompts:
+  - name: guided-search
+    description: |-
+      Interactive prompt that helps users compose an effective search query.
+      Asks clarifying questions and returns a ready-to-use `search` tool call.
+    arguments:
+      - name: intent
+        description: What the user is looking for in natural language
+        required: true
+
+  - name: summarize-item
+    description: Summarize a catalog item in one paragraph for non-technical audiences.
+    arguments:
+      - name: item_id
+        description: ID of the item to summarize
+        required: true
+      - name: audience
+        description: "Target audience: `technical` or `executive` (default: `technical`)"
+        required: false
+
+resources:
+  - name: catalog-stats
+    uri: catalog://stats
+    description: Aggregate statistics — total item count, category breakdown, last-updated timestamp.
+    mimeType: application/json
+
+  - name: categories
+    uri: catalog://categories
+    description: Complete list of categories with slugs, display names, and item counts.
+    mimeType: application/json
+
+resourceTemplates:
+  - name: item-detail
+    uriTemplate: catalog://items/{id}
+    description: Full detail record for the item with the given `id`.
+    mimeType: application/json

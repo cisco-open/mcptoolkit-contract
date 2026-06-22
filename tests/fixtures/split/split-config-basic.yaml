@@ -1,0 +1,31 @@
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+
+info:
+  version: "1.0.0"
+  name: "Service-based split"
+  description: "Split federation server dump by backend service"
+  created: "2025-12-15"
+  author: "MCP Toolkit Team"
+
+categories:
+  - name: "platform-identity"
+    description: "Platform Identity APIs"
+    outputFile: "dump-platform-identity"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^platform-identity_"
+          description: "Tools prefixed with platform-identity_"
+
+  - name: "secure-access-networks"
+    description: "Secure Access Networks APIs"
+    outputFile: "dump-secure-access-networks"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^secure-access-networks_"
+          description: "Tools prefixed with secure-access-networks_"
+
+unmatchedItems:
+  action: "separate-file"
+  outputFile: "dump-unmatched"

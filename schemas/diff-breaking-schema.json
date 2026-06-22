@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/mcpcontract/schema/diff-breaking/2.0.0",
+  "title": "MCP Diff with Breaking Change Analysis",
+  "description": "Structural diff enriched with backward compatibility analysis, breaking change annotations, and change categorization",
+  "type": "object",
+  "required": ["schemaVersion", "diffSource", "rulesApplied", "metadata", "summary", "categorization", "versioningSuggestion", "changes"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Reference to the diff-breaking schema version",
+      "const": "https://developer.cisco.com/mcpcontract/schema/diff-breaking/2.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Server info metadata from diff (passed through from diff.metadata)",
+      "required": ["old", "new"],
+      "properties": {
+        "old": {
+          "type": "object",
+          "description": "Server info from old dump/manifest",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "MCP server name (from serverInfo.name)"
+            },
+            "version": {
+              "type": "string",
+              "description": "MCP server version (from serverInfo.version)"
+            },
+            "protocolVersion": {
+              "type": "string",
+              "description": "MCP protocol version (from serverInfo.protocolVersion)"
+            },
+            "capabilities": {
+              "type": "array",
+              "description": "List of supported capability categories (e.g., ['tools', 'resources', 'prompts'])",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "new": {
+          "type": "object",
+          "description": "Server info from new dump/manifest",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "MCP server name (from serverInfo.name)"
+            },
+            "version": {
+              "type": "string",
+              "description": "MCP server version (from serverInfo.version)"
+            },
+            "protocolVersion": {
+              "type": "string",
+              "description": "MCP protocol version (from serverInfo.protocolVersion)"
+            },
+            "capabilities": {
+              "type": "array",
+              "description": "List of supported capability categories (e.g., ['tools', 'resources', 'prompts'])",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "diffSource": {
+      "type": "string",
+      "description": "Path to the diff file that was analyzed"
+    },
+    "rulesApplied": {
+      "type": "string",
+      "description": "Path to the rules file that was used"
+    },
+    "summary": {
+      "type": "object",
+      "required": ["totalChanges", "breakingChanges", "compatibleChanges", "status", "exitCode"],
+      "properties": {
+        "totalChanges": {
+          "type": "number",
+          "description": "Total number of changes detected"
+        },
+        "breakingChanges": {
+          "type": "number",
+          "description": "Number of breaking changes"
+        },
+        "compatibleChanges": {
+          "type": "number",
+          "description": "Number of backward compatible changes"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["BACKWARD_COMPATIBLE", "BREAKING_CHANGES"],
+          "description": "Overall compatibility status"
+        },
+        "exitCode": {
+          "type": "number",
+          "description": "Exit code (0 = compatible, 1 = breaking)"
+        }
+      }
+    },
+    "categorization": {
+      "type": "object",
+      "description": "Changes grouped by category for changelog generation",
+      "required": ["breaking", "new", "updates", "deleted"],
+      "properties": {
+        "breaking": {
+          "type": "array",
+          "description": "Breaking changes (backward incompatible)",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Change ID reference"
+          }
+        },
+        "new": {
+          "type": "array",
+          "description": "New features (tools/resources/prompts added)",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "updates": {
+          "type": "array",
+          "description": "Non-breaking updates (backward compatible changes)",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "description": "Removed features (tools/resources/prompts deleted)",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "versioningSuggestion": {
+      "type": "object",
+      "description": "Semantic versioning recommendation based on changes",
+      "required": ["recommendedBump", "reason"],
+      "properties": {
+        "recommendedBump": {
+          "type": "string",
+          "enum": ["major", "minor", "patch"],
+          "description": "Recommended version bump type"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Explanation for the recommendation"
+        },
+        "suggestedVersion": {
+          "type": "string",
+          "description": "Suggested next version number (oldVersion + bump)"
+        }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "description": "List of all changes with compatibility annotations",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "changeType", "path", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["tools", "prompts", "resources", "resourceTemplates", "serverInfo"]
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "from": {
+            "description": "Value before change"
+          },
+          "to": {
+            "description": "Value after change"
+          },
+          "breaking": {
+            "type": "boolean",
+            "description": "Whether this change is breaking"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "major", "critical"],
+            "description": "Severity level of the change"
+          },
+          "ruleMessage": {
+            "type": "string",
+            "description": "Message from the matching rule"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Explanation of why this is breaking/compatible"
+          },
+          "migration": {
+            "type": "string",
+            "description": "Migration strategy if breaking"
+          },
+          "changeCategory": {
+            "type": "string",
+            "enum": ["breaking", "new", "update", "deleted"],
+            "description": "Categorization for changelog generation"
+          },
+          "impact": {
+            "type": "object",
+            "description": "Impact assessment for the change",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+                "description": "Impact severity level"
+              },
+              "affectedUsers": {
+                "type": "string",
+                "description": "Description of who is affected"
+              }
+            }
+          },
+          "details": {
+            "type": "object",
+            "description": "Detailed change explanation for changelog",
+            "properties": {
+              "what": {
+                "type": "string",
+                "description": "What changed (concise description)"
+              },
+              "why": {
+                "type": "string",
+                "description": "Why it changed (rationale)"
+              },
+              "before": {
+                "type": "string",
+                "description": "State/value before the change"
+              },
+              "after": {
+                "type": "string",
+                "description": "State/value after the change"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

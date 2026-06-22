@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/mcpcontract/schema/catalog/1.0.0",
+  "title": "MCP Rules Catalog Entry Schema",
+  "description": "Schema for documenting backward compatibility rules with examples and metadata",
+  "type": "object",
+  "required": ["changeType", "category", "version", "title", "description", "variants"],
+  "properties": {
+    "changeType": {
+      "type": "string",
+      "description": "The change type this catalog entry documents (must match differ.ts changeType)",
+      "pattern": "^[a-z-]+$",
+      "examples": ["parameter-enum-values-changed", "tool-removed", "resource-added"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["tools", "prompts", "resources", "resourceTemplates", "serverInfo"],
+      "description": "Category of the rule"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Catalog entry version (semantic versioning)"
+    },
+    "introduced": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "mcpcontract version when this rule was first introduced"
+    },
+    "rulesFile": {
+      "type": "string",
+      "description": "Path to the rules file this catalog entry documents",
+      "default": "rules/breaking-changes.yaml",
+      "examples": ["rules/breaking-changes.yaml", "rules/strict-compatibility.yaml"]
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title for the rule",
+      "minLength": 5
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what this change type detects",
+      "minLength": 20
+    },
+    "variants": {
+      "type": "array",
+      "description": "Rule variants for this changeType (multiple rules can share same changeType with different conditions)",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "breaking", "severity", "message", "rationale", "examples"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this variant",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "breaking": {
+            "type": "boolean",
+            "description": "Whether this variant represents a breaking change"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "major", "critical"],
+            "description": "Severity level of the change"
+          },
+          "message": {
+            "type": "string",
+            "description": "User-facing message explaining the rule",
+            "minLength": 10
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why this is classified as breaking or compatible",
+            "minLength": 20
+          },
+          "conditions": {
+            "type": "array",
+            "description": "Optional conditions that must match for this variant to apply",
+            "items": {
+              "type": "object",
+              "required": ["field", "operator", "value"],
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "description": "Field path to evaluate (dot notation)"
+                },
+                "operator": {
+                  "type": "string",
+                  "enum": ["equals", "notEquals", "contains", "notContains", "hasAdditions", "hasRemovals", "onlyAdditions", "onlyRemovals"],
+                  "description": "Comparison operator"
+                },
+                "value": {
+                  "description": "Value to compare against (type depends on operator)"
+                }
+              }
+            }
+          },
+          "migration": {
+            "type": ["string", "null"],
+            "description": "Migration guidance for handling this breaking change"
+          },
+          "examples": {
+            "type": "object",
+            "required": ["pass", "fail"],
+            "properties": {
+              "pass": {
+                "type": "array",
+                "description": "Examples where this variant should match",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/example"
+                }
+              },
+              "fail": {
+                "type": "array",
+                "description": "Examples where this variant should NOT match",
+                "items": {
+                  "$ref": "#/$defs/example"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relatedRules": {
+      "type": "array",
+      "description": "Related changeTypes that users might also be interested in",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z-]+$"
+      }
+    },
+    "references": {
+      "type": "array",
+      "description": "External references and documentation links",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Reference title"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reference URL"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags for filtering and searching",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "example": {
+      "type": "object",
+      "required": ["name", "description", "change", "expectedResult"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Short name for this example",
+          "minLength": 5
+        },
+        "description": {
+          "type": "string",
+          "description": "What this example demonstrates",
+          "minLength": 10
+        },
+        "change": {
+          "type": "object",
+          "description": "The change object that would be generated by differ.ts",
+          "required": ["id", "category", "changeType", "path", "description"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID for the change"
+            },
+            "category": {
+              "type": "string",
+              "enum": ["tools", "prompts", "resources", "resourceTemplates", "serverInfo"]
+            },
+            "changeType": {
+              "type": "string",
+              "pattern": "^[a-z-]+$"
+            },
+            "path": {
+              "type": "string",
+              "description": "Path to the changed element"
+            },
+            "description": {
+              "type": "string",
+              "description": "Human-readable description of the change"
+            },
+            "from": {
+              "description": "Previous value (can be any type)"
+            },
+            "to": {
+              "description": "New value (can be any type)"
+            }
+          }
+        },
+        "expectedResult": {
+          "type": "object",
+          "description": "What the rules engine should return for this example",
+          "properties": {
+            "breaking": {
+              "type": "boolean",
+              "description": "Expected breaking status"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["info", "major", "critical"]
+            },
+            "ruleMessage": {
+              "type": "string",
+              "description": "Expected rule message"
+            },
+            "matchesThisVariant": {
+              "type": "boolean",
+              "description": "Whether this example should match this specific variant (used in fail examples)"
+            }
+          }
+        }
+      }
+    }
+  }
+}

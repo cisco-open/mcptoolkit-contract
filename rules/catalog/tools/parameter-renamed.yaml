@@ -1,0 +1,64 @@
+changeType: parameter-renamed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Renamed
+description: |
+  Detects when a parameter name changes. Renaming is breaking because clients
+  send parameters by name, and validation will fail when using the old name.
+
+variants:
+  - id: parameter-renamed-breaking
+    breaking: true
+    severity: critical
+    message: Renaming a parameter breaks existing clients
+    rationale: |
+      Old clients send the old parameter name, and validation fails because the
+      server no longer recognizes it. The parameter appears missing from the
+      server's perspective.
+      
+      Even if a parameter is optional, renaming it is breaking.
+    migration: |
+      To rename a parameter safely:
+      1. Add new parameter with new name (optional initially)
+      2. Accept both old and new names on the server
+      3. Deprecate old name for at least one major version
+      4. Document the migration path
+      5. Remove old name in next major version
+      
+      Alternative: Never rename - keep old name indefinitely.
+    examples:
+      pass:
+        - name: Parameter renamed
+          description: Renaming a parameter is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440010
+            category: tools
+            changeType: parameter-renamed
+            path: tools[get_weather].parameters.properties.location
+            description: "Parameter renamed from 'location' to 'city'"
+            from: { name: location }
+            to: { name: city }
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-renamed
+  - resource-renamed
+  - prompt-argument-removed
+
+references:
+  - title: API Parameter Naming
+    url: https://swagger.io/docs/specification/describing-parameters/
+  - title: Schema Evolution Patterns
+    url: https://cloud.google.com/apis/design/compatibility
+
+tags:
+  - parameters
+  - naming
+  - breaking-changes
+  - migration

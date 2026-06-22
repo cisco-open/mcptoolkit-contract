@@ -1,0 +1,421 @@
+# MCP Backward Compatibility Rules
+# Based on docs/scope/BACKWARD-COMPATIBILITY.md
+#
+# This file defines rules for determining whether changes in MCP dumps/manifests
+# are backward compatible or breaking.
+#
+# Schema Version: 1.0.0
+
+version: "1.0.0"
+description: "Default backward compatibility rules for MCP servers"
+
+rules:
+  # ============================================================================
+  # TOOLS - Changes to MCP tools
+  # ============================================================================
+  tools:
+    - changeType: "tool-added"
+      breaking: false
+      severity: "info"
+      message: "Adding a new tool is backward compatible - clients ignore unknown tools"
+      rationale: "Old clients don't know about new tools and will continue using existing ones. New clients can discover via tools/list."
+      
+    - changeType: "tool-removed"
+      breaking: true
+      severity: "critical"
+      message: "Removing a tool breaks clients that depend on it"
+      rationale: "Clients calling the removed tool will receive 'tool not found' errors."
+      migration: "Deprecate the tool first for at least one major version before removing"
+      
+    - changeType: "tool-renamed"
+      breaking: true
+      severity: "critical"
+      message: "Renaming a tool breaks clients calling the old name"
+      rationale: "Client calls to the old name will fail with 'tool not found'"
+      migration: "Support both old and new names during a deprecation period"
+      
+    - changeType: "tool-description-changed"
+      breaking: false
+      severity: "info"
+      message: "Changing tool description is backward compatible"
+      rationale: "Descriptions are informational only and don't affect functionality"
+      
+    # Parameters
+    - changeType: "parameter-added"
+      breaking: false
+      severity: "info"
+      message: "Adding an optional parameter is backward compatible"
+      rationale: "Old clients don't send the new parameter; server uses default value"
+      conditions:
+        - field: "to.required"
+          operator: "equals"
+          value: false
+      
+    - changeType: "parameter-added"
+      breaking: true
+      severity: "critical"
+      message: "Adding a required parameter breaks existing clients"
+      rationale: "Old clients don't send the required parameter and will fail validation"
+      migration: "Add as optional first, then make required in next major version"
+      conditions:
+        - field: "to.required"
+          operator: "equals"
+          value: true
+      
+    - changeType: "parameter-removed"
+      breaking: false
+      severity: "info"
+      message: "Removing an unused parameter is backward compatible"
+      rationale: "Server can ignore extra parameters sent by old clients"
+      note: "Only safe if parameter was truly optional and server ignores unknown parameters"
+      
+    - changeType: "parameter-renamed"
+      breaking: true
+      severity: "critical"
+      message: "Renaming a parameter breaks existing clients"
+      rationale: "Old clients send old parameter name; validation fails"
+      migration: "Support both parameter names during deprecation period"
+      
+    - changeType: "parameter-type-changed"
+      breaking: true
+      severity: "critical"
+      message: "Changing parameter type breaks clients"
+      rationale: "Type mismatch causes validation errors"
+      example: "Changing from number to string means {limit: 10} becomes invalid"
+      
+    - changeType: "parameter-made-required"
+      breaking: true
+      severity: "critical"
+      message: "Making an optional parameter required breaks existing clients"
+      rationale: "Old clients don't send the parameter and will fail validation"
+      migration: "Keep optional, or create new major version"
+      
+    - changeType: "parameter-made-optional"
+      breaking: false
+      severity: "info"
+      message: "Making a required parameter optional is backward compatible"
+      rationale: "More permissive changes are safe - old clients continue sending it"
+      
+    - changeType: "parameter-description-changed"
+      breaking: false
+      severity: "info"
+      message: "Changing parameter description is backward compatible"
+      rationale: "Descriptions are informational only"
+      
+    - changeType: "parameter-enum-values-changed"
+      breaking: false
+      severity: "info"
+      message: "Adding enum values is backward compatible"
+      rationale: "MCP consumers should handle unknown enum values gracefully (Postel's Law: be liberal in what you accept)"
+      note: "Clients ignore unknown enum values and continue using known ones. This follows the open-world assumption."
+      conditions:
+        - field: "changeType"
+          operator: "onlyAdditions"
+          value: true
+      
+    - changeType: "parameter-enum-values-changed"
+      breaking: true
+      severity: "critical"
+      message: "Removing enum values breaks clients that use them"
+      rationale: "Clients sending removed enum values will fail validation"
+      migration: "Deprecate values before removing, or provide migration path in documentation"
+      conditions:
+        - field: "changeType"
+          operator: "hasRemovals"
+          value: true
+      
+  # ============================================================================
+  # PROMPTS - Changes to MCP prompts
+  # ============================================================================
+  prompts:
+    - changeType: "prompt-added"
+      breaking: false
+      severity: "info"
+      message: "Adding a new prompt is backward compatible"
+      rationale: "Clients only use prompts they know about"
+      
+    - changeType: "prompt-removed"
+      breaking: true
+      severity: "major"
+      message: "Removing a prompt breaks clients that depend on it"
+      rationale: "Clients requesting the removed prompt will get errors"
+      migration: "Deprecate first before removing"
+      
+    - changeType: "prompt-renamed"
+      breaking: true
+      severity: "major"
+      message: "Renaming a prompt breaks clients calling the old name"
+      rationale: "Old clients won't find the prompt by the old name"
+      migration: "Support both names during deprecation period"
+      
+    - changeType: "prompt-description-changed"
+      breaking: false
+      severity: "info"
+      message: "Changing prompt description is backward compatible"
+      rationale: "Descriptions are informational"
+      
+    - changeType: "prompt-argument-added"
+      breaking: false
+      severity: "info"
+      message: "Adding an optional prompt argument is backward compatible"
+      rationale: "Old clients don't send the new argument"
+      conditions:
+        - field: "to.required"
+          operator: "equals"
+          value: false
+      
+    - changeType: "prompt-argument-added"
+      breaking: true
+      severity: "major"
+      message: "Adding a required prompt argument breaks existing clients"
+      rationale: "Old clients don't send the required argument"
+      conditions:
+        - field: "to.required"
+          operator: "equals"
+          value: true
+      
+    - changeType: "prompt-argument-removed"
+      breaking: false
+      severity: "info"
+      message: "Removing an optional prompt argument is backward compatible"
+      rationale: "Server can ignore extra arguments"
+      
+    - changeType: "prompt-argument-made-required"
+      breaking: true
+      severity: "major"
+      message: "Making a prompt argument required breaks existing clients"
+      rationale: "Old clients don't send the argument"
+      
+    - changeType: "prompt-argument-made-optional"
+      breaking: false
+      severity: "info"
+      message: "Making a prompt argument optional is backward compatible"
+      rationale: "More permissive - old clients continue sending it"
+      
+  # ============================================================================
+  # RESOURCES - Changes to MCP resources
+  # ============================================================================
+  resources:
+    - changeType: "resource-added"
+      breaking: false
+      severity: "info"
+      message: "Adding a new resource is backward compatible"
+      rationale: "Clients only use resources they know about"
+      
+    - changeType: "resource-removed"
+      breaking: true
+      severity: "major"
+      message: "Removing a resource breaks clients that depend on it"
+      rationale: "Clients requesting the removed resource will get errors"
+      migration: "Deprecate first before removing"
+      
+    - changeType: "resource-renamed"
+      breaking: true
+      severity: "major"
+      message: "Renaming a resource breaks clients using the old name"
+      rationale: "Old clients request old resource name"
+      migration: "Support both names during deprecation"
+      
+    - changeType: "resource-uri-changed"
+      breaking: true
+      severity: "critical"
+      message: "Changing resource URI breaks clients"
+      rationale: "Clients use hardcoded URIs to access resources"
+      example: "Changing card/{id} to card:///{id} breaks all client code"
+      
+    - changeType: "resource-mimetype-changed"
+      breaking: true
+      severity: "major"
+      message: "Changing resource MIME type can break clients"
+      rationale: "Clients may parse content based on declared MIME type"
+      
+    - changeType: "resource-description-changed"
+      breaking: false
+      severity: "info"
+      message: "Changing resource description is backward compatible"
+      rationale: "Descriptions are informational"
+      
+  # ============================================================================
+  # RESOURCE TEMPLATES - Changes to MCP resource templates
+  # ============================================================================
+  resourceTemplates:
+    - changeType: "resourcetemplate-added"
+      breaking: false
+      severity: "info"
+      message: "Adding a new resource template is backward compatible"
+      rationale: "Clients only use templates they know about"
+      
+    - changeType: "resourcetemplate-removed"
+      breaking: true
+      severity: "major"
+      message: "Removing a resource template breaks clients that depend on it"
+      rationale: "Clients using the template will fail"
+      
+    - changeType: "resourcetemplate-uritemplate-changed"
+      breaking: true
+      severity: "critical"
+      message: "Changing resource template URI breaks clients"
+      rationale: "Clients use the URI template pattern to construct requests"
+      
+  # ============================================================================
+  # SERVER INFO - Changes to server metadata and capabilities
+  # ============================================================================
+  serverInfo:
+    - changeType: "session-support-changed"
+      breaking: true
+      severity: "critical"
+      message: "Changing session support model breaks client expectations"
+      rationale: "Clients must handle session management differently (stateless vs stateful)"
+      details: "Both transitions are breaking: sessionless→session-based AND session-based→sessionless"
+      migration: "This requires major version bump and client updates"
+      
+    - changeType: "session-header-name-changed"
+      breaking: false
+      severity: "info"
+      message: "Session header name change reflects protocol version evolution"
+      rationale: "MCP spec evolution changes header names (e.g., Mcp-Session-Id → MCP-Session-Id). Clients should use case-insensitive header matching per HTTP spec (RFC 9110)"
+      details: "Notable but not breaking: HTTP headers are case-insensitive, so proper client implementations continue to work"
+      migration: "Document the header name change in release notes for awareness"
+      
+    # CORS Support
+    - changeType: "cors-browser-ready-changed"
+      breaking: true
+      severity: "major"
+      message: "Browser compatibility status changed - affects browser-based clients"
+      rationale: "When browserReady goes from true to false, browser-based MCP clients (like MCP Inspector) can no longer use this server"
+      details: "This indicates CORS configuration changes that break browser access"
+      migration: "Fix CORS configuration or document that browser access is no longer supported"
+      conditions:
+        - field: "from"
+          operator: "equals"
+          value: true
+        - field: "to"
+          operator: "equals"
+          value: false
+      
+    - changeType: "cors-browser-ready-changed"
+      breaking: false
+      severity: "info"
+      message: "Browser compatibility improved"
+      rationale: "Server now properly supports CORS for browser-based clients"
+      conditions:
+        - field: "from"
+          operator: "equals"
+          value: false
+        - field: "to"
+          operator: "equals"
+          value: true
+      
+    - changeType: "cors-allow-origin-changed"
+      breaking: true
+      severity: "major"
+      message: "CORS Allow-Origin restriction may break existing browser clients"
+      rationale: "Changing from '*' to specific origin or removing CORS support breaks browsers on other origins"
+      details: "Browser-based clients from restricted origins will be blocked"
+      migration: "Ensure all intended client origins are allowed"
+      
+    - changeType: "cors-expose-headers-changed"
+      breaking: true
+      severity: "major"
+      message: "CORS Expose-Headers changed - may break browser clients"
+      rationale: "Removing exposed headers prevents browsers from reading them"
+      details: "Browser-based clients relying on specific headers will fail"
+      
+    - changeType: "cors-preflight-status-changed"
+      breaking: true
+      severity: "major"
+      message: "CORS preflight response changed"
+      rationale: "Changed preflight status indicates CORS configuration issues"
+      details: "Browsers may now block requests if preflight fails"
+      
+    - changeType: "cors-allow-methods-changed"
+      breaking: true
+      severity: "major"
+      message: "CORS allowed methods changed"
+      rationale: "Browser requests using removed methods will be blocked"
+      
+    - changeType: "cors-allow-headers-changed"
+      breaking: true
+      severity: "major"
+      message: "CORS allowed headers changed"
+      rationale: "Browser requests with removed headers will be blocked"
+      
+    - changeType: "cors-detection-added"
+      breaking: false
+      severity: "info"
+      message: "CORS detection added to dump"
+      rationale: "Additional metadata, does not affect compatibility"
+      
+    - changeType: "cors-detection-removed"
+      breaking: false
+      severity: "info"
+      message: "CORS detection removed from dump"
+      rationale: "Metadata removal, does not indicate server changes"
+      
+    # Protocol and Capabilities
+    - changeType: "protocol-version-changed"
+      breaking: true
+      severity: "critical"
+      message: "Changing MCP protocol version is breaking"
+      rationale: "Different protocol versions have different semantics"
+      
+    - changeType: "capability-added"
+      breaking: false
+      severity: "info"
+      message: "Adding server capabilities is backward compatible"
+      rationale: "Old clients ignore unknown capabilities"
+      
+    - changeType: "capability-removed"
+      breaking: true
+      severity: "major"
+      message: "Removing capabilities breaks clients that depend on them"
+      rationale: "Clients expecting certain capabilities will fail"
+      
+    - changeType: "capability-property-changed"
+      breaking: true
+      severity: "major"
+      message: "Disabling notification support (listChanged: true → false) breaks clients expecting notifications"
+      rationale: "Clients relying on listChanged notifications will no longer receive updates when the list changes"
+      details: "Setting listChanged from true to false means the server will not send notifications/list_changed events"
+      migration: "This is a breaking change requiring a major version bump. Clients must poll instead of listening."
+      conditions:
+        - field: "from"
+          operator: "equals"
+          value: true
+        - field: "to"
+          operator: "equals"
+          value: false
+      
+    - changeType: "capability-property-changed"
+      breaking: false
+      severity: "info"
+      message: "Enabling notification support (listChanged: false → true) is backward compatible"
+      rationale: "Clients were not expecting notifications, so adding them is a bonus feature they can opt into"
+      details: "Setting listChanged from false to true means the server will now send notifications/list_changed events"
+      conditions:
+        - field: "from"
+          operator: "equals"
+          value: false
+        - field: "to"
+          operator: "equals"
+          value: true
+      
+    - changeType: "capability-property-changed"
+      breaking: true
+      severity: "major"
+      message: "Changing capability properties affects client-server contract"
+      rationale: "Capability changes alter how clients interact with the server"
+      details: "Changes to capability flags may require clients to adjust their behavior"
+      migration: "Document capability changes clearly and evaluate impact on clients"
+
+# ============================================================================
+# METADATA
+# ============================================================================
+metadata:
+  author: "stsfartz"
+  basedOn: "docs/scope/BACKWARD-COMPATIBILITY.md, docs/build/implementation/29-CORS_SUPPORT.md"
+  lastUpdated: "2026-01-03"
+  mcpProtocolVersion: "2025-06-18"
+  references:
+    - "https://semver.org/spec/v2.0.0.html"
+    - "https://spec.modelcontextprotocol.io/"

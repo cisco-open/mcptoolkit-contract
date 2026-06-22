@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build output
+/build/
+dist/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.jest-cache/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp
+*.tmp
+.tmp/
+temp/
+
+# Test outputs (keep fixtures, ignore generated test files at root)
+test-*.json
+test-*.yaml
+test-*.md
+test-*.js
+*-test.json
+*-test.yaml
+
+# Playground (ignore all contents except README)
+tests/playground/*
+!tests/playground/README.md
+
+# Reference materials used for AI assistance
+ref
+
+# MCP Description specification repo (separate project, referenced only)
+specs/

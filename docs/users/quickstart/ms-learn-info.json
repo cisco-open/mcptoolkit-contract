@@ -1,0 +1,23 @@
+{
+  "reverseDnsName": "com.microsoft.learn/mcp",
+  "description": "MCP server for Microsoft Learn documentation and API reference",
+  "repository": {
+    "url": "https://github.com/microsoft/learn-mcp",
+    "source": "github"
+  },
+  "homepage": "https://learn.microsoft.com",
+  "license": "MIT",
+  "categories": ["Documentation", "Learning"],
+  "keywords": ["microsoft", "learn", "documentation", "api"],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@microsoft/learn-mcp",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "streamable-http",
+        "url": "https://learn.microsoft.com/api/mcp"
+      }
+    }
+  ]
+}

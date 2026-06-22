@@ -1,0 +1,81 @@
+changeType: session-support-changed
+category: serverInfo
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Session Support Changed
+description: |
+  Detects when the session support model changes (stateless ↔ stateful).
+  Both transitions are breaking because they fundamentally alter how clients
+  manage state.
+
+variants:
+  - id: session-support-changed-breaking
+    breaking: true
+    severity: critical
+    message: Changing session support model breaks client expectations
+    rationale: |
+      Clients must handle session management differently for stateless vs
+      stateful servers:
+      
+      **sessionless → session-based**: Clients expecting stateless behavior
+      will not manage sessions properly, potentially losing state.
+      
+      **session-based → sessionless**: Clients expecting session persistence
+      will have broken workflows when state is not maintained.
+      
+      Both transitions require major client code changes.
+    migration: |
+      Session model changes require major version bump:
+      1. Increment MAJOR version
+      2. Document the change extensively
+      3. Provide migration guide for both client types
+      4. Consider providing compatibility layer temporarily
+      5. Update all client SDKs and examples
+    examples:
+      pass:
+        - name: Adding session support
+          description: Making a sessionless server session-based is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444001
+            category: serverInfo
+            changeType: session-support-changed
+            path: serverInfo.capabilities.sessionSupport
+            description: "Session support changed from false to true"
+            from: false
+            to: true
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+        
+        - name: Removing session support
+          description: Making a session-based server sessionless is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444002
+            category: serverInfo
+            changeType: session-support-changed
+            path: serverInfo.capabilities.sessionSupport
+            description: "Session support changed from true to false"
+            from: true
+            to: false
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - protocol-version-changed
+  - capability-property-changed
+
+references:
+  - title: MCP Session Management
+    url: https://spec.modelcontextprotocol.io/specification/architecture/
+
+tags:
+  - server-info
+  - sessions
+  - state-management
+  - breaking-changes
+  - critical

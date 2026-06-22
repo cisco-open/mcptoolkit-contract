@@ -1,0 +1,167 @@
+changeType: capability-property-changed
+category: serverInfo
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Capability Property Changed
+description: |
+  Detects when properties of server capabilities change. Impact varies:
+  enabling features is compatible, but disabling them can be breaking.
+
+variants:
+  - id: capability-listchanged-disabled
+    breaking: true
+    severity: major
+    message: Disabling notification support (listChanged true → false) breaks clients expecting notifications
+    rationale: |
+      Clients relying on listChanged notifications will no longer receive
+      updates when the list changes. Setting listChanged from true to false
+      means the server will not send notifications/list_changed events.
+      
+      This breaks workflows that depend on real-time updates.
+    migration: |
+      Disabling listChanged requires major version bump:
+      1. Increment MAJOR version
+      2. Document the change clearly
+      3. Explain that clients must poll instead of listening
+      4. Provide polling examples and best practices
+    conditions:
+      - field: from
+        operator: equals
+        value: true
+      - field: to
+        operator: equals
+        value: false
+    examples:
+      pass:
+        - name: Notifications disabled
+          description: Disabling listChanged notifications is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444006
+            category: serverInfo
+            changeType: capability-property-changed
+            path: serverInfo.capabilities.tools.listChanged
+            description: "Tools listChanged disabled (true → false)"
+            from: true
+            to: false
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail:
+        - name: Notifications enabled should not match
+          description: Enabling notifications matches different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444007
+            category: serverInfo
+            changeType: capability-property-changed
+            path: serverInfo.capabilities.tools.listChanged
+            description: "Tools listChanged enabled (false → true)"
+            from: false
+            to: true
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: false
+
+  - id: capability-listchanged-enabled
+    breaking: false
+    severity: info
+    message: Enabling notification support (listChanged false → true) is backward compatible
+    rationale: |
+      Clients were not expecting notifications, so adding them is a bonus
+      feature they can opt into. Setting listChanged from false to true
+      means the server will now send notifications/list_changed events.
+      
+      Old clients ignore the notifications; new clients can use them.
+    migration: null
+    conditions:
+      - field: from
+        operator: equals
+        value: false
+      - field: to
+        operator: equals
+        value: true
+    examples:
+      pass:
+        - name: Notifications enabled
+          description: Enabling listChanged notifications is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444008
+            category: serverInfo
+            changeType: capability-property-changed
+            path: serverInfo.capabilities.tools.listChanged
+            description: "Tools listChanged enabled (false → true)"
+            from: false
+            to: true
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail:
+        - name: Notifications disabled should not match
+          description: Disabling notifications matches different variant
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444009
+            category: serverInfo
+            changeType: capability-property-changed
+            path: serverInfo.capabilities.tools.listChanged
+            description: "Tools listChanged disabled (true → false)"
+            from: true
+            to: false
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: false
+
+  - id: capability-property-changed-general
+    breaking: true
+    severity: major
+    message: Changing capability properties affects client-server contract
+    rationale: |
+      Capability changes alter how clients interact with the server.
+      Changes to capability flags may require clients to adjust their behavior.
+      
+      This is a catch-all for other capability property changes not covered
+      by more specific rules.
+    migration: |
+      Capability property changes should be carefully evaluated:
+      1. Document capability changes clearly
+      2. Evaluate impact on clients
+      3. Consider major version bump if disruptive
+      4. Provide migration guide
+    examples:
+      pass:
+        - name: Capability flag changed
+          description: Changing other capability properties
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444010
+            category: serverInfo
+            changeType: capability-property-changed
+            path: serverInfo.capabilities.prompts.enabled
+            description: "Prompts capability enabled changed"
+            from: true
+            to: false
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - capability-added
+  - capability-removed
+  - session-support-changed
+
+references:
+  - title: MCP Capabilities
+    url: https://spec.modelcontextprotocol.io/specification/server/capabilities/
+  - title: MCP Notifications
+    url: https://spec.modelcontextprotocol.io/specification/server/notifications/
+
+tags:
+  - server-info
+  - capabilities
+  - notifications
+  - list-changed
+  - conditional-rules

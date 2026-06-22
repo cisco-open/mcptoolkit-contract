@@ -1,0 +1,91 @@
+## Version {{metadata.new.version}} - {{formatDate}}
+
+{{#if metadata.old.name}}{{#if (ne metadata.old.name metadata.new.name)}}**Note**: Server renamed from "{{metadata.old.name}}" to "{{metadata.new.name}}"
+
+{{/if}}{{/if}}{{#if metadata.old.protocolVersion}}{{#if (ne metadata.old.protocolVersion metadata.new.protocolVersion)}}**MCP Protocol**: Upgraded from {{metadata.old.protocolVersion}} to {{metadata.new.protocolVersion}}
+
+{{/if}}{{/if}}{{#if metadata.new.capabilities}}{{#if metadata.old.capabilities}}{{#each metadata.new.capabilities}}{{#unless (contains ../metadata.old.capabilities this)}}**New Capability**: {{this}} support added
+{{/unless}}{{/each}}{{/if}}{{/if}}{{! Release summary sentence }}
+{{#if (gt categorization.breaking.length 0)}}{{semverBump categorization}} release with {{categorization.breaking.length}} breaking {{#if (eq categorization.breaking.length 1)}}change{{else}}changes{{/if}}{{#if (gt categorization.new.length 0)}}, {{categorization.new.length}} new {{#if (eq categorization.new.length 1)}}feature{{else}}features{{/if}}{{/if}}{{#if (gt categorization.updates.length 0)}}, and {{categorization.updates.length}} {{#if (eq categorization.updates.length 1)}}update{{else}}updates{{/if}}{{/if}}.{{else if (gt categorization.new.length 0)}}{{semverBump categorization}} release with {{categorization.new.length}} new {{#if (eq categorization.new.length 1)}}feature{{else}}features{{/if}}{{#if (gt categorization.updates.length 0)}} and {{categorization.updates.length}} {{#if (eq categorization.updates.length 1)}}update{{else}}updates{{/if}}{{/if}}.{{else}}{{semverBump categorization}} release with {{summary.totalChanges}} {{#if (eq summary.totalChanges 1)}}change{{else}}changes{{/if}}.{{/if}}
+
+{{#unless (and options.omitZeros (eq categorization.breaking.length 0))}}- **Breaking Changes**: {{categorization.breaking.length}}
+{{/unless}}{{#unless (and options.omitZeros (eq categorization.new.length 0))}}- **New**: {{categorization.new.length}} features added
+{{/unless}}{{#unless (and options.omitZeros (eq categorization.updates.length 0))}}- **Updates**: {{categorization.updates.length}} features changed
+{{/unless}}{{#unless (and options.omitZeros (eq categorization.deleted.length 0))}}- **Deleted**: {{categorization.deleted.length}} features removed
+{{/unless}}
+
+{{#if (gt categorization.breaking.length 0)}}
+This release focuses on backward-incompatible changes and requires migration planning.
+{{else if (gt categorization.new.length 0)}}
+This release focuses on new capabilities and enhancements.
+{{else}}
+This release focuses on maintenance and improvements.
+{{/if}}
+
+### Summary
+{{#each grouped}}
+{{#if (gt totalCount 0)}}
+
+#### {{label}} ({{totalCount}})
+{{#if (gt breaking.length 0)}}
+
+**Breaking Changes:**
+{{#each breaking}}
+- [{{singularLabel ../label}} `{{details.capabilityName}}`](#{{details.capabilityName}}): {{details.whatBrief}}
+{{/each}}
+{{/if}}
+{{#if (gt new.length 0)}}
+
+**New:**
+{{#each new}}
+- [{{singularLabel ../label}} `{{details.capabilityName}}`](#{{details.capabilityName}}): {{details.whatBrief}}
+{{/each}}
+{{/if}}
+{{#if (gt updates.length 0)}}
+
+**Updates:**
+{{#each updates}}
+- [{{singularLabel ../label}} `{{details.capabilityName}}`](#{{details.capabilityName}}): {{details.whatBrief}}
+{{/each}}
+{{/if}}
+{{#if (gt deleted.length 0)}}
+
+**Deleted:**
+{{#each deleted}}
+- [{{singularLabel ../label}} `{{details.capabilityName}}`](#{{details.capabilityName}}): {{details.whatBrief}}
+{{/each}}
+{{/if}}
+{{/if}}
+{{/each}}
+
+---
+
+### Detailed Changes
+{{#each grouped}}
+{{#if (gt totalCount 0)}}
+
+#### {{label}}
+{{#each allByCapability}}
+
+##### `{{name}}`
+{{#each changes}}
+
+- {{details.whatBrief}}
+{{#if ../../../options.showDiffReasoning}}
+{{#if impact}}  - **Impact**: {{impactBadge impact.level}} {{impact.level}} - {{impact.affectedUsers}}{{/if}}
+{{#if details.why}}  - **Reason**: {{details.why}}{{/if}}
+{{/if}}
+{{#if details.beforeSnippet}}
+
+  | Before | After |
+  |--------|-------|
+  | {{{tableBr details.beforeSnippet}}} | {{{tableBr details.afterSnippet}}} |
+{{else}}
+{{#if details.before}}  - **Before**: {{details.before}}{{/if}}
+{{#if details.after}}  - **After**: {{details.after}}{{/if}}
+{{/if}}
+{{#if migration}}  - **Migration**: {{migration}}{{/if}}
+{{/each}}
+{{/each}}
+{{/if}}
+{{/each}}

@@ -1,0 +1,57 @@
+changeType: parameter-description-changed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Description Changed
+description: |
+  Detects when a parameter's description text changes. Description changes are
+  compatible because they are purely informational and don't affect validation
+  or behavior.
+
+variants:
+  - id: parameter-description-changed-compatible
+    breaking: false
+    severity: info
+    message: Changing parameter description is backward compatible
+    rationale: |
+      Descriptions are informational only and don't affect the parameter's
+      type, validation rules, or behavior.
+      
+      Improving descriptions (fixing typos, adding examples, clarifying usage)
+      is encouraged and safe to do at any time.
+    migration: null
+    examples:
+      pass:
+        - name: Description improved
+          description: Improving parameter description is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440015
+            category: tools
+            changeType: parameter-description-changed
+            path: tools[get_weather].parameters.properties.location.description
+            description: "Parameter 'location' description changed"
+            from: City name
+            to: City name (e.g., "San Francisco" or "London, UK")
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-description-changed
+  - prompt-description-changed
+  - resource-description-changed
+
+references:
+  - title: API Documentation Best Practices
+    url: https://swagger.io/blog/api-documentation/api-documentation-best-practices/
+  - title: JSON Schema Annotations
+    url: https://json-schema.org/understanding-json-schema/reference/generic.html
+
+tags:
+  - parameters
+  - documentation
+  - backward-compatible
+  - descriptions

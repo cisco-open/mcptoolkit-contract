@@ -1,0 +1,48 @@
+changeType: resource-added
+category: resources
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Added
+description: |
+  Detects when a new resource is added to an MCP server. Adding resources is
+  backward compatible because clients discover and use only known resources.
+
+variants:
+  - id: resource-added-compatible
+    breaking: false
+    severity: info
+    message: Adding a new resource is backward compatible
+    rationale: |
+      Clients only use resources they know about. Old clients ignore new resources
+      and continue using existing ones. New clients can discover and use the new
+      resource via resources/list.
+    migration: null
+    examples:
+      pass:
+        - name: New resource added
+          description: Adding a new resource is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442001
+            category: resources
+            changeType: resource-added
+            path: resources[config://app/settings]
+            description: "Resource 'config://app/settings' was added"
+            to:
+              uri: config://app/settings
+              name: Application Settings
+              mimeType: application/json
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resource-removed
+  - resourcetemplate-added
+
+tags:
+  - resources
+  - additions
+  - backward-compatible

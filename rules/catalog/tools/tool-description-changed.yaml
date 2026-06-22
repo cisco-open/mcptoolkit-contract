@@ -1,0 +1,56 @@
+changeType: tool-description-changed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Tool Description Changed
+description: |
+  Detects when a tool's description text changes. Description changes are
+  compatible because they are purely informational and don't affect the
+  tool's behavior or API contract.
+
+variants:
+  - id: tool-description-changed-compatible
+    breaking: false
+    severity: info
+    message: Changing tool description is backward compatible
+    rationale: |
+      Descriptions are informational only and don't affect functionality.
+      They help users understand what the tool does but aren't part of the
+      functional contract.
+      
+      Improving descriptions (fixing typos, adding clarity, updating examples)
+      is encouraged and safe to do at any time.
+    migration: null
+    examples:
+      pass:
+        - name: Description improved
+          description: Improving tool description text is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440004
+            category: tools
+            changeType: tool-description-changed
+            path: tools[get_weather].description
+            description: "Tool 'get_weather' description changed"
+            from: Get weather data
+            to: Get current weather data for a specific location
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-description-changed
+  - prompt-description-changed
+  - resource-description-changed
+
+references:
+  - title: API Documentation Best Practices
+    url: https://swagger.io/blog/api-documentation/api-documentation-best-practices/
+
+tags:
+  - tools
+  - documentation
+  - backward-compatible
+  - descriptions

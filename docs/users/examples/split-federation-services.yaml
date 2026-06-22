@@ -1,0 +1,60 @@
+# Example Split Configuration for Federation MCP Server
+# This configuration splits a federation server dump by backend service
+
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+
+info:
+  version: "1.0.0"
+  name: "Federation Services Split"
+  description: "Split federation MCP server dump into separate service dumps"
+  created: "2025-12-15"
+  author: "Platform Team"
+
+# Define categories for splitting
+categories:
+  # Platform Identity Service
+  - name: "platform-identity"
+    description: "Platform Identity and Organization Management APIs"
+    outputFile: "dump-platform-identity"
+    
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^platform-identity_"
+          description: "All tools prefixed with platform-identity_"
+      
+      # Future: When prompts are added
+      prompts:
+        - type: "name-pattern"
+          pattern: "^platform-identity_"
+      
+      # Future: When resources are added
+      resources:
+        - type: "name-pattern"
+          pattern: "^platform-identity://"
+
+  # Secure Access Networks Service
+  - name: "secure-access-networks"
+    description: "Secure Access Networks (SD-WAN) Configuration and Management APIs"
+    outputFile: "dump-secure-access-networks"
+    
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^secure-access-networks_"
+          description: "All tools prefixed with secure-access-networks_"
+      
+      prompts:
+        - type: "name-pattern"
+          pattern: "^secure-access-networks_"
+      
+      resources:
+        - type: "name-pattern"
+          pattern: "^secure-access-networks://"
+
+# Handle tools that don't match any category
+unmatchedItems:
+  action: "warn"  # Options: ignore, warn, error, separate-file
+  # Uncomment to save unmatched items to a separate file:
+  # action: "separate-file"
+  # outputFile: "dump-unmatched"

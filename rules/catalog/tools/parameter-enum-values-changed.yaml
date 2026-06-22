@@ -1,0 +1,237 @@
+changeType: parameter-enum-values-changed
+category: tools
+version: 1.0.0
+introduced: 0.8.1
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Enum Values Changed
+description: |
+  Detects when a tool parameter's enum constraint values are modified. This can be:
+  - Adding new enum values (compatible - clients ignore unknown values)
+  - Removing enum values (breaking - clients may send now-invalid values)
+  - Both adding and removing values (breaking)
+  
+  This rule implements Postel's Law: "Be liberal in what you accept". Clients following
+  the open-world assumption should gracefully handle unknown enum values, making additions
+  backward compatible. Removals break existing clients that may send the removed values.
+
+variants:
+  - id: enum-additions-only
+    breaking: false
+    severity: info
+    message: Adding enum values is backward compatible
+    rationale: |
+      Per Postel's Law and open-world assumption, well-designed MCP clients should:
+      1. Only send enum values they understand
+      2. Gracefully handle unknown values in responses
+      3. Discover capabilities at runtime
+      
+      Adding new enum values allows new clients to use enhanced features while
+      old clients continue using the subset they understand. This is the standard
+      practice in JSON Schema, OpenAPI, GraphQL, and other API specifications.
+    migration: null
+    conditions:
+      - field: changeType
+        operator: onlyAdditions
+        value: true
+    examples:
+      pass:
+        - name: Simple enum addition
+          description: Adding a new value to an existing enum is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440000
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit'] → ['celsius', 'fahrenheit', 'kelvin']"
+            from: ['celsius', 'fahrenheit']
+            to: ['celsius', 'fahrenheit', 'kelvin']
+          expectedResult:
+            breaking: false
+            severity: info
+            ruleMessage: Adding enum values is backward compatible
+            matchesThisVariant: true
+
+        - name: Multiple enum additions
+          description: Adding multiple values at once is still compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440001
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[search].parameters.properties.sort.enum
+            description: "Parameter 'sort' enum values changed: ['asc', 'desc'] → ['asc', 'desc', 'relevance', 'date']"
+            from: ['asc', 'desc']
+            to: ['asc', 'desc', 'relevance', 'date']
+          expectedResult:
+            breaking: false
+            severity: info
+            ruleMessage: Adding enum values is backward compatible
+            matchesThisVariant: true
+
+        - name: Empty to single value
+          description: Adding first value to previously empty enum
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440002
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[configure].parameters.properties.mode.enum
+            description: "Parameter 'mode' enum values changed: [] → ['auto']"
+            from: []
+            to: ['auto']
+          expectedResult:
+            breaking: false
+            severity: info
+            ruleMessage: Adding enum values is backward compatible
+            matchesThisVariant: true
+
+      fail:
+        - name: Enum removal should not match
+          description: This variant should NOT match when values are removed
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440100
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit', 'kelvin'] → ['celsius', 'fahrenheit']"
+            from: ['celsius', 'fahrenheit', 'kelvin']
+            to: ['celsius', 'fahrenheit']
+          expectedResult:
+            breaking: true
+            severity: critical
+            ruleMessage: Removing enum values breaks clients
+            matchesThisVariant: false
+
+        - name: Mixed additions and removals should not match
+          description: This variant should NOT match when both adding and removing values
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440101
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[sort].parameters.properties.order.enum
+            description: "Parameter 'order' enum values changed: ['asc', 'desc'] → ['ascending', 'descending']"
+            from: ['asc', 'desc']
+            to: ['ascending', 'descending']
+          expectedResult:
+            breaking: true
+            severity: critical
+            ruleMessage: Removing enum values breaks clients
+            matchesThisVariant: false
+
+  - id: enum-removals-or-changes
+    breaking: true
+    severity: critical
+    message: Removing enum values breaks clients
+    rationale: |
+      When enum values are removed, existing clients may still attempt to send those
+      values, causing validation failures. This breaks backward compatibility because:
+      1. Clients cache the list of valid values from earlier sessions
+      2. User scripts/configurations may reference removed values
+      3. No runtime mechanism exists to notify clients of removals
+      
+      This applies to:
+      - Pure removals (removing one or more values)
+      - Replacements (removing old values while adding new ones)
+      
+      Servers must maintain deprecated enum values indefinitely or increment major version.
+    migration: |
+      To remove enum values:
+      1. Increment MAJOR version (breaking change)
+      2. Document removed values in changelog
+      3. Consider deprecation warnings before removal
+      4. Provide migration path in release notes
+      
+      Alternative approaches:
+      - Keep deprecated values indefinitely, ignore them server-side
+      - Map old values to new equivalents transparently
+      - Use MINOR version to add new values, never remove old ones
+    conditions:
+      - field: changeType
+        operator: hasRemovals
+        value: true
+    examples:
+      pass:
+        - name: Simple enum removal
+          description: Removing a value from enum is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440200
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit', 'kelvin'] → ['celsius', 'fahrenheit']"
+            from: ['celsius', 'fahrenheit', 'kelvin']
+            to: ['celsius', 'fahrenheit']
+          expectedResult:
+            breaking: true
+            severity: critical
+            ruleMessage: Removing enum values breaks clients
+            matchesThisVariant: true
+
+        - name: Complete enum replacement
+          description: Replacing all enum values is breaking (both adds and removes)
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440201
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[sort].parameters.properties.order.enum
+            description: "Parameter 'order' enum values changed: ['asc', 'desc'] → ['ascending', 'descending']"
+            from: ['asc', 'desc']
+            to: ['ascending', 'descending']
+          expectedResult:
+            breaking: true
+            severity: critical
+            ruleMessage: Removing enum values breaks clients
+            matchesThisVariant: true
+
+        - name: Partial removal with additions
+          description: Removing some values while adding others is still breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440202
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[filter].parameters.properties.type.enum
+            description: "Parameter 'type' enum values changed: ['all', 'active', 'archived'] → ['active', 'inactive', 'deleted']"
+            from: ['all', 'active', 'archived']
+            to: ['active', 'inactive', 'deleted']
+          expectedResult:
+            breaking: true
+            severity: critical
+            ruleMessage: Removing enum values breaks clients
+            matchesThisVariant: true
+
+      fail:
+        - name: Pure additions should not match
+          description: This variant should NOT match when only adding values
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440300
+            category: tools
+            changeType: parameter-enum-values-changed
+            path: tools[get_weather].parameters.properties.units.enum
+            description: "Parameter 'units' enum values changed: ['celsius', 'fahrenheit'] → ['celsius', 'fahrenheit', 'kelvin']"
+            from: ['celsius', 'fahrenheit']
+            to: ['celsius', 'fahrenheit', 'kelvin']
+          expectedResult:
+            breaking: false
+            severity: info
+            ruleMessage: Adding enum values is backward compatible
+            matchesThisVariant: false
+
+relatedRules:
+  - parameter-type-changed
+  - parameter-required-changed
+  - parameter-removed
+
+references:
+  - title: MCP Compatibility Guidelines
+    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+  - title: "Postel's Law (Robustness Principle)"
+    url: https://en.wikipedia.org/wiki/Robustness_principle
+  - title: JSON Schema Validation Specification
+    url: https://json-schema.org/draft/2020-12/json-schema-validation.html#name-enum
+  - title: OpenAPI Enum Best Practices
+    url: https://swagger.io/docs/specification/data-models/enums/
+
+tags:
+  - parameters
+  - enums
+  - backward-compatibility
+  - postel-law
+  - open-world

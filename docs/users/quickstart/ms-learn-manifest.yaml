@@ -1,0 +1,28 @@
+name: com.microsoft.learn/mcp
+version: 1.0.0
+description: MCP server for Microsoft Learn documentation and API reference
+repository:
+  url: https://github.com/microsoft/learn-mcp
+  source: github
+packages:
+  - registryType: npm
+    identifier: "@microsoft/learn-mcp"
+    runtimeHint: npx
+    transport:
+      type: streamable-http
+      url: https://learn.microsoft.com/api/mcp
+_meta:
+  io.modelcontextprotocol.registry/publisher-provided:
+    tool: mcpcontract
+    version: 0.7.2
+    discoveredCapabilities:
+      toolsCount: 3
+      resourcesCount: 0
+      resourceTemplatesCount: 0
+      promptsCount: 0
+      capabilitiesDumpedAt: 2025-11-20T07:12:45.155Z
+      mcpProtocolVersion: 2025-06-18
+      toolNames:
+        - microsoft_docs_search
+        - microsoft_code_sample_search
+        - microsoft_docs_fetch

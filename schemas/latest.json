@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Maps schema types to their latest versions - updated on each schema version bump",
+  "mcp-description": "0.7.0",
+  "dump": "0.3.8",
+  "manifest-info": "1.0.0",
+  "diff": "1.0.0",
+  "diff-breaking": "2.0.0",
+  "split-config": "1.0.0",
+  "server": "2025-12-11"
+}

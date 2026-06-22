@@ -1,0 +1,15 @@
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+
+info:
+  version: "1.0.0"
+  name: "Invalid regex test"
+  description: "Config with invalid regex pattern"
+
+categories:
+  - name: "test-category"
+    outputFile: "dump-test"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^(invalid["
+          description: "This pattern has unclosed bracket"

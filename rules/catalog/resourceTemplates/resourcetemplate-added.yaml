@@ -1,0 +1,48 @@
+changeType: resourcetemplate-added
+category: resourceTemplates
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Template Added
+description: |
+  Detects when a new resource template is added to an MCP server. Adding
+  templates is backward compatible because clients discover and use only
+  known templates.
+
+variants:
+  - id: resourcetemplate-added-compatible
+    breaking: false
+    severity: info
+    message: Adding a new resource template is backward compatible
+    rationale: |
+      Clients only use templates they know about. Old clients ignore new
+      templates and continue using existing ones. New clients can discover
+      and use the new template.
+    migration: null
+    examples:
+      pass:
+        - name: New template added
+          description: Adding a new resource template is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655443001
+            category: resourceTemplates
+            changeType: resourcetemplate-added
+            path: resourceTemplates[file://logs/{date}.log]
+            description: "Resource template 'file://logs/{date}.log' was added"
+            to:
+              uriTemplate: file://logs/{date}.log
+              name: Daily Log Files
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resourcetemplate-removed
+  - resource-added
+
+tags:
+  - resource-templates
+  - additions
+  - backward-compatible

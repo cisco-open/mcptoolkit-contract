@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{#if info.title}}{{info.title}}{{else}}{{info.name}}{{/if}}{{#if info.version}} v{{info.version}}{{/if}}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #111827;
+      background: #f9fafb;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 0.875em;
+      background: #f3f4f6;
+      padding: 0.125em 0.375em;
+      border-radius: 0.25rem;
+    }
+    pre {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* Info card */
+    .info-card .title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .info-card h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    .info-card .description { margin-top: 0.75rem; color: #374151; }
+    .info-card .meta { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.875rem; color: #6b7280; }
+    .info-card .meta-item { display: flex; align-items: center; gap: 0.25rem; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      vertical-align: middle;
+    }
+    .badge.version { background: #dbeafe; color: #1e40af; }
+    .badge.protocol { background: #e0e7ff; color: #3730a3; }
+    .badge.transport { background: #fef3c7; color: #92400e; }
+    .badge.tool { background: #d1fae5; color: #065f46; }
+    .badge.prompt { background: #ede9fe; color: #5b21b6; }
+    .badge.resource { background: #fce7f3; color: #9d174d; }
+    .badge.template { background: #ffedd5; color: #9a3412; }
+    .badge.deprecated { background: #fef2f2; color: #991b1b; font-style: italic; }
+    .badge.required { background: #fee2e2; color: #991b1b; font-size: 0.625rem; }
+    .badge.tag { background: #f3f4f6; color: #374151; font-size: 0.625rem; font-weight: 500; text-transform: none; }
+    .badge.cors-ready { background: #d1fae5; color: #065f46; }
+    .badge.cors-fail { background: #fef2f2; color: #991b1b; }
+    .badge.security { background: #fef9c3; color: #854d0e; }
+    .badge.hint { background: #f3f4f6; color: #6b7280; font-weight: 500; text-transform: none; }
+
+    /* Section headers */
+    h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #111827;
+      display: inline;
+    }
+    .section-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .count { font-size: 0.8125rem; color: #9ca3af; font-weight: 400; }
+    .section-icon { font-size: 1.125rem; }
+
+    /* Details / collapsible */
+    details { border: none; }
+    details > summary {
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before {
+      content: '▶';
+      display: inline-block;
+      font-size: 0.625rem;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+      color: #9ca3af;
+    }
+    details[open] > summary::before { transform: rotate(90deg); }
+
+    /* Item cards (tools, prompts, etc.) */
+    .item-detail {
+      border: 1px solid #f3f4f6;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+    .item-detail > summary {
+      padding: 0.625rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background: #fafafa;
+    }
+    .item-detail > summary:hover { background: #f3f4f6; }
+    .item-detail > summary .name { font-weight: 600; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; font-size: 0.875rem; }
+    .item-detail > summary .title-text { color: #6b7280; font-size: 0.875rem; }
+    .item-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid #f3f4f6; }
+    .item-body .description { color: #374151; font-size: 0.875rem; margin-bottom: 0.75rem; }
+
+    /* Annotations / hints row */
+    .hints { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
+
+    /* Tags row */
+    .tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+
+    /* Schema tables */
+    .schema-section { margin-top: 0.5rem; }
+    .schema-toggle {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #6b7280;
+      padding: 0.25rem 0;
+    }
+    .schema-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      margin-top: 0.375rem;
+    }
+    .schema-table th {
+      text-align: left;
+      color: #9ca3af;
+      font-weight: 500;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .schema-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: top;
+    }
+    .schema-table td:first-child { font-weight: 500; }
+    .type-pill {
+      display: inline-block;
+      font-size: 0.6875rem;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 0.25rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    }
+    .schema-json { margin-top: 0.5rem; }
+
+    /* Transport items */
+    .transport-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f9fafb;
+      font-size: 0.875rem;
+    }
+    .transport-item:last-child { border-bottom: none; }
+    .transport-url { color: #6b7280; word-break: break-all; }
+
+    /* URI display */
+    .uri { color: #6b7280; font-size: 0.8125rem; word-break: break-all; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+
+    /* Resource / prompt argument list */
+    .arg-list { margin: 0; padding: 0; list-style: none; }
+    .arg-list li {
+      padding: 0.25rem 0;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .arg-list li:last-child { border-bottom: none; }
+    .arg-name { font-weight: 600; font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body { padding: 1rem 0.5rem; }
+      .card { padding: 1rem; }
+      .info-card h1 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Info Card -->
+    <div class="card info-card">
+      <div class="title-row">
+        <h1>{{#if info.title}}{{info.title}}{{else}}{{info.name}}{{/if}}</h1>
+        {{#if info.version}}<span class="badge version">v{{info.version}}</span>{{/if}}
+        {{#if info.protocolVersion}}<span class="badge protocol">MCP {{info.protocolVersion}}</span>{{/if}}
+        {{#if showDumpInformation}}
+          {{#if _meta.dump.cors}}
+            {{#if _meta.dump.cors.browserReady}}
+              <span class="badge cors-ready">browser-ready</span>
+            {{else}}
+              {{#if (eq _meta.dump.cors.browserReady false)}}
+                <span class="badge cors-fail">not browser-ready</span>
+              {{/if}}
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      </div>
+      {{#if info.description}}<div class="description">{{{markdown info.description}}}</div>{{/if}}
+      <div class="meta">
+        {{#if info.name}}<span class="meta-item"><strong>Name:</strong>&nbsp;{{info.name}}</span>{{/if}}
+        {{#if info.websiteUrl}}<span class="meta-item"><a href="{{info.websiteUrl}}">{{info.websiteUrl}}</a></span>{{/if}}
+        {{#if info.id}}<span class="meta-item"><strong>ID:</strong>&nbsp;<code>{{info.id}}</code></span>{{/if}}
+        {{#if info.license}}<span class="meta-item"><strong>License:</strong>&nbsp;{{info.license.name}}</span>{{/if}}
+        {{#if info.contact.name}}<span class="meta-item"><strong>Contact:</strong>&nbsp;{{info.contact.name}}</span>{{/if}}
+      </div>
+    </div>
+
+    <!-- Transports -->
+    {{#if transports}}
+    <div class="card">
+      <div class="section-header">
+        <span class="section-icon">🔌</span>
+        <h2>Transports</h2>
+        <span class="count">({{count transports}})</span>
+      </div>
+      {{#each transports}}
+      <div class="transport-item">
+        <span class="badge transport">{{type}}</span>
+        {{#if url}}<span class="transport-url">{{url}}</span>{{/if}}
+        {{#if command}}<code>{{command}}{{#if args}} {{join args " "}}{{/if}}</code>{{/if}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    <!-- Security -->
+    {{#if security}}
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">🔒</span>
+            <h2>Security</h2>
+            <span class="count">({{count security}})</span>
+          </div>
+        </summary>
+        {{#each security}}
+        <div class="item-detail" style="margin-top: 0.5rem;">
+          <div style="padding: 0.625rem 0.75rem;">
+            <span class="badge security">{{type}}</span>
+            {{#if description}}<span style="font-size:0.875rem; color:#374151;">{{description}}</span>{{/if}}
+          </div>
+        </div>
+        {{/each}}
+      </details>
+    </div>
+    {{/if}}
+
+    <!-- Tools -->
+    {{#if tools}}
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">🔧</span>
+            <h2>Tools</h2>
+            <span class="count">({{count tools}})</span>
+          </div>
+        </summary>
+        {{#each tools}}
+        <details class="item-detail"{{#unless @index}} open{{/unless}}>
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">{{name}}</span>
+            {{#if title}}<span class="title-text">— {{title}}</span>{{/if}}
+            {{#if deprecated}}<span class="badge deprecated">deprecated</span>{{/if}}
+          </summary>
+          <div class="item-body">
+            {{#if tags}}
+            <div class="tags">
+              {{#each tags}}<span class="badge tag">{{this}}</span>{{/each}}
+            </div>
+            {{/if}}
+            {{#if description}}<div class="description">{{{markdown description}}}</div>{{/if}}
+            {{#if annotations}}
+            <div class="hints">
+              {{#if annotations.readOnlyHint}}<span class="badge hint">read-only</span>{{/if}}
+              {{#if annotations.destructiveHint}}<span class="badge hint" style="background:#fef2f2;color:#991b1b;">destructive</span>{{/if}}
+              {{#if annotations.idempotentHint}}<span class="badge hint">idempotent</span>{{/if}}
+              {{#if annotations.openWorldHint}}<span class="badge hint">open-world</span>{{/if}}
+            </div>
+            {{/if}}
+            {{#if inputSchema.properties}}
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                  {{#each inputSchema.properties}}
+                    <tr>
+                      <td><code>{{@key}}</code></td>
+                      <td>
+                        {{#if type}}<span class="type-pill">{{type}}</span>{{/if}}
+                        {{#if (inlineEnum enum)}} {{inlineEnum enum}}{{/if}}
+                      </td>
+                      <td>{{#if (contains ../inputSchema.required @key)}}<span class="badge required">required</span>{{/if}}</td>
+                      <td>
+                        {{#if description}}{{description}}{{/if}}
+                        {{#if default}} <em>Default: {{default}}</em>{{/if}}
+                        {{#if (eq type "number")}}{{#if (formatNumberConstraints this)}} <em>{{formatNumberConstraints this}}</em>{{/if}}{{/if}}
+                        {{#if (eq type "integer")}}{{#if (formatNumberConstraints this)}} <em>{{formatNumberConstraints this}}</em>{{/if}}{{/if}}
+                        {{#if (eq type "string")}}{{#if (formatStringConstraints this)}} <em>{{formatStringConstraints this}}</em>{{/if}}{{/if}}
+                        {{#if (eq type "array")}}{{#if (formatArrayConstraints this)}} <em>{{formatArrayConstraints this}}</em>{{/if}}{{/if}}
+                      </td>
+                    </tr>
+                  {{/each}}
+                  </tbody>
+                </table>
+              </details>
+            </div>
+            {{/if}}
+            {{#if outputSchema}}
+            <div class="schema-section">
+              <details>
+                <summary class="schema-toggle">Output Schema</summary>
+                {{#if outputSchema.properties}}
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                  {{#each outputSchema.properties}}
+                    <tr>
+                      <td><code>{{@key}}</code></td>
+                      <td>{{#if type}}<span class="type-pill">{{type}}</span>{{/if}}</td>
+                      <td>{{#if description}}{{description}}{{/if}}</td>
+                    </tr>
+                  {{/each}}
+                  </tbody>
+                </table>
+                {{else}}
+                <div class="schema-json">
+                  <pre><code>{{{json outputSchema 2}}}</code></pre>
+                </div>
+                {{/if}}
+              </details>
+            </div>
+            {{/if}}
+          </div>
+        </details>
+        {{/each}}
+      </details>
+    </div>
+    {{/if}}
+
+    <!-- Prompts -->
+    {{#if prompts}}
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">💬</span>
+            <h2>Prompts</h2>
+            <span class="count">({{count prompts}})</span>
+          </div>
+        </summary>
+        {{#each prompts}}
+        <details class="item-detail"{{#unless @index}} open{{/unless}}>
+          <summary>
+            <span class="badge prompt">prompt</span>
+            <span class="name">{{name}}</span>
+            {{#if title}}<span class="title-text">— {{title}}</span>{{/if}}
+            {{#if deprecated}}<span class="badge deprecated">deprecated</span>{{/if}}
+          </summary>
+          <div class="item-body">
+            {{#if tags}}
+            <div class="tags">
+              {{#each tags}}<span class="badge tag">{{this}}</span>{{/each}}
+            </div>
+            {{/if}}
+            {{#if description}}<div class="description">{{{markdown description}}}</div>{{/if}}
+            {{#if arguments}}
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Arguments</summary>
+                <ul class="arg-list">
+                {{#each arguments}}
+                  <li>
+                    <span class="arg-name">{{name}}</span>
+                    {{#if required}}<span class="badge required">required</span>{{/if}}
+                    {{#if description}} — {{description}}{{/if}}
+                  </li>
+                {{/each}}
+                </ul>
+              </details>
+            </div>
+            {{/if}}
+          </div>
+        </details>
+        {{/each}}
+      </details>
+    </div>
+    {{/if}}
+
+    <!-- Resources -->
+    {{#if resources}}
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">📦</span>
+            <h2>Resources</h2>
+            <span class="count">({{count resources}})</span>
+          </div>
+        </summary>
+        {{#each resources}}
+        <details class="item-detail"{{#unless @index}} open{{/unless}}>
+          <summary>
+            <span class="badge resource">resource</span>
+            <span class="name">{{name}}</span>
+            {{#if title}}<span class="title-text">— {{title}}</span>{{/if}}
+            {{#if deprecated}}<span class="badge deprecated">deprecated</span>{{/if}}
+          </summary>
+          <div class="item-body">
+            {{#if tags}}
+            <div class="tags">
+              {{#each tags}}<span class="badge tag">{{this}}</span>{{/each}}
+            </div>
+            {{/if}}
+            {{#if description}}<div class="description">{{{markdown description}}}</div>{{/if}}
+            {{#if uri}}<div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">{{uri}}</span></div>{{/if}}
+            {{#if mimeType}}<div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>{{mimeType}}</code></div>{{/if}}
+            {{#if annotations}}
+            <div class="hints">
+              {{#if annotations.audience}}
+              {{#each annotations.audience}}<span class="badge hint">{{this}}</span>{{/each}}
+              {{/if}}
+              {{#if annotations.priority}}<span class="badge hint">priority: {{annotations.priority}}</span>{{/if}}
+            </div>
+            {{/if}}
+          </div>
+        </details>
+        {{/each}}
+      </details>
+    </div>
+    {{/if}}
+
+    <!-- Resource Templates -->
+    {{#if resourceTemplates}}
+    <div class="card">
+      <details open>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">📋</span>
+            <h2>Resource Templates</h2>
+            <span class="count">({{count resourceTemplates}})</span>
+          </div>
+        </summary>
+        {{#each resourceTemplates}}
+        <details class="item-detail"{{#unless @index}} open{{/unless}}>
+          <summary>
+            <span class="badge template">template</span>
+            <span class="name">{{name}}</span>
+            {{#if title}}<span class="title-text">— {{title}}</span>{{/if}}
+            {{#if deprecated}}<span class="badge deprecated">deprecated</span>{{/if}}
+          </summary>
+          <div class="item-body">
+            {{#if tags}}
+            <div class="tags">
+              {{#each tags}}<span class="badge tag">{{this}}</span>{{/each}}
+            </div>
+            {{/if}}
+            {{#if description}}<div class="description">{{{markdown description}}}</div>{{/if}}
+            <div style="margin-bottom:0.5rem;"><strong>URI Template:</strong> <span class="uri">{{uriTemplate}}</span></div>
+            {{#if mimeType}}<div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>{{mimeType}}</code></div>{{/if}}
+            {{#if annotations}}
+            <div class="hints">
+              {{#if annotations.audience}}
+              {{#each annotations.audience}}<span class="badge hint">{{this}}</span>{{/each}}
+              {{/if}}
+              {{#if annotations.priority}}<span class="badge hint">priority: {{annotations.priority}}</span>{{/if}}
+            </div>
+            {{/if}}
+          </div>
+        </details>
+        {{/each}}
+      </details>
+    </div>
+    {{/if}}
+
+    <!-- Tags -->
+    {{#if tags}}
+    <div class="card">
+      <div class="section-header">
+        <span class="section-icon">🏷️</span>
+        <h2>Tags</h2>
+        <span class="count">({{count tags}})</span>
+      </div>
+      <div class="tags" style="margin-top: 0.5rem;">
+        {{#each tags}}
+        <span class="badge tag" style="font-size:0.75rem;" title="{{description}}">{{name}}</span>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- Extraction Details (CORS, Session, etc.) -->
+    {{#if showDumpInformation}}
+    {{#if _meta.dump}}
+    <div class="card">
+      <details>
+        <summary>
+          <div class="section-header">
+            <span class="section-icon">🔍</span>
+            <h2>Extraction Details</h2>
+          </div>
+        </summary>
+        <div style="margin-top: 0.75rem; font-size: 0.875rem;">
+          <table class="schema-table">
+            <tbody>
+              {{#if _meta.dump.runtimeObservations.mcpProtocolUsed}}
+              <tr><td><strong>Protocol Version</strong></td><td>{{_meta.dump.runtimeObservations.mcpProtocolUsed}}</td></tr>
+              {{/if}}
+              {{#if _meta.dump.runtimeObservations.sessionIdSupported}}
+              <tr><td><strong>Session ID</strong></td><td>Supported{{#if _meta.dump.runtimeObservations.sessionIdHeader}} (header: <code>{{_meta.dump.runtimeObservations.sessionIdHeader}}</code>){{/if}}</td></tr>
+              {{/if}}
+              {{#if _meta.dump.runtimeObservations.pingSupported}}
+              <tr><td><strong>Ping</strong></td><td>{{#if _meta.dump.runtimeObservations.pingSupported}}Supported{{#if _meta.dump.runtimeObservations.pingLatencyMs}} ({{_meta.dump.runtimeObservations.pingLatencyMs}}ms){{/if}}{{else}}Not supported{{/if}}</td></tr>
+              {{/if}}
+            </tbody>
+          </table>
+
+          {{#if _meta.dump.cors}}
+          <div style="margin-top: 1rem;">
+            <strong>CORS / Browser Compatibility</strong>
+            <table class="schema-table" style="margin-top: 0.375rem;">
+              <tbody>
+                <tr>
+                  <td><strong>Browser Ready</strong></td>
+                  <td>
+                    {{#if _meta.dump.cors.browserReady}}
+                      <span class="badge cors-ready">yes</span>
+                    {{else}}
+                      {{#if (eq _meta.dump.cors.browserReady false)}}
+                        <span class="badge cors-fail">no</span>
+                      {{else}}
+                        <span class="badge hint">unknown</span>
+                      {{/if}}
+                    {{/if}}
+                  </td>
+                </tr>
+                {{#if _meta.dump.cors.responseHeaders.accessControlAllowOrigin}}
+                <tr><td><strong>Allow-Origin</strong></td><td><code>{{_meta.dump.cors.responseHeaders.accessControlAllowOrigin}}</code></td></tr>
+                {{/if}}
+                {{#if _meta.dump.cors.responseHeaders.accessControlExposeHeaders}}
+                <tr><td><strong>Expose-Headers</strong></td><td>{{join _meta.dump.cors.responseHeaders.accessControlExposeHeaders ", "}}</td></tr>
+                {{/if}}
+                {{#if _meta.dump.cors.preflight.tested}}
+                <tr><td><strong>Preflight Status</strong></td><td>{{_meta.dump.cors.preflight.status}}</td></tr>
+                {{#if _meta.dump.cors.preflight.accessControlAllowMethods}}
+                <tr><td><strong>Allow-Methods</strong></td><td>{{join _meta.dump.cors.preflight.accessControlAllowMethods ", "}}</td></tr>
+                {{/if}}
+                {{/if}}
+              </tbody>
+            </table>
+          </div>
+          {{/if}}
+        </div>
+      </details>
+    </div>
+    {{/if}}
+    {{/if}}
+
+    <!-- Footer -->
+    <div class="footer">
+      Generated by <a href="https://github.com/cisco-open/mcptoolkit-contract">mcpcontract</a>{{#if _meta.dump.toolVersion}} v{{_meta.dump.toolVersion}}{{/if}}{{#if _meta.dump.createdAt}} · {{formatDate _meta.dump.createdAt}}{{/if}}
+    </div>
+
+  </div>
+
+  {{#if _validation}}
+  <script>
+    (function() {
+      var issues = {{{json _validation}}};
+      if (issues.errors && issues.errors.length) {
+        console.group('%cmcpdesc validation errors', 'color: red; font-weight: bold');
+        issues.errors.forEach(function(e) { console.error(e.path + ': ' + e.message); });
+        console.groupEnd();
+      }
+      if (issues.warnings && issues.warnings.length) {
+        console.group('%cmcpdesc validation warnings', 'color: orange; font-weight: bold');
+        issues.warnings.forEach(function(w) { console.warn(w.path + ': ' + w.message); });
+        console.groupEnd();
+      }
+    })();
+  </script>
+  {{/if}}
+</body>
+</html>

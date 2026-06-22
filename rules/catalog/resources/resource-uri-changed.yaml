@@ -1,0 +1,75 @@
+changeType: resource-uri-changed
+category: resources
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource URI Changed
+description: |
+  Detects when a resource's URI changes. URI changes are critical breaking changes
+  because clients use URIs to access resources.
+
+variants:
+  - id: resource-uri-changed-breaking
+    breaking: true
+    severity: critical
+    message: Changing resource URI breaks clients
+    rationale: |
+      Clients use hardcoded URIs to access resources. Changing the URI means
+      all client code referencing the old URI will fail.
+      
+      URIs are the primary identifier for resources and changing them is highly
+      disruptive.
+    migration: |
+      URI changes require major version bump:
+      1. Increment MAJOR version
+      2. Support both old and new URIs during transition
+      3. Provide clear migration documentation
+      4. Consider URI aliases/redirects if possible
+      
+      Example: Changing card/{id} to card:///{id} breaks all client code.
+    examples:
+      pass:
+        - name: URI scheme changed
+          description: Changing URI scheme is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442004
+            category: resources
+            changeType: resource-uri-changed
+            path: resources[data/config.json].uri
+            description: "Resource URI changed from 'file://data/config.json' to 'config://app/settings'"
+            from: file://data/config.json
+            to: config://app/settings
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+        
+        - name: URI path changed
+          description: Changing URI path is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442005
+            category: resources
+            changeType: resource-uri-changed
+            path: resources[card/{id}].uri
+            description: "Resource URI changed from 'card/{id}' to 'cards/{id}'"
+            from: card/{id}
+            to: cards/{id}
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - resource-removed
+  - resourcetemplate-uritemplate-changed
+
+references:
+  - title: URI Design Best Practices
+    url: https://www.rfc-editor.org/rfc/rfc3986
+
+tags:
+  - resources
+  - uris
+  - breaking-changes
+  - critical

@@ -1,0 +1,498 @@
+{
+  "version": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.2",
+  "dumpDetails": {
+    "toolName": "sonnet",
+    "toolVersion": "4.5",
+    "createdAt": "2025-11-12T10:30:00.000Z",
+    "description": "This dump was generated using Copilot based on the specification of the IETF network management MCP server",
+    "mcpServerConfig": {
+      "name": "ietf-network-mgmt-server",
+      "transport": "stdio",
+      "command": "network-mcp-server",
+      "args": ["--device", "router-1", "--dialect", "huawei-vrp"]
+    },
+    "dumpExecution": {
+      "mcpProtocolUsed": "2025-06-18",
+      "sessionIdSupported": false,
+      "clientCapabilitiesSent": {
+        "roots": {
+          "listChanged": true
+        }
+      }
+    }
+  },
+  "serverInfo": {
+    "name": "IOS-XR-MCP",
+    "version": "7.5.3",
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+      "prompts": {
+        "listChanged": false
+      },
+      "resources": {
+        "subscribe": true,
+        "listChanged": false
+      },
+      "tools": {
+        "listChanged": false
+      },
+      "network": {
+        "yangModules": [
+          "ietf-interfaces",
+          "ietf-ip",
+          "ietf-routing",
+          "openconfig-interfaces",
+          "openconfig-network-instance",
+          "openconfig-vlan",
+          "ietf-system"
+        ],
+        "cliDialect": "huawei-vrp",
+        "configDatastore": [
+          "running",
+          "candidate",
+          "operational"
+        ],
+        "notificationStream": [
+          "syslog",
+          "netconf-stream",
+          "snmp-trap"
+        ],
+        "maxBulkEdit": 1000,
+        "supportsRollback": true,
+        "rollbackTimeout": 300
+      }
+    },
+    "instructions": "MCP server for network equipment management. Supports YANG data models, CLI commands, configuration management with confirmed commits, and real-time monitoring. See IETF draft-zw-opsawg-mcp-network-mgmt-00 for full specification."
+  },
+  "tools": [
+    {
+      "name": "network.cli.exec",
+      "description": "Execute operational CLI show commands on the network device. Used for retrieving operational state, statistics, and diagnostic information. Commands run in operational mode and cannot modify configuration.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cmd": {
+            "type": "string",
+            "description": "The CLI command to execute (e.g., 'show interfaces', 'show ip route vrf mgmt')"
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Command timeout in seconds (default: 30)",
+            "default": 30,
+            "minimum": 1,
+            "maximum": 300
+          }
+        },
+        "required": ["cmd"]
+      }
+    },
+    {
+      "name": "network.cli.configure",
+      "description": "Enter configuration mode and send configuration commands. Commands are applied to the candidate datastore and require a commit operation to take effect. Supports both single commands and multi-line configuration blocks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "commands": {
+            "type": "array",
+            "description": "Array of configuration commands to execute in order",
+            "items": {
+              "type": "string"
+            }
+          },
+          "target": {
+            "type": "string",
+            "description": "Target datastore for configuration",
+            "enum": ["candidate", "running"],
+            "default": "candidate"
+          }
+        },
+        "required": ["commands"]
+      }
+    },
+    {
+      "name": "network.yang.get",
+      "description": "Retrieve YANG data node from the specified datastore. Returns structured data conforming to the YANG model. Supports XPath-style paths for precise data selection.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "YANG data path (e.g., '/openconfig-interfaces:interfaces/interface[name=\"TenGigE0/0/0/0\"]')"
+          },
+          "datastore": {
+            "type": "string",
+            "description": "Datastore to query",
+            "enum": ["running", "operational", "candidate"],
+            "default": "operational"
+          },
+          "depth": {
+            "type": "integer",
+            "description": "Maximum depth of subtree to retrieve (0 = unlimited)",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "network.yang.edit",
+      "description": "Edit the candidate datastore using YANG data structures. Supports create, merge, replace, and delete operations. Changes are staged in candidate datastore until committed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Target datastore",
+            "enum": ["candidate"],
+            "default": "candidate"
+          },
+          "edit": {
+            "type": "array",
+            "description": "Array of edit operations",
+            "items": {
+              "type": "object",
+              "properties": {
+                "operation": {
+                  "type": "string",
+                  "enum": ["merge", "create", "replace", "delete"],
+                  "default": "merge"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "YANG path to edit"
+                },
+                "value": {
+                  "type": "object",
+                  "description": "YANG data to apply (omit for delete operations)"
+                }
+              },
+              "required": ["path"]
+            }
+          }
+        },
+        "required": ["edit"]
+      }
+    },
+    {
+      "name": "network.commit",
+      "description": "Commit candidate configuration to running datastore. Supports confirmed commit with automatic rollback if not confirmed within timeout period. Returns commit-id for tracking.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirmed": {
+            "type": "integer",
+            "description": "Confirmed commit timeout in seconds (0 = normal commit)",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 3600
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Confirm a previous confirmed commit",
+            "default": false
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional commit comment for audit trail"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "network.rollback",
+      "description": "Rollback configuration to a previous commit. Can rollback to a specific commit-id or to the last committed state. Only available if supportsRollback capability is true.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "commitId": {
+            "type": "string",
+            "description": "Specific commit ID to rollback to (optional, defaults to previous commit)"
+          },
+          "steps": {
+            "type": "integer",
+            "description": "Number of commits to rollback (default: 1)",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "network.file.pull",
+      "description": "Backup a configuration file from the device to the controller. Supports running-config, startup-config, and other device files. Returns file content as base64-encoded string for binary files.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "File to retrieve",
+            "enum": ["running-config", "startup-config", "candidate-config"],
+            "default": "running-config"
+          },
+          "format": {
+            "type": "string",
+            "description": "Output format",
+            "enum": ["text", "xml", "json"],
+            "default": "text"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "network.file.push",
+      "description": "Restore a configuration file to the device. File content is validated before being written to the specified target. Supports atomic replace operations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Target file on device",
+            "enum": ["candidate-config", "startup-config"]
+          },
+          "content": {
+            "type": "string",
+            "description": "File content (text or base64-encoded)"
+          },
+          "format": {
+            "type": "string",
+            "description": "Content format",
+            "enum": ["text", "xml", "json"],
+            "default": "text"
+          },
+          "validate": {
+            "type": "boolean",
+            "description": "Validate before writing",
+            "default": true
+          }
+        },
+        "required": ["filename", "content"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "network:///interfaces",
+      "name": "All Interfaces",
+      "description": "Complete list of all network interfaces with operational and configuration state. Supports cursor-based pagination for large interface counts.",
+      "mimeType": "application/yang-data+json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.9,
+        "supportsSubscribe": true,
+        "pagination": true
+      }
+    },
+    {
+      "uri": "network:///routing/ipv4/route-table",
+      "name": "IPv4 Routing Table",
+      "description": "Complete IPv4 routing information base (RIB) from operational datastore. Includes all routes with next-hop, metric, and protocol information.",
+      "mimeType": "application/yang-data+json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.8,
+        "supportsSubscribe": true,
+        "pagination": true
+      }
+    },
+    {
+      "uri": "network:///routing/ipv6/route-table",
+      "name": "IPv6 Routing Table",
+      "description": "Complete IPv6 routing information base (RIB) from operational datastore. Includes all routes with next-hop, metric, and protocol information.",
+      "mimeType": "application/yang-data+json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.8,
+        "supportsSubscribe": true,
+        "pagination": true
+      }
+    },
+    {
+      "uri": "network:///system/cpu-utilization",
+      "name": "CPU Utilization",
+      "description": "Real-time CPU utilization percentage across all cores. Updated every 30 seconds. Supports subscription for continuous monitoring.",
+      "mimeType": "application/json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.7,
+        "supportsSubscribe": true,
+        "updateInterval": 30,
+        "_meta": {
+          "unit": "percent",
+          "precision": 0.1
+        }
+      }
+    },
+    {
+      "uri": "network:///system/memory-summary",
+      "name": "Memory Summary",
+      "description": "Memory usage summary including total, used, free, and cached memory. Updated every 30 seconds.",
+      "mimeType": "application/json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.7,
+        "supportsSubscribe": true,
+        "updateInterval": 30,
+        "_meta": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "uri": "network:///file/running-config",
+      "name": "Running Configuration",
+      "description": "Current active configuration as plain text. This is the live configuration that determines device behavior.",
+      "mimeType": "text/plain",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.9,
+        "readOnly": true
+      }
+    },
+    {
+      "uri": "network:///file/startup-config",
+      "name": "Startup Configuration",
+      "description": "Configuration loaded on device boot. This may differ from running-config if changes have not been saved.",
+      "mimeType": "text/plain",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.8,
+        "readOnly": true
+      }
+    },
+    {
+      "uri": "network:///file/candidate-config",
+      "name": "Candidate Configuration",
+      "description": "Staged configuration changes that have not yet been committed. This datastore is used for two-phase commit operations.",
+      "mimeType": "text/plain",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.6,
+        "readOnly": false
+      }
+    }
+  ],
+  "resourceTemplates": [
+    {
+      "uriTemplate": "network:///interface/{name}",
+      "name": "Single Interface",
+      "description": "Retrieve detailed information about a specific interface by name. Returns YANG-modeled data including operational state, statistics, and configuration. Supports both OpenConfig and IETF interface models.",
+      "mimeType": "application/yang-data+json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.9,
+        "supportsSubscribe": true,
+        "readOnly": true,
+        "parameters": {
+          "name": {
+            "description": "Interface name (e.g., 'TenGigE0/0/0/0', 'Loopback100', 'Vlan100')",
+            "type": "string",
+            "required": true
+          }
+        }
+      }
+    },
+    {
+      "uriTemplate": "network:///log/syslog/last{count}",
+      "name": "Recent Syslog Entries",
+      "description": "Retrieve the most recent syslog messages from the device. Maximum 10000 entries. Returns plain text with one message per line including timestamp and severity.",
+      "mimeType": "text/plain; charset=utf-8",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.7,
+        "supportsSubscribe": true,
+        "readOnly": true,
+        "parameters": {
+          "count": {
+            "description": "Number of recent syslog entries to retrieve (1-10000)",
+            "type": "integer",
+            "required": true,
+            "minimum": 1,
+            "maximum": 10000
+          }
+        }
+      }
+    },
+    {
+      "uriTemplate": "network:///file/{slot}/crashinfo",
+      "name": "Crash Information",
+      "description": "Retrieve crash information file for a specific hardware slot. Returns JSON array of crash records with timestamp, reason, and stack trace.",
+      "mimeType": "application/json",
+      "annotations": {
+        "audience": ["user"],
+        "priority": 0.5,
+        "readOnly": true,
+        "parameters": {
+          "slot": {
+            "description": "Hardware slot identifier (e.g., '0', '1/0', 'RP0')",
+            "type": "string",
+            "required": true
+          }
+        },
+        "_meta": {
+          "hardware-specific": true
+        }
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "network.troubleshoot.ping-fail",
+      "description": "Step-by-step diagnostic workflow for ping failure scenarios. Guides through ARP verification, interface status checks, routing table inspection, and extended ping tests. Returns actionable remediation steps.",
+      "arguments": [
+        {
+          "name": "src",
+          "description": "Source IP address for ping test",
+          "required": true
+        },
+        {
+          "name": "dst",
+          "description": "Destination IP address that is unreachable",
+          "required": true
+        },
+        {
+          "name": "vrf",
+          "description": "VRF/routing instance name (optional, default is global routing table)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "network.config.add-vlan",
+      "description": "Interactive VLAN creation wizard. Guides through VLAN ID selection, naming, and interface assignment. Validates VLAN ID ranges and generates appropriate configuration commands for the device CLI dialect.",
+      "arguments": [
+        {
+          "name": "vlan_id",
+          "description": "IEEE 802.1Q VLAN ID (1-4094)",
+          "required": true
+        },
+        {
+          "name": "name",
+          "description": "VLAN name (alphanumeric, hyphens, underscores only - no spaces)",
+          "required": true
+        },
+        {
+          "name": "ports",
+          "description": "List of interface names to add to the VLAN (optional)",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "network.security.audit",
+      "description": "Generate and execute security compliance checks based on predefined profiles. Returns detailed audit report with pass/fail status, findings, and remediation recommendations. Supports basic and detailed audit profiles.",
+      "arguments": [
+        {
+          "name": "profile",
+          "description": "Security audit profile to execute",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "roots": []
+}

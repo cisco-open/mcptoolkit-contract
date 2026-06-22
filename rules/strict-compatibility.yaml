@@ -1,0 +1,124 @@
+# Strict Backward Compatibility Rules
+# 
+# This example shows how to customize compatibility rules for teams
+# that require stricter validation than the default MCP guidelines.
+#
+# Use this if your clients:
+# - Use strict enum validation that rejects unknown values
+# - Cannot be updated easily (embedded systems, legacy code)
+# - Require explicit opt-in for all schema changes
+#
+# Usage:
+#   mcpcontract breaking --diff diff.json --rules rules/strict-compatibility.yaml --output analysis.json
+
+version: "1.0.0"
+description: "Strict compatibility rules - more conservative than default"
+
+rules:
+  # ============================================================================
+  # TOOLS - Stricter rules for tool changes
+  # ============================================================================
+  tools:
+    # In strict mode, ANY enum change is breaking
+    - changeType: "parameter-enum-values-changed"
+      breaking: true
+      severity: "major"
+      message: "ANY enum change is breaking in strict mode"
+      rationale: "Clients use strict validation and cannot handle enum modifications"
+      migration: "Update all clients before deploying server changes"
+      note: "This overrides the default rule that allows enum additions"
+    
+    # Inherit other rules from default
+    - changeType: "tool-added"
+      breaking: false
+      severity: "info"
+      message: "Adding a new tool is backward compatible"
+      
+    - changeType: "tool-removed"
+      breaking: true
+      severity: "critical"
+      message: "Removing a tool breaks clients"
+      
+    - changeType: "parameter-added"
+      breaking: true
+      severity: "major"
+      message: "Even optional parameters require client awareness in strict mode"
+      note: "Override to treat all parameter additions as breaking"
+      
+    - changeType: "parameter-removed"
+      breaking: true
+      severity: "critical"
+      message: "Removing parameters breaks clients"
+      
+    - changeType: "parameter-type-changed"
+      breaking: true
+      severity: "critical"
+      message: "Type changes always break clients"
+      
+    - changeType: "parameter-made-required"
+      breaking: true
+      severity: "critical"
+      message: "Making parameters required breaks clients"
+      
+    - changeType: "parameter-made-optional"
+      breaking: false
+      severity: "info"
+      message: "Making parameters optional is safe"
+      
+    - changeType: "parameter-description-changed"
+      breaking: false
+      severity: "info"
+      message: "Description changes are informational"
+
+  # ============================================================================
+  # PROMPTS - Strict prompt rules
+  # ============================================================================
+  prompts:
+    - changeType: "prompt-added"
+      breaking: false
+      severity: "info"
+      message: "Adding prompts is safe"
+      
+    - changeType: "prompt-removed"
+      breaking: true
+      severity: "critical"
+      message: "Removing prompts breaks clients"
+      
+    - changeType: "prompt-argument-added"
+      breaking: true
+      severity: "major"
+      message: "In strict mode, even optional arguments are breaking"
+
+  # ============================================================================
+  # RESOURCES - Strict resource rules
+  # ============================================================================
+  resources:
+    - changeType: "resource-added"
+      breaking: false
+      severity: "info"
+      message: "Adding resources is safe"
+      
+    - changeType: "resource-removed"
+      breaking: true
+      severity: "critical"
+      message: "Removing resources breaks clients"
+      
+    - changeType: "resource-uri-changed"
+      breaking: true
+      severity: "critical"
+      message: "URI changes always break clients"
+      
+    - changeType: "resource-mimetype-changed"
+      breaking: true
+      severity: "critical"
+      message: "MIME type changes break parsing logic"
+
+# ============================================================================
+# METADATA
+# ============================================================================
+metadata:
+  author: "Your Team"
+  purpose: "Example strict compatibility rules"
+  basedOn: "rules/breaking-changes.yaml"
+  note: "This is more conservative than default MCP guidelines"
+  lastUpdated: "2025-11-26"

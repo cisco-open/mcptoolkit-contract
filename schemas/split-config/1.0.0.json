@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0",
+  "title": "MCP Dump Split Configuration",
+  "description": "Configuration schema for splitting large MCP server dumps into focused subsets by filtering rules",
+  "type": "object",
+  "required": ["schemaVersion", "info", "categories"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Reference to the split configuration schema version",
+      "const": "https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0"
+    },
+    "info": {
+      "type": "object",
+      "description": "Metadata about this split configuration",
+      "required": ["version"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Version of this split configuration file",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "example": "1.0.0"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for this split configuration"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what this split configuration does"
+        },
+        "created": {
+          "type": "string",
+          "description": "Creation date",
+          "format": "date"
+        },
+        "updated": {
+          "type": "string",
+          "description": "Last update date",
+          "format": "date"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or team responsible for this configuration"
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "description": "Array of categories to split the dump into",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "outputFile", "filters"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$",
+            "description": "Category identifier (alphanumeric, dash, underscore only)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of this category"
+          },
+          "outputFile": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$",
+            "description": "Output filename without extension (will use dump's format)"
+          },
+          "filters": {
+            "type": "object",
+            "description": "Filtering rules for each capability type",
+            "properties": {
+              "tools": {
+                "type": "array",
+                "description": "Filters for tools",
+                "items": {
+                  "$ref": "#/definitions/filter"
+                }
+              },
+              "prompts": {
+                "type": "array",
+                "description": "Filters for prompts",
+                "items": {
+                  "$ref": "#/definitions/filter"
+                }
+              },
+              "resources": {
+                "type": "array",
+                "description": "Filters for resources",
+                "items": {
+                  "$ref": "#/definitions/filter"
+                }
+              },
+              "resourceTemplates": {
+                "type": "array",
+                "description": "Filters for resource templates",
+                "items": {
+                  "$ref": "#/definitions/filter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "unmatchedItems": {
+      "type": "object",
+      "description": "Configuration for handling items that don't match any category",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["ignore", "warn", "error", "separate-file"],
+          "default": "warn",
+          "description": "Action to take for unmatched items"
+        },
+        "outputFile": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Output filename for unmatched items (required if action is 'separate-file')"
+        }
+      },
+      "if": {
+        "properties": {
+          "action": {
+            "const": "separate-file"
+          }
+        }
+      },
+      "then": {
+        "required": ["outputFile"]
+      }
+    }
+  },
+  "definitions": {
+    "filter": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["name-pattern"],
+          "description": "Filter type (currently only 'name-pattern' is supported)"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "ECMAScript regular expression pattern"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this filter"
+        }
+      },
+      "if": {
+        "properties": {
+          "type": {
+            "const": "name-pattern"
+          }
+        }
+      },
+      "then": {
+        "required": ["pattern"]
+      }
+    }
+  }
+}

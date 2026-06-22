@@ -1,0 +1,84 @@
+changeType: parameter-type-changed
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Type Changed
+description: |
+  Detects when a parameter's data type changes. Type changes are almost always
+  breaking because they cause validation errors and data mismatches.
+
+variants:
+  - id: parameter-type-changed-breaking
+    breaking: true
+    severity: critical
+    message: Changing parameter type breaks clients
+    rationale: |
+      Type mismatches cause validation errors. Clients sending the old type will
+      be rejected, breaking all existing integrations.
+      
+      Examples of breaking type changes:
+      - number → string: {limit: 10} becomes invalid
+      - string → number: {limit: "10"} becomes invalid
+      - string → array: "value" becomes invalid
+      - object → string: {key: "value"} becomes invalid
+      
+      Even widening types (number → any) can be breaking if clients validate
+      responses strictly.
+    migration: |
+      Type changes require major version bump:
+      1. Document the breaking change clearly
+      2. Increment MAJOR version
+      3. Provide migration guide with examples
+      4. Consider providing conversion utilities
+      
+      Alternative: Create new parameter with new type, keep old one deprecated.
+    examples:
+      pass:
+        - name: Number to string
+          description: Changing from number to string type is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440011
+            category: tools
+            changeType: parameter-type-changed
+            path: tools[paginate].parameters.properties.limit.type
+            description: "Parameter 'limit' type changed from number to string"
+            from: number
+            to: string
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+        
+        - name: String to array
+          description: Changing from string to array type is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440012
+            category: tools
+            changeType: parameter-type-changed
+            path: tools[filter].parameters.properties.tags.type
+            description: "Parameter 'tags' type changed from string to array"
+            from: string
+            to: array
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-enum-values-changed
+  - parameter-made-required
+  - resource-mimetype-changed
+
+references:
+  - title: JSON Schema Types
+    url: https://json-schema.org/understanding-json-schema/reference/type.html
+  - title: API Type Safety Best Practices
+    url: https://swagger.io/docs/specification/data-models/data-types/
+
+tags:
+  - parameters
+  - types
+  - breaking-changes
+  - validation

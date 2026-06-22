@@ -1,0 +1,18 @@
+# Exclude development/test artefacts from the published npm package.
+# NOTE: schemas/, rules/, and templates/ are intentionally NOT excluded
+# because the CLI reads them at runtime via import.meta.url.
+
+.github/
+.vscode/
+docs/
+ref/
+tests/
+src/
+
+# Dev files
+*.jsonl
+.editorconfig
+.eslintrc*
+.prettierrc*
+tsconfig.json
+jest.config.js

@@ -1,0 +1,48 @@
+changeType: capability-added
+category: serverInfo
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Capability Added
+description: |
+  Detects when new server capabilities are added. Adding capabilities is
+  backward compatible because clients discover capabilities dynamically
+  and ignore unknown ones.
+
+variants:
+  - id: capability-added-compatible
+    breaking: false
+    severity: info
+    message: Adding server capabilities is backward compatible
+    rationale: |
+      Old clients ignore unknown capabilities and continue using existing
+      features. New clients can discover and use the new capabilities.
+      
+      This follows the discovery-based design of MCP.
+    migration: null
+    examples:
+      pass:
+        - name: New capability added
+          description: Adding a capability is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655444004
+            category: serverInfo
+            changeType: capability-added
+            path: serverInfo.capabilities.experimental
+            description: "Capability 'experimental' was added"
+            to:
+              enabled: true
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - capability-removed
+  - tool-added
+
+tags:
+  - server-info
+  - capabilities
+  - backward-compatible

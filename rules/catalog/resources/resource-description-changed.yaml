@@ -1,0 +1,45 @@
+changeType: resource-description-changed
+category: resources
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Resource Description Changed
+description: |
+  Detects when a resource's description changes. Description changes are
+  compatible because they are informational only.
+
+variants:
+  - id: resource-description-changed-compatible
+    breaking: false
+    severity: info
+    message: Changing resource description is backward compatible
+    rationale: |
+      Descriptions are informational and don't affect functionality or content.
+      Improving descriptions is encouraged and safe.
+    migration: null
+    examples:
+      pass:
+        - name: Description improved
+          description: Improving resource description is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655442007
+            category: resources
+            changeType: resource-description-changed
+            path: resources[file://data/config.json].description
+            description: "Resource description changed"
+            from: Config file
+            to: Application configuration file in JSON format
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - tool-description-changed
+  - prompt-description-changed
+
+tags:
+  - resources
+  - documentation
+  - backward-compatible

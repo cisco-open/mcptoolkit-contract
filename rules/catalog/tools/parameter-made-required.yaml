@@ -1,0 +1,63 @@
+changeType: parameter-made-required
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Made Required
+description: |
+  Detects when an optional parameter becomes required. This is breaking because
+  existing clients that don't send the parameter will fail validation.
+
+variants:
+  - id: parameter-made-required-breaking
+    breaking: true
+    severity: critical
+    message: Making an optional parameter required breaks existing clients
+    rationale: |
+      Old clients don't send the parameter (it was optional), and will now fail
+      validation when the server enforces it as required.
+      
+      This is one of the most common breaking changes in API evolution and
+      requires all clients to update their code.
+    migration: |
+      To make a parameter required safely:
+      1. Keep it optional and add server-side validation warnings
+      2. Document that it will become required in next major version
+      3. Give clients at least one full version cycle to migrate
+      4. Make it required in MAJOR version increment
+      
+      Alternative: Create a new tool version that requires the parameter.
+    examples:
+      pass:
+        - name: Optional to required
+          description: Making an optional parameter required is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440013
+            category: tools
+            changeType: parameter-made-required
+            path: tools[send_notification].parameters.properties.priority
+            description: "Parameter 'priority' changed from optional to required"
+            from: { required: false }
+            to: { required: true }
+          expectedResult:
+            breaking: true
+            severity: critical
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-made-optional
+  - parameter-added
+  - prompt-argument-made-required
+
+references:
+  - title: JSON Schema Required Properties
+    url: https://json-schema.org/understanding-json-schema/reference/object.html#required-properties
+  - title: API Evolution - Required Fields
+    url: https://cloud.google.com/apis/design/compatibility
+
+tags:
+  - parameters
+  - required-changes
+  - breaking-changes
+  - validation

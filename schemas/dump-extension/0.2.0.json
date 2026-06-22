@@ -1,0 +1,392 @@
+{
+  "$id": "https://developer.cisco.com/mcp/extensions/x-cisco-metadata/0.2.0",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cisco MCP Metadata Extension (x-cisco-metadata)",
+  "description": "DevNet-standardized extension for MCP Server Description documents. v0.2.0 uses extension-level versioning with a modular payload under the 'dump' property.",
+  "type": "object",
+
+  "required": ["version", "dump"],
+
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.2.0",
+      "description": "Version of the x-cisco-metadata extension payload"
+    },
+
+    "dump": {
+      "type": "object",
+      "description": "Metadata discovered during capability extraction by mcpcontract",
+      "required": ["toolName", "toolVersion", "createdAt"],
+      "properties": {
+        "toolName": {
+          "type": "string",
+          "description": "Name of the tool used to create the dump (e.g., 'mcpcontract')"
+        },
+        "toolVersion": {
+          "type": "string",
+          "description": "Version of the dump tool",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when capability extraction was performed"
+        },
+
+        "serverConfig": {
+          "type": "object",
+          "description": "Connection configuration used during capability extraction",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Human-readable name of the server from config"
+            },
+            "transport": {
+              "type": "string",
+              "enum": ["stdio", "streamable-http", "sse"],
+              "description": "Transport type used to connect"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL for HTTP-based transports"
+            },
+            "command": {
+              "type": "string",
+              "description": "Command for stdio transport"
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Arguments for stdio command"
+            },
+            "env": {
+              "type": "object",
+              "description": "Environment variable names used for stdio transport (values redacted)",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+
+        "runtimeObservations": {
+          "type": "object",
+          "description": "Runtime observations discovered during MCP initialization and capability extraction",
+          "properties": {
+            "mcpProtocolUsed": {
+              "type": "string",
+              "description": "MCP protocol version used by the dump tool when communicating with the server"
+            },
+            "sessionIdSupported": {
+              "type": "boolean",
+              "description": "Whether the server returned a session ID during initialization"
+            },
+            "sessionIdHeader": {
+              "type": "string",
+              "description": "Exact header name (with casing) used by the server for session management",
+              "examples": ["Mcp-Session-Id", "MCP-Session-Id", "mcp-session-id"]
+            },
+            "pingSupported": {
+              "type": "boolean",
+              "description": "Whether the server responded to a ping request"
+            },
+            "pingLatencyMs": {
+              "type": "number",
+              "description": "Round-trip latency in milliseconds for ping",
+              "minimum": 0
+            },
+            "instructions": {
+              "type": "string",
+              "description": "Server instructions from MCP InitializeResult"
+            }
+          },
+          "additionalProperties": false
+        },
+
+        "cors": {
+          "type": "object",
+          "description": "CORS support detection for browser-based MCP clients",
+          "properties": {
+            "browserReady": {
+              "type": ["boolean", "null"],
+              "description": "Overall browser readiness assessment"
+            },
+            "responseHeaders": {
+              "type": "object",
+              "description": "CORS headers from the initialize response",
+              "properties": {
+                "accessControlAllowOrigin": {
+                  "type": "string",
+                  "description": "Value of Access-Control-Allow-Origin"
+                },
+                "accessControlExposeHeaders": {
+                  "type": "array",
+                  "description": "Headers exposed to browser via Access-Control-Expose-Headers",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            },
+            "preflight": {
+              "type": "object",
+              "description": "Results from OPTIONS preflight request",
+              "required": ["tested"],
+              "properties": {
+                "tested": {
+                  "type": "boolean",
+                  "description": "Whether a preflight request was sent"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "HTTP status code from OPTIONS request"
+                },
+                "accessControlAllowOrigin": {
+                  "type": "string",
+                  "description": "Value of Access-Control-Allow-Origin from preflight"
+                },
+                "accessControlAllowMethods": {
+                  "type": "array",
+                  "description": "Methods allowed by preflight",
+                  "items": { "type": "string" }
+                },
+                "accessControlAllowHeaders": {
+                  "type": "array",
+                  "description": "Headers allowed by preflight",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+
+        "paginationDetection": {
+          "type": "object",
+          "description": "Tracks which capabilities use cursor-based pagination",
+          "properties": {
+            "tools": { "$ref": "#/definitions/paginationDetectionResult" },
+            "resources": { "$ref": "#/definitions/paginationDetectionResult" },
+            "resourceTemplates": { "$ref": "#/definitions/paginationDetectionResult" },
+            "prompts": { "$ref": "#/definitions/paginationDetectionResult" }
+          },
+          "additionalProperties": false
+        },
+
+        "clientCapabilities": {
+          "type": "object",
+          "description": "Client capabilities sent by the dump tool during initialization",
+          "properties": {
+            "experimental": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "roots": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              }
+            },
+            "sampling": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+
+        "splitOperation": {
+          "type": "object",
+          "description": "Split operation metadata when generated from split output",
+          "required": ["toolName", "toolVersion", "createdAt", "splitConfig"],
+          "properties": {
+            "toolName": {
+              "type": "string",
+              "description": "Tool that performed the split"
+            },
+            "toolVersion": {
+              "type": "string",
+              "description": "Version of the split command"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of split operation"
+            },
+            "splitConfig": {
+              "type": "object",
+              "required": ["sourceFile", "category"],
+              "properties": {
+                "sourceFile": {
+                  "type": "string",
+                  "description": "Original dump filename"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Category name from split config"
+                },
+                "configFile": {
+                  "type": "string",
+                  "description": "Split config filename"
+                },
+                "schemaVersion": {
+                  "type": "string",
+                  "description": "Schema version of source dump"
+                }
+              },
+              "additionalProperties": false
+            },
+            "splitExecution": {
+              "type": "object",
+              "description": "Counts and filter rules applied during split",
+              "properties": {
+                "originalCounts": {
+                  "type": "object",
+                  "properties": {
+                    "tools": { "type": "integer" },
+                    "prompts": { "type": "integer" },
+                    "resources": { "type": "integer" },
+                    "resourceTemplates": { "type": "integer" }
+                  },
+                  "additionalProperties": false
+                },
+                "filteredCounts": {
+                  "type": "object",
+                  "properties": {
+                    "tools": { "type": "integer" },
+                    "prompts": { "type": "integer" },
+                    "resources": { "type": "integer" },
+                    "resourceTemplates": { "type": "integer" }
+                  },
+                  "additionalProperties": false
+                },
+                "filterRules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["capability", "type", "pattern"],
+                    "properties": {
+                      "capability": {
+                        "type": "string",
+                        "enum": ["tools", "prompts", "resources", "resourceTemplates"]
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Filter type (e.g., 'name-pattern')"
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "description": "Regex pattern applied"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+
+        "enrichment": {
+          "type": "object",
+          "description": "Enrichment data from dump, such as examples",
+          "properties": {
+            "toolResponseExamples": {
+              "type": "object",
+              "description": "Response examples per tool, keyed by tool name",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "data"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Short name for this example"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What this example demonstrates"
+                    },
+                    "data": {
+                      "description": "The actual response data"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "resourceContentExamples": {
+              "type": "object",
+              "description": "Content examples per resource, keyed by resource URI",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "data"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Short name for this example"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What this example demonstrates"
+                    },
+                    "data": {
+                      "description": "The actual resource content"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "promptArgumentExamples": {
+              "type": "object",
+              "description": "Argument examples per prompt, keyed by prompt name",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "additionalProperties": false,
+
+  "definitions": {
+    "paginationDetectionResult": {
+      "type": "object",
+      "description": "Pagination detection result for a capability",
+      "required": ["paginationDetected", "pagesRetrieved", "totalItems"],
+      "properties": {
+        "paginationDetected": {
+          "type": "boolean",
+          "description": "Whether nextCursor was seen when fetching this capability"
+        },
+        "pagesRetrieved": {
+          "type": "integer",
+          "description": "Number of pages fetched to get all items",
+          "minimum": 1
+        },
+        "totalItems": {
+          "type": "integer",
+          "description": "Total number of items after exhaustive fetch",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

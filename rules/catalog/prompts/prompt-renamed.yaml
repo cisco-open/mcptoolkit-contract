@@ -1,0 +1,51 @@
+changeType: prompt-renamed
+category: prompts
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Prompt Renamed
+description: |
+  Detects when a prompt's name changes. Renaming is breaking because clients
+  reference prompts by name.
+
+variants:
+  - id: prompt-renamed-breaking
+    breaking: true
+    severity: major
+    message: Renaming a prompt breaks clients calling the old name
+    rationale: |
+      Old clients won't find the prompt by the old name and will receive errors.
+      Prompt names are part of the API contract.
+    migration: |
+      To rename a prompt safely:
+      1. Add new prompt with new name (same implementation)
+      2. Keep old name as alias
+      3. Deprecate old name for at least one major version
+      4. Document the rename
+      5. Remove old name in next major version
+    examples:
+      pass:
+        - name: Prompt renamed
+          description: Renaming a prompt is breaking
+          change:
+            id: 550e8400-e29b-41d4-a716-446655441003
+            category: prompts
+            changeType: prompt-renamed
+            path: prompts[summarize]
+            description: "Prompt renamed from 'summarize' to 'create_summary'"
+            from: { name: summarize }
+            to: { name: create_summary }
+          expectedResult:
+            breaking: true
+            severity: major
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - prompt-removed
+  - tool-renamed
+
+tags:
+  - prompts
+  - naming
+  - breaking-changes

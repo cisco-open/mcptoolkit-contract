@@ -1,0 +1,43 @@
+## Version {{metadata.new.version}} - {{formatDate}}
+{{#if metadata.old.name}}{{#if (ne metadata.old.name metadata.new.name)}}**Server Renamed**: {{metadata.old.name}} → {{metadata.new.name}}  
+{{/if}}{{/if}}{{#if metadata.old.protocolVersion}}{{#if (ne metadata.old.protocolVersion metadata.new.protocolVersion)}}**MCP Protocol**: {{metadata.old.protocolVersion}} → {{metadata.new.protocolVersion}}  
+{{/if}}{{/if}}{{#if metadata.new.capabilities}}{{#if metadata.old.capabilities}}{{#each metadata.new.capabilities}}{{#unless (contains ../metadata.old.capabilities this)}}**New Capability**: {{this}}  
+{{/unless}}{{/each}}{{/if}}{{/if}}
+**Status**: {{#if (gt categorization.breaking.length 0)}}⚠️  BREAKING CHANGES{{else}}✅ Backward Compatible{{/if}}  
+**Changes**: {{summary.totalChanges}} total ({{categorization.breaking.length}} breaking, {{categorization.new.length}} new, {{categorization.updates.length}} updates, {{categorization.deleted.length}} deleted)
+
+{{#if (gt categorization.breaking.length 0)}}
+### ⚠️  Breaking Changes ({{categorization.breaking.length}})
+{{#each changes}}
+{{#if (eq changeCategory "breaking")}}
+- {{details.what}}
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt categorization.new.length 0)}}
+### ✨ New ({{categorization.new.length}})
+{{#each changes}}
+{{#if (eq changeCategory "new")}}
+- {{details.what}}
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt categorization.updates.length 0)}}
+### 🔄 Updates ({{categorization.updates.length}})
+{{#each changes}}
+{{#if (eq changeCategory "update")}}
+- {{details.what}}
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt categorization.deleted.length 0)}}
+### 🗑️  Deleted ({{categorization.deleted.length}})
+{{#each changes}}
+{{#if (eq changeCategory "deleted")}}
+- {{details.what}}
+{{/if}}
+{{/each}}
+{{/if}}

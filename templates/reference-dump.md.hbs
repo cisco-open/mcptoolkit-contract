@@ -1,0 +1,175 @@
+# {{info.name}}
+
+**Server Version:** {{info.version}}{{#if info.protocolVersion}} | **MCP Specifications:** {{info.protocolVersion}}{{/if}}
+
+{{#if info.description}}
+{{{info.description}}}
+{{else}}
+Reference documentation for the **{{info.name}}** MCP server capabilities.
+{{/if}}
+
+---
+
+## Summary
+
+{{#if (gt (count tools) 0)}}
+### Tools ({{count tools}})
+
+{{#each tools}}
+- [`{{name}}`](#{{name}}){{#if description}} - {{firstSentence description}}{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt (count prompts) 0)}}
+### Prompts ({{count prompts}})
+
+{{#each prompts}}
+- [`{{name}}`](#{{name}}){{#if description}} - {{firstSentence description}}{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt (count resources) 0)}}
+### Resources ({{count resources}})
+
+{{#each resources}}
+- [`{{name}}`](#{{name}}){{#if description}} - {{firstSentence description}}{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if (gt (count resourceTemplates) 0)}}
+### Resource Templates ({{count resourceTemplates}})
+
+{{#each resourceTemplates}}
+- [`{{name}}`](#{{name}}){{#if description}} - {{firstSentence description}}{{/if}}
+{{/each}}
+{{/if}}
+
+---
+
+## Details
+
+{{#if (gt (count tools) 0)}}
+### Tools
+
+{{#each tools}}
+#### Tool `{{name}}`
+
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if inputSchema}}
+{{#if inputSchema.properties}}
+**Parameters:**
+
+{{#each inputSchema.properties}}
+- **`{{@key}}`**{{#if this.type}} ({{this.type}}){{/if}}{{#if ../inputSchema.required}}{{#if (contains ../inputSchema.required @key)}} - *required*{{/if}}{{/if}}
+{{#if this.description}}
+  {{{this.description}}}
+{{/if}}
+{{#if (inlineEnum this.enum)}}
+  Options: {{inlineEnum this.enum}}
+{{else}}
+{{#if this.enum}}
+  Options: {{join this.enum ", "}}
+{{/if}}
+{{/if}}
+{{#if this.default}}
+  Default: `{{this.default}}`
+{{/if}}
+
+{{/each}}
+{{else}}
+**Parameters:** None
+{{/if}}
+{{/if}}
+
+{{#unless @last}}
+---
+{{/unless}}
+
+{{/each}}
+{{/if}}
+
+{{#if (gt (count prompts) 0)}}
+### Prompts
+
+{{#each prompts}}
+#### Prompt `{{name}}`
+
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if arguments}}
+**Arguments:**
+
+{{#each arguments}}
+- **`{{name}}`**{{#if required}} - *required*{{/if}}
+{{#if description}}
+  {{{description}}}
+{{/if}}
+
+{{/each}}
+{{else}}
+**Arguments:** None
+{{/if}}
+
+{{#unless @last}}
+---
+{{/unless}}
+
+{{/each}}
+{{/if}}
+
+{{#if (gt (count resources) 0)}}
+### Resources
+
+{{#each resources}}
+#### Resource `{{name}}`
+
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+{{#if uri}}
+**URI:** `{{uri}}`
+{{/if}}
+
+{{#if mimeType}}
+**MIME Type:** `{{mimeType}}`
+{{/if}}
+
+{{#unless @last}}
+---
+{{/unless}}
+
+{{/each}}
+{{/if}}
+
+{{#if (gt (count resourceTemplates) 0)}}
+### Resource Templates
+
+{{#each resourceTemplates}}
+#### Resource Template `{{name}}`
+
+{{#if description}}
+{{{description}}}
+{{/if}}
+
+**URI Template:** `{{uriTemplate}}`
+
+{{#if mimeType}}
+**MIME Type:** `{{mimeType}}`
+{{/if}}
+
+{{#unless @last}}
+---
+{{/unless}}
+
+{{/each}}
+{{/if}}
+
+---
+
+*Generated with [mcpcontract](https://github.com/cisco-open/mcptoolkit-contract){{#if _meta.dump.toolVersion}} v{{_meta.dump.toolVersion}}{{/if}}*

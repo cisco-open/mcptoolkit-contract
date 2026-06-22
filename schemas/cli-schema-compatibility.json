@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Maps CLI versions to compatible schema versions - append new entries on release",
+  "compatibility": [
+    {
+      "cliVersion": "1.0.0-rc1",
+      "releaseDate": "2026-06-04",
+      "schemas": {
+        "dump": "0.3.8",
+        "mcp-description": "0.7.0",
+        "x-cisco-metadata": "0.2.0",
+        "manifest": "1.0.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0",
+        "server": "2025-12-11"
+      },
+      "notes": "Initial open-source release. All prior internal versions are consolidated into this baseline."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+changeType: parameter-made-optional
+category: tools
+version: 1.0.0
+introduced: 0.5.0
+rulesFile: rules/breaking-changes.yaml
+title: Parameter Made Optional
+description: |
+  Detects when a required parameter becomes optional. This is backward compatible
+  because it makes the API more permissive - old clients continue sending the
+  parameter as before.
+
+variants:
+  - id: parameter-made-optional-compatible
+    breaking: false
+    severity: info
+    message: Making a required parameter optional is backward compatible
+    rationale: |
+      More permissive changes are safe. Old clients continue sending the
+      parameter (they think it's required), and new clients can choose to
+      omit it.
+      
+      The server must handle both cases: parameter present or absent.
+      This gives clients more flexibility without breaking existing code.
+    migration: null
+    examples:
+      pass:
+        - name: Required to optional
+          description: Making a required parameter optional is compatible
+          change:
+            id: 550e8400-e29b-41d4-a716-446655440014
+            category: tools
+            changeType: parameter-made-optional
+            path: tools[search].parameters.properties.query
+            description: "Parameter 'query' changed from required to optional"
+            from: { required: true }
+            to: { required: false }
+          expectedResult:
+            breaking: false
+            severity: info
+            matchesThisVariant: true
+      fail: []
+
+relatedRules:
+  - parameter-made-required
+  - parameter-removed
+  - prompt-argument-made-optional
+
+references:
+  - title: API Compatibility - Relaxing Requirements
+    url: https://cloud.google.com/apis/design/compatibility
+  - title: JSON Schema Required Properties
+    url: https://json-schema.org/understanding-json-schema/reference/object.html#required
+
+tags:
+  - parameters
+  - required-changes
+  - backward-compatible
+  - permissive-changes
