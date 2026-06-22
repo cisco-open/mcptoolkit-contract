@@ -58,7 +58,7 @@
     "semver": "^7.7.3",
     "snarkdown": "^2.0.0",
     "uuid": "^13.0.0",
-    "yaml": "^2.6.1"
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
