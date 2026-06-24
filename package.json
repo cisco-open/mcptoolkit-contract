@@ -42,7 +42,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",
@@ -57,7 +57,6 @@
     "openid-client": "^6.8.4",
     "semver": "^7.8.5",
     "snarkdown": "^2.0.0",
-    "uuid": "^14.0.1",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
@@ -68,7 +67,6 @@
     "@types/node": "^26.0.0",
     "@types/omelette": "^0.4.5",
     "@types/semver": "^7.7.1",
-    "@types/uuid": "^10.0.0",
     "jest": "^30.4.2",
     "typescript": "^6.0.3"
   },
