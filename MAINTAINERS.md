@@ -23,5 +23,5 @@ Existing maintainers will reach out when an invitation is appropriate.
 ## Contact
 
 - For security issues: see [SECURITY.md](/SECURITY.md).
-- For code of conduct issues: [oss-coc@cisco.com](mailto:oss-coc@cisco.com).
+- For code of conduct issues: [oss-conduct@cisco.com](mailto:oss-conduct@cisco.com).
 - For everything else: use [GitHub Issues](https://github.com/cisco-open/mcptoolkit-contract/issues).
