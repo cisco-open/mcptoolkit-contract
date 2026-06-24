@@ -9,15 +9,23 @@
  */
 
 export default {
-  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      useESM: true,
+    '^.+\\.tsx?$': ['@swc/jest', {
+      jsc: {
+        parser: {
+          syntax: 'typescript',
+          tsx: false,
+        },
+        target: 'es2022',
+      },
+      module: {
+        type: 'es6',
+      },
     }],
   },
   testMatch: [

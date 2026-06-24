@@ -1,0 +1,18 @@
+
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+info:
+  version: "1.0.0"
+  name: "Overlap test"
+categories:
+  - name: "all-platform"
+    outputFile: "dump-all-platform"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^platform-"
+  - name: "identity-tools"
+    outputFile: "dump-identity"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "_.*[Ss]ubscription"
