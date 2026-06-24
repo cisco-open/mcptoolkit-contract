@@ -5,7 +5,7 @@ triaging issues, reviewing pull requests, and shipping releases.
 
 | Maintainer | GitHub | Area |
 |---|---|---|
-| Stève Sfartz | [@ObjectIsAdvantag](https://github.com/ObjectIsAdvantag) | Lead maintainer |
+| Stève Sfartz | [@stsfartz](https://github.com/stsfartz) | Lead maintainer |
 
 ## Becoming a maintainer
 
