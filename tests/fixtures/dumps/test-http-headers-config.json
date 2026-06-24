@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "test-http-with-headers": {
+      "type": "streamable-http",
+      "url": "https://api.test.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer test-token-12345",
+        "X-API-Key": "test-api-key",
+        "X-Client-ID": "mcpcontract-test"
+      }
+    },
+    "test-http-no-headers": {
+      "type": "streamable-http",
+      "url": "https://public.test.example.com/mcp"
+    },
+    "test-sse-with-headers": {
+      "type": "sse",
+      "url": "https://sse.test.example.com/events",
+      "headers": {
+        "Authorization": "Bearer sse-token-67890"
+      }
+    }
+  }
+}

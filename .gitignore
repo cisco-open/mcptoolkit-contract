@@ -45,6 +45,9 @@ test-*.js
 *-test.json
 *-test.yaml
 
+# Always track fixture files regardless of naming patterns above
+!tests/fixtures/**
+
 # Playground (ignore all contents except README)
 tests/playground/*
 !tests/playground/README.md

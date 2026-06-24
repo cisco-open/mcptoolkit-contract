@@ -1,0 +1,116 @@
+{
+  "version": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.3",
+  "dumpDetails": {
+    "toolName": "mcpcontract",
+    "toolVersion": "0.17.0",
+    "description": "Test federation server dump for unit tests",
+    "createdAt": "2025-12-15T10:00:00.000Z",
+    "mcpServerConfig": {
+      "name": "test-federation-server",
+      "transport": "streamable-http",
+      "url": "https://federation.test.example.com/mcp"
+    },
+    "dumpExecution": {
+      "mcpProtocolUsed": "2025-06-18"
+    }
+  },
+  "serverInfo": {
+    "name": "test-federation-server",
+    "version": "1.0.0",
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+      "tools": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "platform-identity_getSubscription",
+      "description": "Get a subscription by ID",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Subscription ID" }
+        },
+        "required": ["id"]
+      }
+    },
+    {
+      "name": "platform-identity_listSubscriptions",
+      "description": "List all subscriptions for an account",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "accountId": { "type": "string", "description": "Account ID" }
+        }
+      }
+    },
+    {
+      "name": "platform-identity_updateSubscription",
+      "description": "Update subscription details",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Subscription ID" },
+          "data": { "type": "object", "description": "Updated subscription data" }
+        },
+        "required": ["id", "data"]
+      }
+    },
+    {
+      "name": "secure-access-networks_jwtLogin",
+      "description": "Authenticate and retrieve a JWT token",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "password": { "type": "string" }
+        },
+        "required": ["username", "password"]
+      }
+    },
+    {
+      "name": "secure-access-networks_listPolicies",
+      "description": "List all network access policies",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filter": { "type": "string", "description": "Optional filter expression" }
+        }
+      }
+    },
+    {
+      "name": "secure-access-networks_createPolicy",
+      "description": "Create a new network access policy",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Policy name" },
+          "rules": { "type": "array", "description": "Policy rules" }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "other-service_doSomething",
+      "description": "Perform an unrelated operation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "analytics_getReport",
+      "description": "Retrieve an analytics report",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "reportId": { "type": "string", "description": "Report identifier" }
+        },
+        "required": ["reportId"]
+      }
+    }
+  ],
+  "resources": [],
+  "resourceTemplates": [],
+  "prompts": []
+}

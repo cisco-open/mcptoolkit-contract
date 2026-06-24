@@ -1,9 +1,0 @@
-
-schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
-info:
-  version: "1.0.0"
-  name: "No filters test"
-categories:
-  - name: "empty-category"
-    outputFile: "dump-empty"
-    filters: {}
