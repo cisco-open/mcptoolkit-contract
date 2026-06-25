@@ -1,8 +1,10 @@
 # MCP Toolkit: Server Contract
 
-The MCP server contract CLI (`mcpcontract`) extracts capabilities from live MCP servers, generates registry-ready manifests, detects breaking changes between versions, and renders human-readable documentation.
+The CLI (`mcpcontract`) extracts capabilities from live MCP servers, then lets you create changelogs, detect breaking changes and generate documentation and registry-ready manifests.
 
-Follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). See [CHANGELOG.md](CHANGELOG.md) for release history.
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.3-orange.svg)](CHANGELOG.md)
+[![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Quick start:** [docs/quick-start.md](docs/quick-start.md)
 - **Full walkthrough:** [docs/users/tutorials/complete-workflow.md](docs/users/tutorials/complete-workflow.md)
