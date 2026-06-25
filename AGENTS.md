@@ -8,7 +8,7 @@ Quick reference for AI agents and developers extending this CLI tool.
 
 **Purpose**: Extract capabilities from live MCP servers, generate registry-compatible manifests, validate against schemas, render documentation, and track changes between versions.
 
-**Tech Stack**: TypeScript, Node.js 18+, Commander.js, Ajv, Handlebars, YAML
+**Tech Stack**: TypeScript, Node.js 20+, Commander.js, Ajv, Handlebars, YAML
 
 **Version Management**: Follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). All changes must be documented in [CHANGELOG.md](CHANGELOG.md) before release.
 

@@ -8,32 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0-rc2] - 2026-06-25](#100-rc2---2026-06-25)
 - [[1.0.0-rc1] - 2026-06-04](#100-rc1---2026-06-04)
 
 <!-- tocstop -->
 
 ## [Unreleased]
 
-### Security
-
-- Fixed all npm audit vulnerabilities (6 high, 19 moderate, 1 low) via `npm audit fix`
-  — upgraded transitive deps: `@hono/node-server` 1.19.14, `hono` 4.12.27,  `express-rate-limit` 8.5.2, `ip-address` 10.2.0, `fast-uri` 3.1.2, `path-to-regexp` 8.4.2, `picomatch` 2.3.2, `@babel/core` 7.29.7, `qs` 6.15.2
-- Added `overrides.js-yaml: "^4.2.0"` in `package.json` to force a patched `js-yaml` version throughout the dependency tree (GHSA-h67p-54hq-rp68 — DoS via repeated YAML merge-key aliases). **Do not remove this override**: the transitive consumer `@istanbuljs/load-nyc-config@1.1.0` (used by  `babel-plugin-istanbul` inside Jest) pins `js-yaml@^3.13.1` and has no  maintained update; the override is the only path to a patched version without downgrading Jest.
-
-### Fixed
-
-- Replaced `uuid` package with built-in `crypto.randomUUID` (`node:crypto`) in `differ.ts` — `uuid@14` requires `globalThis.crypto` (Node ≥ 19), which broke Node 18 support; `crypto.randomUUID` is available from Node 14.17+
+## [1.0.0-rc2] - 2026-06-25
 
 ### Changed
 
+- **Minimum Node.js version raised to 20+** — dropped Node 18 support; updated `engines.node` in `package.json` to `>=20.0.0` and removed `18.x` from the CI test matrix
 - Upgraded all dependencies to latest: Jest 30.4.2, TypeScript 6.0.3, `@types/node` 26, `commander` 15, `marked` 18, `@modelcontextprotocol/sdk` 1.29
 - Added `"types": ["node"]` to `tsconfig.json` (required by TypeScript 6)
 - Replaced `ts-jest` with `@swc/jest` for Jest transforms — no `ts-jest` release exists for Jest 30; `@swc/jest` provides faster, equivalent ESM transpilation
 
+### Fixed
+
+- Replaced `uuid` package with built-in `crypto.randomUUID` (`node:crypto`) in `differ.ts`
+
+### Security
+
+- Fixed all npm audit vulnerabilities (6 high, 19 moderate, 1 low) via `npm audit fix`
+  — upgraded transitive deps: `@hono/node-server` 1.19.14, `hono` 4.12.27, `express-rate-limit` 8.5.2, `ip-address` 10.2.0, `fast-uri` 3.1.2, `path-to-regexp` 8.4.2, `picomatch` 2.3.2, `@babel/core` 7.29.7, `qs` 6.15.2
+- Added `overrides.js-yaml: "^4.2.0"` in `package.json` to force a patched `js-yaml` version throughout the dependency tree (GHSA-h67p-54hq-rp68)
 
 ### CI
 
-- Added Node 24.x to the test matrix (18.x / 20.x / 22.x / 24.x)
+- Removed Node 18.x from the test matrix; now testing on 20.x / 22.x / 24.x
 - Bumped GitHub Actions: `actions/checkout` 4 → 7, `actions/setup-node` 4 → 6
 
 ## [1.0.0-rc1] - 2026-06-04

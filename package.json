@@ -1,6 +1,6 @@
 {
   "name": "@cisco-open/mcptoolkit-contract",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0-rc2",
   "description": "CLI toolkit for MCP server contract management: dumps capabilities, generates changelogs and renders documentation",
   "type": "module",
   "main": "./build/index.js",
@@ -28,7 +28,7 @@
     "validation",
     "documentation"
   ],
-  "author": "Cisco Systems, Inc.",
+  "author": "Stève Sfartz",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -42,7 +42,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",

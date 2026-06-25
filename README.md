@@ -1,6 +1,6 @@
 # MCP Toolkit: Server Contract
 
-The CLI (`mcpcontract`) extracts capabilities from live MCP servers, then lets you create changelogs, detect breaking changes, generate documentation and registry-ready manifests.
+The `mcpcontract` CLI extracts capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, generate documentation and registry-ready manifests.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.3-orange.svg)](CHANGELOG.md)
