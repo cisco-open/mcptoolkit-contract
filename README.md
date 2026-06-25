@@ -1,6 +1,6 @@
 # MCP Toolkit: Server Contract
 
-The CLI (`mcpcontract`) extracts capabilities from live MCP servers, then lets you create changelogs, detect breaking changes and generate documentation and registry-ready manifests.
+The CLI (`mcpcontract`) extracts capabilities from live MCP servers, then lets you create changelogs, detect breaking changes, generate documentation and registry-ready manifests.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.3-orange.svg)](CHANGELOG.md)
@@ -26,20 +26,18 @@ mcpcontract dump --server-name "My Server" --url http://localhost:3000/mcp --tra
 mcpcontract document manifest.json --template registry-ready --output README.md
 ```
 
-📚 **For a complete walkthrough**, see the [complete workflow tutorial](docs/users/tutorials/complete-workflow.md).
+**For a complete walkthrough**, check the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial.
 
 ## 🔍 Backward Compatibility Analysis
 
-Analyze changes between MCP server versions to detect breaking changes:
+Create dumps for various releases of an MCP server, then compare releases and generate a changelog 
 
 ```bash
-# Example 1: To generate a changelog
+# Compare two dumps => creates a diff document
 mcpcontract diff --from v1.json --to v2.json --output diff.json
-mcpcontract changelog --diff diff.json --output CHANGELOG.md
-
-# Example 2: To generate a changelog with mention of breaking changes
-mcpcontract diff --from v1.json --to v2.json --output diff.json
+# Add breaking changes => creates an enriched diff document
 mcpcontract breaking --diff diff.json --output analysis.json
+# Generate a changelog that includes breaking changes if any
 mcpcontract changelog --breaking analysis.json --output CHANGELOG.md
 ```
 
@@ -61,34 +59,28 @@ mcpcontract changelog --breaking analysis.json --output CHANGELOG.md
 - [MCP Compatibility Guidelines](docs/users/mcp-compatibility-guidelines.md) — Philosophy and best practices
 - [Example Artifacts](docs/users/examples/)
 
-## �📖 Commands
+## 📖 Commands
 
-### ✅ dump - Extract Capabilities from Live MCP Server
+### ✅ dump - Generate an MCP description from a live server
 
-Extract complete capabilities from a running MCP server.
+Connects to a live MCP server and extract its description (transport, tools, prompts, resources)
 
-> **Note**: Supports three transport types:
-> - `streamable-http` (recommended for HTTP, per MCP spec) or `http` (accepted as alias)
-> - `sse` (Server-Sent Events)
-> - `stdio` (standard input/output)
+> **Note**: the command supports three transports:
+> - `streamable-http` or `http` (accepted as alias)
+> - `stdio`
+> - `sse` (legacy - deprecated transport for MCP servers)
 
 ```bash
-# Using config file
+# Dump capabilities using a config file
 mcpcontract dump --config server-config.json --output dump.json
 
-# Using CLI options - HTTP transport (recommended default)
+#  Dump capabilities using CLI options - HTTP transport 
 mcpcontract dump \
   --transport streamable-http \
   --url "http://localhost:3000/mcp" \
   --output dump.json
 
-# Using CLI options - SSE transport
-mcpcontract dump \
-  --transport sse \
-  --url "http://localhost:3000/sse" \
-  --output dump.json
-
-# Using CLI options - STDIO transport (server name auto-generated from command)
+# Dump capabilities using CLI options - STDIO transport (server name auto-generated from command)
 mcpcontract dump \
   --transport stdio \
   --command "npx" \
@@ -96,80 +88,22 @@ mcpcontract dump \
   --output dump.json
 ```
 
-**Status**: ✅ Fully implemented and tested
+### ✅ document - Generate documentation
 
-### ✅ split - Split Large Dumps into Focused Subsets
-
-Organize large federation server dumps by service or domain using regex-based filtering.
-
-```bash
-# Split by service prefix patterns
-mcpcontract split federation-dump.json \
-  --config split-config.yaml \
-  --output-dir ./split-dumps \
-  --validate
-
-# Preview without creating files
-mcpcontract split federation-dump.json \
-  --config split-config.yaml \
-  --dry-run
-```
-
-**Key Features**:
-- Regex-based name pattern matching (Phase 1: tools only)
-- Multiple output categories from single input
-- Overlap support (tools can match multiple categories)
-- Unmatched items handling (ignore/warn/error/separate-file)
-- Split metadata tracking in outputs
-- JSON and YAML format support
-
-**Status**: ✅ Fully implemented and tested (Phase 1: tools filtering only)
-
-### ⚠️ manifest - Generate server.json Manifest [EXPERIMENTAL]
-
-Generate MCP registry-compatible manifest from capability dump and metadata.
-
-```bash
-mcpcontract manifest \
-  --mcpdesc capabilities-dump.json \
-  --info server-info.json \
-  --output server.json \
-  --add-capabilities-meta
-```
-
-**Status**: ⚠️ **EXPERIMENTAL** - Under active development, may change
-
-### ✅ validate - Validate Files Against Schemas
-
-Validate dump or manifest files against MCP schemas.
-
-```bash
-mcpcontract validate server.json --schema manifest
-mcpcontract validate dump.json --schema dump --strict
-```
-
-**Status**: ✅ Fully implemented and tested
-
-### ✅ document - Generate Documentation
-
-Generate human-readable documentation from manifests or dumps.
+Generate human-readable documentation from an MCP description or manifest.
 
 ```bash
 mcpcontract document server.json --template registry-ready --output README.md
 mcpcontract document server.json --template default --output MANIFEST.md
 ```
 
-**Status**: ✅ Fully implemented and tested
+### ✅ diff - Compare two releases of an MCP server
 
-### ✅ diff - Compare Capability Versions
-
-Generate structural diff between two capability dumps or manifests.
+Generate structural diff between two MCP descriptions or manifests.
 
 ```bash
 mcpcontract diff --from dump-v1.json --to dump-v2.json --output diff.json
 ```
-
-**Status**: ✅ Fully implemented and tested
 
 ### ✅ breaking - Detect Breaking Changes
 
@@ -179,7 +113,6 @@ Apply compatibility rules to identify breaking changes. The output analysis file
 mcpcontract breaking --diff diff.json --rules rules/breaking-changes.yaml --output diff-breaking.json
 ```
 
-**Status**: ✅ Fully implemented and tested  
 **Exit Codes**: 0 (compatible), 1 (breaking), 2 (error)  
 **Note**: The analysis file includes the complete diff with added severity ratings, so changelog can use it as a standalone input.
 
@@ -192,8 +125,6 @@ mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --form
 mcpcontract changelog --breaking diff-breaking.json --output RELEASE-NOTES.md --format detailed
 mcpcontract changelog --breaking diff-breaking.json --output STATS.md --format stats
 ```
-
-**Status**: ✅ Fully implemented and tested
 
 ### ✅ rules - Browse Compatibility Rules Catalog
 
@@ -237,7 +168,6 @@ mcpcontract rules export --summary --output catalog-summary.json
 mcpcontract rules export --catalog rules/strict-compatibility-catalog --format markdown
 ```
 
-**Status**: ✅ Fully implemented and tested  
 **Catalog Entries**: 33 rules documented (40+ variants, 60+ examples)  
 **Categories**: tools (12), prompts (8), resources (6), resourceTemplates (3), serverInfo (5)  
 **Features**:
@@ -255,6 +185,59 @@ mcpcontract rules export --catalog rules/strict-compatibility-catalog --format m
 **Input Options**:
 - `--diff <file>`: Use raw structural diff (no severity ratings)
 - `--breaking <file>`: Use analysis file which contains diff + severity annotations (recommended)
+
+### ✅ split - Split Large Dumps into Focused Subsets
+
+Organize large federation server dumps by service or domain using regex-based filtering.
+
+```bash
+# Split by service prefix patterns
+mcpcontract split federation-dump.json \
+  --config split-config.yaml \
+  --output-dir ./split-dumps \
+  --validate
+
+# Preview without creating files
+mcpcontract split federation-dump.json \
+  --config split-config.yaml \
+  --dry-run
+```
+
+**Key Features**:
+- Regex-based name pattern matching (Phase 1: tools only)
+- Multiple output categories from single input
+- Overlap support (tools can match multiple categories)
+- Unmatched items handling (ignore/warn/error/separate-file)
+- Split metadata tracking in outputs
+- JSON and YAML format support
+
+**Status**: ✅ Fully implemented and tested (Phase 1: tools filtering only)
+
+### ⚠️ manifest - Generate server.json manifests
+
+> **EXPERIMENTAL** - Under active development, may change
+
+Generate MCP registry-compatible manifest from capability dump and metadata.
+
+```bash
+mcpcontract manifest \
+  --mcpdesc capabilities-dump.json \
+  --info server-info.json \
+  --output server.json \
+  --add-capabilities-meta
+```
+
+### ✅ validate - Check compliance with specifications
+
+Check a document is compliant with the MCP Description or Manifest specifications.
+
+```bash
+# Validate an MCP description
+mcpcontract validate dump.yaml --schema mcpdesc --strict
+
+# Validate an MCP manifest
+mcpcontract validate server.json --schema manifest
+```
 
 ## 🏗️ Project Structure
 
@@ -285,7 +268,7 @@ See **[docs/users/examples/](docs/users/examples/)** for working examples:
 - `html/` — sample HTML output from `mcpcontract document`
 
 
-## 🔧 Development Commands
+## 🔧 Maintenance
 
 ```bash
 # Build
@@ -297,36 +280,19 @@ npm run watch
 # Clean build directory
 npm run clean
 
-# Run tests (when implemented)
+# Run tests 
 npm test
 
-# Test coverage (when implemented)
+# Test coverage
 npm run test:coverage
 ```
 
 ## 📚 Documentation
 
-- **[Quick Start](docs/quick-start.md)** — Install + first dump in five minutes
-- **[Complete workflow tutorial](docs/users/tutorials/complete-workflow.md)** — End-to-end tutorial
+- **[Quick Start](docs/quick-start.md)** — Install & generate your first dump in five minutes
+- **[Full Tour Tutorial](docs/users/tutorials/complete-workflow.md)** — End-to-end tutorial
 - **[User docs](docs/users/)** — Schemas, compatibility guidelines, examples
-- **[Maintainer docs](docs/maintainers/)** — Architecture and design decisions
-- **[AGENTS.md](AGENTS.md)** — Developer guide (build, test, release)
-- **[Changelog](CHANGELOG.md)** — Version history
-
-## 🔖 Version Management
-
-This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
-
-- **MAJOR** (X.0.0): Breaking changes to CLI interface or schema structure
-- **MINOR** (0.X.0): New commands or features, backward-compatible additions
-- **PATCH** (0.0.X): Bug fixes, documentation updates, non-breaking changes
-
-All notable changes are documented in [CHANGELOG.md](CHANGELOG.md). Contributors should update the changelog when implementing new features or fixes.
-
-## 🔗 Related Projects
-
-- **MCP Registry**: https://github.com/modelcontextprotocol/registry
-- **MCP Specification**: https://modelcontextprotocol.io
+- **[Maintainer docs](docs/maintainers/README.md)** — Architecture and design decisions
 
 ## License
 
