@@ -14,7 +14,7 @@ The `mcpcontract` CLI extracts capabilities from live MCP servers, and lets you 
 
 ```bash
 # Install from npm (recommended)
-npm install -g @cisco-open/mcptoolkit-contract
+npm install -g @cisco_open/mcptoolkit-contract
 
 # Verify installation
 mcpcontract --version

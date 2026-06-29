@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish @cisco-open/mcptoolkit-contract
+    name: Publish @cisco_open/mcptoolkit-contract
     runs-on: ubuntu-latest
 
     steps:

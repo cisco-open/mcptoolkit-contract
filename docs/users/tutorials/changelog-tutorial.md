@@ -201,7 +201,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install mcpcontract
-        run: npm install -g @cisco-open/mcptoolkit-contract
+        run: npm install -g @cisco_open/mcptoolkit-contract
 
       - name: Capture base version
         run: |

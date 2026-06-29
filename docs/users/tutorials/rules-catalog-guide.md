@@ -25,10 +25,10 @@ This tutorial provides a complete end-to-end guide to using the `mcpcontract rul
 **Installation**:
 ```bash
 # Install from npm (recommended)
-npm install -g @cisco-open/mcptoolkit-contract
+npm install -g @cisco_open/mcptoolkit-contract
 
 # Or clone and build from source
-git clone https://github.com/cisco@cisco-open/mcptoolkit-contract.git
+git clone https://github.com/cisco-open/mcptoolkit-contract.git
 cd mcptoolkit-contract
 npm install
 npm run build
