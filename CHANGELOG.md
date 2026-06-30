@@ -17,6 +17,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Unified the `changelog` input on a single `--diff` flag.** `changelog` now
+  takes the structural diff from `diff`, or the annotated diff from `breaking`
+  (e.g. `diff-breaking.json`); breaking changes are highlighted when the diff has
+  been annotated. Documentation standardizes the annotated-diff artifact name on
+  `diff-breaking.json`.
+- **Reworked the README quickstart around CI.** The Backward Compatibility
+  Analysis section now shows an exit-code-gated pipeline (`breaking` exits `0`
+  compatible / `1` breaking / `2` error) and references a new wrapper script.
+
+### Added
+
+- **`scripts/changelog.sh`** — a non-gating human shortcut that runs
+  `diff` → `breaking` → `changelog` in one invocation
+  (`scripts/changelog.sh <from> <to> [output]`).
+
+### Removed
+
+- **Removed the `changelog --breaking <file>` and `changelog --analysis <file>`
+  input aliases.** Use `--diff <file>` instead. Pre-GA removal — no deprecation
+  cycle.
+
+### Fixed
+
+- **`changelog` now always exits `0` on a successful render.** Previously it
+  propagated the breaking-change exit code (`1`), which aborted `set -e` CI
+  scripts at the changelog step even though the file was written. Gating is the
+  job of `breaking`, whose exit code remains the CI contract.
+- **Brought the bash, zsh, and fish shell completions back in sync with every
+  command's current options.** Added the missing `dump --auth`/`--oauth-*`,
+  `breaking --suggest-version`, and `changelog --omit-zeros`/`--sort`/
+  `--show-diff-reasoning` flags; corrected `changelog --format` suggestions to
+  `release`/`compact`; removed short flags (`-o`/`-f`/`-t`/`-q`) that
+  `diff`/`breaking`/`changelog` do not define; dropped a stale `--pretty` from
+  `dump` and `convert` from the `agents --command` list; and fixed the fish
+  `dump --header` flag (was `--headers`).
+
 ## [1.0.0-rc.4] - 2026-06-30
 
 ### Changed

@@ -159,10 +159,10 @@ mcpcontract dump --config new-mcp.json --output new-dump.json
 mcpcontract diff --from old-dump.json --to new-dump.json --output diff.json
 
 # 3. Check for breaking changes with version recommendation
-mcpcontract breaking --diff diff.json --suggest-version --output analysis.json
+mcpcontract breaking --diff diff.json --suggest-version --output diff-breaking.json
 
 # 4. Generate release notes
-mcpcontract changelog --analysis analysis.json --format release --output CHANGELOG.md
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 \`\`\`
 
 ## Workflow 2: Quick Validation Pipeline
@@ -200,7 +200,7 @@ mcpcontract diff --from old-dump.json --to new-dump.json | \\
 
 - **dump.json** - Server capabilities extracted from live server
 - **diff.json** - Structural differences between versions
-- **analysis.json** - Breaking change analysis with severity ratings
+- **diff-breaking.json** - Annotated diff with breaking-change severity ratings
 
 ## Output Formats
 
@@ -712,7 +712,7 @@ A diff file containing changes in these categories:
 ## Next Steps After Diff
 
 1. **Analyze for breaking changes**: \`mcpcontract breaking --diff diff.json\`
-2. **Generate changelog**: \`mcpcontract changelog --analysis analysis.json\`
+2. **Generate changelog**: \`mcpcontract changelog --diff diff-breaking.json\`
 3. **Review changes manually**: Open diff.json and inspect
 
 ## Troubleshooting
@@ -745,7 +745,7 @@ Analyzes a structural diff using backward compatibility rules to identify breaki
 mcpcontract breaking \\
   --diff diff.json \\
   --suggest-version \\
-  --output analysis.json
+  --output diff-breaking.json
 \`\`\`
 
 ## Common Patterns
@@ -766,7 +766,7 @@ mcpcontract diff --from old.json --to new.json | \\
 mcpcontract breaking \\
   --diff diff.json \\
   --rules custom-rules.yaml \\
-  --output analysis.json
+  --output diff-breaking.json
 \`\`\`
 
 ### Pretty-Print Analysis
@@ -833,8 +833,8 @@ Analysis file containing:
 
 ## Next Steps After Analysis
 
-1. **Generate changelog**: \`mcpcontract changelog --analysis analysis.json\`
-2. **Review breaking changes**: Open analysis.json and assess impact
+1. **Generate changelog**: \`mcpcontract changelog --diff diff-breaking.json\`
+2. **Review breaking changes**: Open diff-breaking.json and assess impact
 3. **Update version**: Use suggestedVersion in package.json
 
 ## Troubleshooting
@@ -864,7 +864,7 @@ Generates human-readable changelogs from breaking change analysis, formatted for
 ## Basic Usage
 \`\`\`bash
 mcpcontract changelog \\
-  --analysis analysis.json \\
+  --diff diff-breaking.json \\
   --format release \\
   --output CHANGELOG.md
 \`\`\`
@@ -874,7 +874,7 @@ mcpcontract changelog \\
 ### Release Format (Comprehensive)
 \`\`\`bash
 mcpcontract changelog \\
-  --analysis analysis.json \\
+  --diff diff-breaking.json \\
   --format release \\
   --output CHANGELOG.md
 \`\`\`
@@ -882,7 +882,7 @@ mcpcontract changelog \\
 ### Compact Format (Brief)
 \`\`\`bash
 mcpcontract changelog \\
-  --analysis analysis.json \\
+  --diff diff-breaking.json \\
   --format compact \\
   --output RELEASE_NOTES.md
 \`\`\`
@@ -890,20 +890,20 @@ mcpcontract changelog \\
 ### From Piped Analysis
 \`\`\`bash
 mcpcontract breaking --diff diff.json --suggest-version | \\
-  mcpcontract changelog --analysis - --format release
+  mcpcontract changelog --diff - --format release
 \`\`\`
 
 ### Complete Pipeline
 \`\`\`bash
 mcpcontract diff --from old.json --to new.json | \\
   mcpcontract breaking --diff - --suggest-version | \\
-  mcpcontract changelog --analysis - --format release --output CHANGELOG.md
+  mcpcontract changelog --diff - --format release --output CHANGELOG.md
 \`\`\`
 
 ## Key Parameters
 
 ### Required
-- \`--analysis <file>\` - Analysis file from \`breaking\` command (or \`-\` for stdin)
+- \`--diff <file>\` - Diff from \`diff\`, or annotated diff from \`breaking\` (or \`-\` for stdin)
 
 ### Optional
 - \`--output <file>\` - Output file (default: stdout)
@@ -949,7 +949,7 @@ Markdown changelog with sections:
 
 ### Empty changelog
 - No changes detected in analysis
-- Verify analysis.json has changes array
+- Verify diff-breaking.json has changes array
 - Check diff wasn't empty
 
 ### Template errors

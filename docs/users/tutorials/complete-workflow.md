@@ -106,7 +106,7 @@ mcpcontract breaking \
   --diff diff.json \
   --rules rules/breaking-changes.yaml \
   --suggest-version \
-  --output analysis.json
+  --output diff-breaking.json
 ```
 
 `--suggest-version` adds a recommended SemVer bump (e.g. `1.0.0 → 2.0.0 (MAJOR)`).
@@ -129,7 +129,7 @@ See the [rules catalog tutorial](rules-catalog.md) for the full catalog and how 
 ## Step 6: Generate a Changelog
 
 ```bash
-mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 ```
 
 Use `--format compact` for a brief one-line-per-change summary.
@@ -156,8 +156,8 @@ mcpcontract document dump.yaml \
 
 # Compare against a previous dump and produce a changelog
 mcpcontract diff --from dump-v1.yaml --to dump.yaml --output diff.json
-mcpcontract breaking --diff diff.json --output analysis.json
-mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+mcpcontract breaking --diff diff.json --output diff-breaking.json || true   # don't abort on breaking exit code
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 
 echo "Done: dump → REFERENCE.md + CHANGELOG.md"
 ```

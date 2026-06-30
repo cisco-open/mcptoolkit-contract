@@ -69,7 +69,7 @@ EXAMPLES:
       --output diff-breaking.json
 
   # Generate changelog highlighting breaking changes
-  $ mcpcontract changelog --analysis diff-breaking.json --output CHANGELOG.md
+  $ mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md
 `;
     }
   })

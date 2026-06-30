@@ -36,10 +36,8 @@ function groupByCapabilityName(changes: any[]): Array<{ name: string; changes: a
 }
 
 export const changelogCommand = new Command('changelog')
-  .description('Generate a human-readable changelog from a structural diff or breaking change analysis')
-  .option('--diff <file>', 'Structural diff file from \'diff\' command (deprecated: use --analysis)')
-  .option('--breaking <file>', 'Breaking change analysis from \'breaking\' command (deprecated: use --analysis)')
-  .option('--analysis <file>', 'Analysis file from \'breaking\' command')
+  .description('Generate a human-readable changelog from a structural diff or annotated diff')
+  .requiredOption('--diff <file>', 'Diff from \'diff\', or annotated diff from \'breaking\'')
   .requiredOption('--output <file>', 'Changelog output file')
   .option('--format <type>', 'Template format: release (default), compact', 'release')
   .option('--template <file>', 'Custom Handlebars template file')
@@ -53,14 +51,15 @@ export const changelogCommand = new Command('changelog')
 
 ${helper.commandDescription(cmd)}
 
-Creates markdown changelog from breaking change analysis with categorized changes.
+Creates a markdown changelog from a diff, with categorized changes. When the diff
+has been annotated by 'breaking', breaking changes are highlighted.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INPUT FILE:
+INPUT FILE (Required):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --analysis <file>             Analysis file from 'breaking' command
-  --breaking <file>             (deprecated: use --analysis)
-  --diff <file>                 (deprecated: use --analysis)
+  --diff <file>                 Diff from 'diff', or annotated diff from
+                                'breaking' (e.g., diff-breaking.json). Run
+                                'breaking' first to highlight breaking changes.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT OPTIONS:
@@ -83,18 +82,18 @@ EXAMPLES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # Generate full release changelog
   $ mcpcontract changelog \\
-      --analysis diff-breaking.json \\
+      --diff diff-breaking.json \\
       --output CHANGELOG.md
 
   # Generate compact changelog
   $ mcpcontract changelog \\
-      --analysis diff-breaking.json \\
+      --diff diff-breaking.json \\
       --output CHANGELOG-compact.md \\
       --format compact
 
   # Use custom template
   $ mcpcontract changelog \\
-      --analysis diff-breaking.json \\
+      --diff diff-breaking.json \\
       --template my-template.hbs \\
       --output CHANGELOG.md
 `;
@@ -102,15 +101,7 @@ EXAMPLES:
   })
   .action(async (options) => {
     try {
-      const { diff: diffFile, breaking: analysisFile, analysis: newAnalysisFile, output, format, template: customTemplate, omitZeros, sort, showDiffReasoning, quiet } = options;
-
-      // Determine input file (support old and new options)
-      const inputFile = newAnalysisFile || analysisFile || diffFile;
-      
-      if (!inputFile) {
-        console.error('❌ Error: --analysis is required');
-        process.exit(2);
-      }
+      const { diff: inputFile, output, format, template: customTemplate, omitZeros, sort, showDiffReasoning, quiet } = options;
 
       if (!quiet) {
         console.error(`📝 Generating changelog from ${inputFile}...`);
@@ -251,8 +242,10 @@ EXAMPLES:
         console.error(`   Total changes: ${analysisData.summary?.totalChanges || 0}`);
       }
 
-      // Exit with same code as analysis
-      process.exit(analysisData.summary.exitCode);
+      // changelog is a pure renderer: a successful render always exits 0.
+      // Gating on breaking changes is the responsibility of the 'breaking'
+      // command, whose exit code (0/1/2) is the CI contract.
+      process.exit(0);
     } catch (error) {
       console.error(`❌ Unexpected error: ${(error as Error).message}`);
       if ((error as Error).stack) {

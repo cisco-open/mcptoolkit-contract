@@ -116,12 +116,20 @@ _mcpcontract_completion() {
                     COMPREPLY=( $(compgen -W "text json" -- "\${cur}") )
                     ;;
                 changelog)
-                    COMPREPLY=( $(compgen -W "json yaml markdown" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "release compact" -- "\${cur}") )
                     ;;
                 *)
                     COMPREPLY=( $(compgen -W "json yaml" -- "\${cur}") )
                     ;;
             esac
+            return
+            ;;
+        --sort)
+            COMPREPLY=( $(compgen -W "original alphabetical" -- "\${cur}") )
+            return
+            ;;
+        --auth)
+            COMPREPLY=( $(compgen -W "none auto oauth" -- "\${cur}") )
             return
             ;;
         --schema)
@@ -233,7 +241,7 @@ _mcpcontract_completion() {
         agents)
             # Special handling for agents command
             if [[ "\${prev}" == "--command" ]]; then
-                local subcommands="dump split convert validate diff breaking changelog document rules completion"
+                local subcommands="dump split validate diff breaking changelog document rules completion"
                 COMPREPLY=( $(compgen -W "\${subcommands}" -- "\${cur}") )
             elif [[ "\${cur}" == -* ]]; then
                 local opts="--command --workflows --all"
@@ -250,7 +258,7 @@ _mcpcontract_completion() {
                 # User typed --, show long options
                 case "\${cmd}" in
                     dump)
-                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --info --skip-cors-check --cors-origin --page-size --help"
+                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     split)
@@ -274,11 +282,11 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     breaking)
-                        local opts="--diff --rules --output --quiet --help"
+                        local opts="--diff --rules --output --suggest-version --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     changelog)
-                        local opts="--diff --breaking --output --format --template --quiet --help"
+                        local opts="--diff --output --format --template --omit-zeros --sort --show-diff-reasoning --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     completion)
@@ -311,15 +319,15 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     diff)
-                        local opts="-o -q -h"
+                        local opts="-h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     breaking)
-                        local opts="-o -q -h"
+                        local opts="-h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     changelog)
-                        local opts="-o -f -t -q -h"
+                        local opts="-h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     completion)
@@ -344,7 +352,7 @@ _mcpcontract_completion() {
                         # Other commands show options to improve discoverability
                         case "\${cmd}" in
                             dump)
-                                local opts=\"--config --mcp-server --server-name --transport --url --header --command --args --env --output --format --pretty --quiet --info --skip-cors-check --cors-origin --page-size --help\"
+                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             diff)
@@ -352,11 +360,11 @@ _mcpcontract_completion() {
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             breaking)
-                                local opts="--diff --rules --output --quiet --help"
+                                local opts="--diff --rules --output --suggest-version --quiet --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             changelog)
-                                local opts="--diff --breaking --output --format --template --quiet --help"
+                                local opts="--diff --output --format --template --omit-zeros --sort --show-diff-reasoning --quiet --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             *)
@@ -427,6 +435,12 @@ _mcp_contract() {
                         '--skip-cors-check[Skip CORS detection]' \\
                         '--cors-origin[CORS preflight origin]:origin:' \\
                         '--page-size[Page size for pagination testing]:number:' \\
+                        '--auth[Authentication mode]:mode:(none auto oauth)' \\
+                        '--oauth-scope[Additional OAuth scope (repeatable)]:scope:' \\
+                        '--oauth-resource[Override OAuth resource value]:uri:' \\
+                        '--oauth-callback-port[OAuth callback port]:port:' \\
+                        '--oauth-client-id[OAuth client id]:id:' \\
+                        '--oauth-client-secret[OAuth client secret]:secret:' \\
                         '(-i --info)'{-i,--info}'[Enrichment info file]:file:_files' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
@@ -485,9 +499,9 @@ _mcp_contract() {
                     _arguments \\
                         '--from[Source MCP description]:file:_files' \\
                         '--to[Target MCP description]:file:_files' \\
-                        '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
+                        '--output[Output file]:file:_files' \\
                         '--detect-renames[Detect renames]' \\
-                        '(-q --quiet)'{-q,--quiet}'[Suppress output]' \\
+                        '--quiet[Suppress output]' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
                     ;;
@@ -495,19 +509,22 @@ _mcp_contract() {
                     _arguments \\
                         '--diff[Diff file]:file:_files' \\
                         '--rules[Rules file]:file:_files' \\
-                        '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '(-q --quiet)'{-q,--quiet}'[Suppress output]' \\
+                        '--output[Output file]:file:_files' \\
+                        '--suggest-version[Display semantic versioning recommendation]' \\
+                        '--quiet[Suppress output]' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
                     ;;
                 changelog)
                     _arguments \\
-                        '--diff[Structural diff file]:file:_files' \\
-                        '--breaking[Breaking change analysis]:file:_files' \\
-                        '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '(-f --format)'{-f,--format}'[Output format]:format:(json yaml markdown)' \\
-                        '(-t --template)'{-t,--template}'[Template file]:file:_files' \\
-                        '(-q --quiet)'{-q,--quiet}'[Suppress output]' \\
+                        '--diff[Diff or annotated diff file]:file:_files' \\
+                        '--output[Changelog output file]:file:_files' \\
+                        '--format[Template format]:format:(release compact)' \\
+                        '--template[Custom template file]:file:_files' \\
+                        '--omit-zeros[Hide categories with 0 entries]' \\
+                        '--sort[Sort order]:order:(original alphabetical)' \\
+                        '--show-diff-reasoning[Show impact badges and rationale]' \\
+                        '--quiet[Suppress output]' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
                     ;;
@@ -585,7 +602,7 @@ _mcp_contract() {
                     ;;
                 agents)
                     _arguments \
-                        '--command[Get help for specific command]:command:(dump validate diff breaking changelog document rules completion)' \
+                        '--command[Get help for specific command]:command:(dump split validate diff breaking changelog document rules completion)' \
                         '--workflows[Show all end-to-end workflows]' \
                         '--all[Output all commands in single document]'
                     ;;
@@ -622,7 +639,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s s -l mcp-server
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s n -l server-name -d "Server name"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s t -l transport -d "Transport type" -a "streamable-http sse stdio"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s u -l url -d "Server URL"
-complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s H -l headers -d "HTTP headers"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s H -l header -d "HTTP header (repeatable)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l command -d "Command to execute"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l args -d "Command arguments"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l env -d "Environment variables"
@@ -634,6 +651,12 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s v -l verbose -d
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l skip-cors-check -d "Skip CORS detection"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l cors-origin -d "CORS preflight origin"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l page-size -d "Page size for pagination testing"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l auth -d "Authentication mode" -a "none auto oauth"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-scope -d "Additional OAuth scope (repeatable)"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-resource -d "Override OAuth resource value"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-callback-port -d "OAuth callback port"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-client-id -d "OAuth client id"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-client-secret -d "OAuth client secret"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s i -l info -d "Enrichment info file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s h -l help -d "Show help"
 
@@ -680,25 +703,28 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s h -l help -
 # diff command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l from -d "Source MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target MCP description" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s o -l output -d "Output file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Detect renames"
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s q -l quiet -d "Suppress output"
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l quiet -d "Suppress output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s h -l help -d "Show help"
 
 # breaking command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -l diff -d "Diff file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -l rules -d "Rules file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -s q -l quiet -d "Suppress output"
+complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -l output -d "Output file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -l suggest-version -d "Display semantic versioning recommendation"
+complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -l quiet -d "Suppress output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from breaking" -s h -l help -d "Show help"
 
 # changelog command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l diff -d "Structural diff file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l breaking -d "Breaking change analysis" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s f -l format -d "Output format" -a "json yaml markdown"
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s t -l template -d "Template file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s q -l quiet -d "Suppress output"
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l diff -d "Diff or annotated diff file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l output -d "Changelog output file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l format -d "Template format" -a "release compact"
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l template -d "Custom template file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l omit-zeros -d "Hide categories with 0 entries"
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l sort -d "Sort order" -a "original alphabetical"
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l show-diff-reasoning -d "Show impact badges and rationale"
+complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l quiet -d "Suppress output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s h -l help -d "Show help"
 
 # completion command
@@ -747,10 +773,9 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_s
 complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l format -d "Output format" -a "json markdown"
 complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l summary -d "Export summary without examples"
-complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l summary -d "Export summary without examples"
 
 # agents command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split convert validate diff breaking changelog document rules completion"
+complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split validate diff breaking changelog document rules completion"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l workflows -d "Show all end-to-end workflows"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l all -d "Output all commands in single document"
 `;

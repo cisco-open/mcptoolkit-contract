@@ -71,7 +71,7 @@ mcpcontract/
 ├── rules/                    # Compatibility rules (YAML)
 │   ├── breaking-changes.yaml      # Default MCP compatibility rules (35 rules)
 │   ├── strict-compatibility.yaml  # Example strict rules
-│   ├── catalog/                   # ✅ Rules documentation (33 entries)
+│   ├── catalog/                   # ✅ Rules documentation (34 entries)
 │   │   ├── catalog-schema.json    # JSON Schema for catalog entries
 │   │   ├── tools/                 # 12 tool-related rules
 │   │   ├── prompts/               # 8 prompt-related rules

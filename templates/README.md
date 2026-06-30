@@ -41,5 +41,5 @@ Available Handlebars helpers (registered by `src/lib/renderer.ts`): `eq`, `neq`,
 mcpcontract document --template card-view my-server-dump.yaml -o docs.html
 
 # Generate a release changelog
-mcpcontract changelog --breaking analysis.json --format release -o CHANGELOG.md
+mcpcontract changelog --diff diff-breaking.json --format release -o CHANGELOG.md
 ```

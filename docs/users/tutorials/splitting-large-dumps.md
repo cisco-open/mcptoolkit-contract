@@ -380,8 +380,7 @@ mcpcontract breaking \
 
 # Generate changelog
 mcpcontract changelog \
-  --diff diff-platform-identity.json \
-  --breaking breaking-platform-identity.json \
+  --diff breaking-platform-identity.json \
   --template release \
   --output CHANGELOG-platform-identity.md
 ```

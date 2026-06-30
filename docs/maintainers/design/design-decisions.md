@@ -114,7 +114,7 @@ Renders a human-readable changelog from a diff (and optional breaking analysis) 
 Compatibility rules live in two parallel structures:
 
 - `rules/breaking-changes.yaml` — the **operational** rules consumed by `breaking` (35 rules across tools/prompts/resources/resourceTemplates/serverInfo).
-- `rules/catalog/<category>/<change>.yaml` — **documentation** entries with pass/fail examples, rationale, and migration guidance (33 entries today).
+- `rules/catalog/<category>/<change>.yaml` — **documentation** entries with pass/fail examples, rationale, and migration guidance (34 entries today).
 
 **Design arbitrations:**
 
