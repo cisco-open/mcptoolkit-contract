@@ -1,29 +1,41 @@
-# MCP Description (mcpdesc) Schema Documentation
+# The mcpdesc Schema
 
-## Overview
+`mcpcontract` uses the **mcpdesc** (MCP Description) schema to fully describe what
+an MCP server offers. Think of it as the MCP equivalent of an OpenAPI spec for a
+REST API: a standalone, MCP-native declaration of every tool, resource, prompt,
+and transport a server exposes. Provenance about *how* a snapshot was captured is
+carried in the **`x-cisco-metadata`** specification extension.
 
-`mcpcontract dump` writes a capability snapshot in the **MCP Description (mcpdesc)**
-format — a standalone, MCP-native declaration of everything a server exposes:
-tools, resources, prompts, transports, and protocol metadata. Provenance about how
-the snapshot was captured is carried in the **`x-cisco-metadata`** specification
-extension.
+| | **mcpdesc** (MCP Description) |
+|--|------|
+| **Answers** | *What does this server offer?* |
+| **Contains** | Tools, resources, prompts with full input schemas; transports; protocol version; auth |
+| **Produced by** | `mcpcontract dump` |
+| **Analogy** | `openapi.yaml` |
+
+```
+ Live MCP Server
+       │  mcpcontract dump
+       ▼
+ server.mcpdesc.json         ← "what this server offers"
+   info: name, version
+   tools: [{ name, inputSchema, ... }]
+   resources, prompts, ...
+```
 
 > **Note:** Earlier releases produced a Cisco-specific *capability dump* format
-> (top-level `version` / `dumpDetails` / `serverInfo`). That on-disk format has been
-> removed. Older files can be migrated with the deprecated
-> [`mcpcontract convert`](dump-to-mcpdesc.md) command.
+> (top-level `version` / `dumpDetails` / `serverInfo`). That on-disk format has
+> been removed. Older files can be migrated with the deprecated
+> [`mcpcontract convert`](convert-legacy.md) command.
 
-## Purpose
+## Why it matters
 
-The mcpdesc snapshot serves several purposes:
+1. **Server discovery** — captures the complete API surface of an MCP server.
+2. **Version tracking** — enables comparison between server versions to detect breaking changes.
+3. **Change analysis** — foundation for `diff`, `breaking`, and `changelog`.
+4. **Documentation** — source of truth for generating human-readable API docs.
 
-1. **Server Discovery** — captures the complete API surface of an MCP server
-2. **Version Tracking** — enables comparison between server versions to detect breaking changes
-3. **Change Analysis** — foundation for `diff`, `breaking`, and `changelog` generation
-4. **Testing & Validation** — a reference for client implementations
-5. **Documentation** — source of truth for generating human-readable API docs
-
-## Schema Versions
+## Schema versions
 
 The format is versioned independently of the CLI:
 
@@ -35,7 +47,7 @@ The format is versioned independently of the CLI:
 `schemas/cli-schema-compatibility.json` records which CLI versions emit which
 schema versions.
 
-## Basic Structure
+## Document structure
 
 An mcpdesc document has the following top-level shape:
 
@@ -58,18 +70,7 @@ An mcpdesc document has the following top-level shape:
 
 **Required**: `mcpdesc`, `info`, `transports`.
 
-## Core Sections
-
-### 1. mcpdesc
-
-```json
-{ "mcpdesc": "0.7.0" }
-```
-
-- **Required**: Yes
-- **Purpose**: Identifies the MCP Description specification version this file conforms to.
-
-### 2. Info
+### info
 
 Server identity and protocol metadata (OpenAPI-aligned `info` object):
 
@@ -85,25 +86,20 @@ Server identity and protocol metadata (OpenAPI-aligned `info` object):
 }
 ```
 
-**Key Fields**:
 - `name` — programmatic server identifier (required)
 - `version` — server version, semver recommended (required)
 - `title` — human-readable display name (MCP `BaseMetadata`, 2025-06-18+)
 - `protocolVersion` — MCP protocol version implemented by the server
 
-### 3. Transports
+### transports
 
 One or more transport configurations the server supports:
 
 ```json
-{
-  "transports": [
-    { "type": "streamable-http", "url": "https://example.com/mcp" }
-  ]
-}
+{ "transports": [ { "type": "streamable-http", "url": "https://example.com/mcp" } ] }
 ```
 
-### 4. Capabilities
+### capabilities
 
 Capabilities advertised by the server during initialization:
 
@@ -118,13 +114,13 @@ Capabilities advertised by the server during initialization:
 }
 ```
 
-### 5. Tools / Resources / Resource Templates / Prompts
+### tools / resources / resourceTemplates / prompts
 
 Arrays describing the server's exposed capabilities. Each tool entry carries its
 `name`, optional `description`, and a JSON Schema `inputSchema`; resources and
 prompts follow the corresponding MCP shapes.
 
-### 6. x-cisco-metadata (capture provenance)
+### x-cisco-metadata (capture provenance)
 
 The `x-cisco-metadata` extension records how the snapshot was produced:
 
@@ -150,7 +146,6 @@ The `x-cisco-metadata` extension records how the snapshot was produced:
 }
 ```
 
-**Key Fields**:
 - `version` — extension payload version (`0.2.0`)
 - `dump.toolName` / `dump.toolVersion` — which tool created the snapshot
 - `dump.createdAt` — capture timestamp
@@ -158,21 +153,14 @@ The `x-cisco-metadata` extension records how the snapshot was produced:
 - `dump.runtimeObservations`, `dump.cors`, `dump.paginationDetection`,
   `dump.clientCapabilities` — runtime discoveries about the server
 
-## Best Practices
+## Best practices
 
-1. **Always validate** — run `mcpcontract validate <file> --schema mcpdesc` to ensure conformance.
+1. **Always validate** — run `mcpcontract validate <file> --schema mcpdesc`.
 2. **Include a description** — set `info.description` to document the server's purpose.
 3. **Preserve history** — keep snapshots from major versions for comparison.
-4. **Document changes** — record schema/contract changes in the changelog.
 
-## Related Documentation
+## Related
 
-- [dump-to-mcpdesc.md](dump-to-mcpdesc.md) — converting legacy dump files to mcpdesc format
-- [schemas.md](schemas.md) — schema overview
-- [../quick-start.md](../quick-start.md) — quick start guide
-- [Tutorials](tutorials/) — step-by-step guides for common workflows
-
-## Schema Location
-
-- **mcpdesc schema**: [schemas/mcp-description/0.7.0.json](../../schemas/mcp-description/0.7.0.json)
-- **x-cisco-metadata extension**: [schemas/dump-extension/0.2.0.json](../../schemas/dump-extension/0.2.0.json)
+- [convert-legacy.md](convert-legacy.md) — migrating legacy dump files to mcpdesc
+- [complete-workflow.md](../tutorials/complete-workflow.md) — end-to-end example
+- Schema files: [mcp-description/0.7.0.json](../../../schemas/mcp-description/0.7.0.json) · [dump-extension/0.2.0.json](../../../schemas/dump-extension/0.2.0.json)

@@ -105,10 +105,24 @@ Apply compatibility rules to the diff. The output combines the diff data with se
 mcpcontract breaking \
   --diff diff.json \
   --rules rules/breaking-changes.yaml \
+  --suggest-version \
   --output analysis.json
 ```
 
-Exit codes: `0` (compatible), `1` (breaking changes found), `2` (error) — useful for gating CI.
+`--suggest-version` adds a recommended SemVer bump (e.g. `1.0.0 → 2.0.0 (MAJOR)`).
+Exit codes: `0` (compatible), `1` (breaking changes found), `2` (error) — useful
+for gating CI. Apply stricter organizational rules with
+`--rules rules/strict-compatibility.yaml`.
+
+**Change types at a glance:**
+
+| Breaking (⚠️) | Compatible (✅) |
+|---|---|
+| `tool-removed`, `resource-removed`, `resource-uri-changed` | `tool-added`, `prompt-added`, `resource-added` |
+| `parameter-removed`, `parameter-made-required`, `parameter-type-changed` | `parameter-added` (optional), `parameter-made-optional` |
+| `tool-output-schema-changed`, `capability-property-changed` | `*-description-changed`, `cors-detection-added` |
+
+See the [rules catalog tutorial](rules-catalog.md) for the full catalog and how to customize severities.
 
 ---
 
@@ -199,6 +213,6 @@ jobs:
 
 ## Next Steps
 
-- [Changelog tutorial](changelog-tutorial.md) — compare versions and detect breaking changes
-- [Rules catalog guide](rules-catalog-guide.md) — understand and customize compatibility rules
+- [Rules catalog](rules-catalog.md) — understand and customize compatibility rules
 - [Splitting large dumps](splitting-large-dumps.md) — organize federation servers by service
+- [mcpdesc schema](../reference/schemas.md) — the document format you're producing

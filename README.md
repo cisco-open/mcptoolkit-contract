@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.3-orange.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.4-orange.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Quick start:** [docs/quick-start.md](docs/quick-start.md)
@@ -53,10 +53,10 @@ mcpcontract changelog --breaking analysis.json --output CHANGELOG.md
 - **Postel's Law**: "Be liberal in what you accept" - clients should handle unknown values gracefully
 - **Customizable**: Teams can override with stricter rules if needed (see `rules/strict-compatibility.yaml`)
 
-📘 **[Read the full MCP Compatibility Guidelines](docs/users/mcp-compatibility-guidelines.md)** for detailed philosophy, patterns, and best practices.
+📘 **[Read the full MCP Compatibility Guidelines](docs/users/reference/compatibility.md)** for detailed philosophy, patterns, and best practices.
 
 **Documentation**:
-- [MCP Compatibility Guidelines](docs/users/mcp-compatibility-guidelines.md) — Philosophy and best practices
+- [MCP Compatibility Guidelines](docs/users/reference/compatibility.md) — Philosophy and best practices
 - [Example Artifacts](docs/users/examples/)
 
 ## 📖 Commands
@@ -121,10 +121,16 @@ mcpcontract breaking --diff diff.json --rules rules/breaking-changes.yaml --outp
 Render markdown changelogs from structural diff or breaking change analysis.
 
 ```bash
-mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --format summary
-mcpcontract changelog --breaking diff-breaking.json --output RELEASE-NOTES.md --format detailed
-mcpcontract changelog --breaking diff-breaking.json --output STATS.md --format stats
+# Comprehensive release notes (default)
+mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --format release
+
+# Brief one-line-per-change summary
+mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --format compact
 ```
+
+**Input Options**:
+- `--breaking <file>` (recommended): analysis file with diff + severity annotations
+- `--diff <file>`: raw structural diff (no severity ratings)
 
 ### ✅ rules - Browse Compatibility Rules Catalog
 
@@ -164,27 +170,10 @@ mcpcontract rules validate --catalog rules/my-team-catalog
 # Export catalog
 mcpcontract rules export --output catalog.json
 mcpcontract rules export --format markdown --output RULES.md
-mcpcontract rules export --summary --output catalog-summary.json
 mcpcontract rules export --catalog rules/strict-compatibility-catalog --format markdown
 ```
 
-**Catalog Entries**: 33 rules documented (40+ variants, 60+ examples)  
-**Categories**: tools (12), prompts (8), resources (6), resourceTemplates (3), serverInfo (5)  
-**Features**:
-- Complete documentation with rationale and migration guidance
-- Pass/fail examples for each rule variant
-- **Custom catalog support** with `--catalog` option for team-specific rules
-- **Severity comparison** when using custom catalogs (shows differences from default)
-- Auto-discovery based on rules filename (e.g., `strict-compatibility.yaml` → `strict-compatibility-catalog/`)
-- Manual catalog override with `--catalog` flag
-- Export as JSON or Markdown
-- Searchable by category, severity, breaking status  
-**Formats**: detailed, summary, stats  
-**Exit Codes**: Inherits from analysis (0=compatible, 1=breaking, 2=error)
-
-**Input Options**:
-- `--diff <file>`: Use raw structural diff (no severity ratings)
-- `--breaking <file>`: Use analysis file which contains diff + severity annotations (recommended)
+**Catalog**: 33 documented rules across tools (12), prompts (8), resources (6), resourceTemplates (3), serverInfo (5) — each with rationale, migration guidance, and pass/fail examples. Custom team catalogs are supported via `--catalog`, which also shows how severities differ from the defaults. See the [rules catalog tutorial](docs/users/tutorials/rules-catalog.md).
 
 ### ✅ split - Split Large Dumps into Focused Subsets
 
@@ -232,7 +221,7 @@ mcpcontract/
 │   ├── commands/        # Commander subcommands (thin argument-parsing layer)
 │   ├── lib/             # Core logic (dumper, differ, rules-engine, splitter, …)
 │   └── index.ts         # CLI entry point
-├── schemas/             # JSON schemas (versioned: dump/, mcp-description/, diff/, …)
+├── schemas/             # JSON schemas (versioned: mcp-description/, diff/, …)
 ├── rules/               # Compatibility rules (YAML) + documentation catalog
 ├── templates/           # Handlebars templates (dumps, changelogs)
 ├── tests/               # Jest unit + integration tests, shell smoke tests
@@ -245,9 +234,9 @@ mcpcontract/
 
 See **[docs/users/examples/](docs/users/examples/)** for working examples:
 
+- `microsoft-learn/` — real dumps from the public Microsoft Learn MCP server, including two historical snapshots for diff/changelog
 - `http-with-auth-config.yaml` — MCP server config with Bearer-token authentication
 - `split-federation-services.yaml` + `split-example.md` — splitting a federation dump by service
-- `ietf-network-mgmt-mcp-dump.json` + `ietf-network-mgmt.md` — a synthetic dump for the IETF network-management MCP draft, plus its rendered documentation
 - `html/` — sample HTML output from `mcpcontract document`
 
 

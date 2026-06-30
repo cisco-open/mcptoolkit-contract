@@ -221,7 +221,7 @@ relatedRules:
 
 references:
   - title: MCP Compatibility Guidelines
-    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+    url: https://github.com/cisco/mcpcontract/docs/users/reference/compatibility.md
   - title: "Postel's Law (Robustness Principle)"
     url: https://en.wikipedia.org/wiki/Robustness_principle
   - title: JSON Schema Validation Specification

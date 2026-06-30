@@ -6,8 +6,7 @@ Sample artifacts demonstrating `mcpcontract` output formats. Each example is rea
 
 | File | Demonstrates |
 |---|---|
-| `ietf-network-mgmt-mcp-dump.json` | A dump in mcpdesc format for the IETF network-management MCP draft server — real-world schema with tools and resources |
-| `ietf-network-mgmt.md` | Rendered documentation for the IETF dump (output of `mcpcontract document`) |
+| `microsoft-learn/` | Real dumps from the public Microsoft Learn MCP server — used by the quick start and tutorials, including two historical snapshots for diff/changelog |
 | `http-with-auth-config.yaml` | Example `mcpcontract dump` config using Bearer token authentication for HTTP servers |
 | `split-federation-services.yaml` | Example `mcpcontract split` config that partitions a federation dump into focused subsets |
 | `split-example.md` | Narrative walkthrough of the split workflow using the federation example |

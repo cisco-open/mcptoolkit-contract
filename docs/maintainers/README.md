@@ -18,6 +18,4 @@ If you are looking for usage docs, see [../users/](../users/).
 - [`33-oauth-best-practices.md`](implementation/33-oauth-best-practices.md) — OAuth implementation guidance for the CLI
 - [`34-wsl-oauth-browser.md`](implementation/34-wsl-oauth-browser.md) — OAuth browser handshake from WSL2
 
-Older implementation journals are archived in [`dust/`](../dust/).
-
 See [AGENTS.md](../../AGENTS.md) for the developer guide (build, test, release procedures, conventions).

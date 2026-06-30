@@ -1,66 +1,47 @@
-# Quick Start Guide
+# Quick Start
 
-Get started with `mcpcontract` in 5 minutes using the Microsoft Learn MCP Server.
+Get going with `mcpcontract` in five minutes using the public
+[Microsoft Learn MCP Server](https://learn.microsoft.com/api/mcp).
 
-## Prerequisites
+## Install
 
 ```bash
-# Install from npm (recommended)
+# From npm (recommended)
 npm install -g @cisco_open/mcptoolkit-contract
 
-# Or clone and build from source
+# …or from source
 git clone https://github.com/cisco-open/mcptoolkit-contract.git
-cd mcptoolkit-contract
-npm install && npm run build
-npm install -g .
+cd mcptoolkit-contract && npm install && npm run build && npm install -g .
 
-# Verify installation
 mcpcontract --version
 ```
 
-## 5-Minute Walkthrough
-
-### 1. Extract Capabilities
-
-**Option A: Interactive Wizard (Recommended for first-time users)**
+## 1. Extract capabilities
 
 ```bash
-# Launch interactive wizard
-mcpcontract dump --wizard
-# or simply:
+# Interactive wizard (easiest first run)
 mcpcontract dump
-```
 
-**Option B: Direct Command Line**
-
-```bash
-# Dump capabalities of an existing server into in a YAML format
-# Tip: Use --verbose for debugging connection issues
+# …or directly
 mcpcontract dump \
   --transport streamable-http \
   --url https://learn.microsoft.com/api/mcp \
   --format yaml \
-  --verbose \
   --output ms-learn-dump.yaml
-
-# Display the generated dump
-cat ms-learn-dump.yaml
 ```
 
-### 2. Validate the generated dump conform to the MCP Description specifications
+Add `--verbose` to debug connection issues. The output is an
+[mcpdesc](users/reference/schemas.md) document describing every tool the server
+exposes.
+
+## 2. Validate
 
 ```bash
-# Validate dump file (auto-detects specifications schema and schema version)
-mcpcontract validate ms-learn-dump.yaml
-
-# View CLI-schema compatibility matrix
-mcpcontract validate --show-compatibility
-
-# Show all versions (not just schema changes)
-mcpcontract validate --show-compatibility --display full
+mcpcontract validate ms-learn-dump.yaml          # auto-detects schema + version
+mcpcontract validate --show-compatibility        # CLI ↔ schema matrix
 ```
 
-### 3. Generate Documentation
+## 3. Generate documentation
 
 ```bash
 mcpcontract document ms-learn-dump.yaml \
@@ -68,119 +49,44 @@ mcpcontract document ms-learn-dump.yaml \
   --output ms-learn-documentation.md
 ```
 
-### 4. Track Changes Between Versions 
+## 4. Track changes between versions
+
+This repo ships two historical snapshots of the Microsoft Learn server so you can
+run a real comparison without dumping twice:
 
 ```bash
-# Compare two versions to detect changes
+D=docs/users/examples/microsoft-learn
+
+# Structural diff (old → new)
 mcpcontract diff \
-  --from docs/users/quickstart/old-dump.yaml \
-  --to docs/users/quickstart/new-dump.yaml \
-  --output docs/users/quickstart/changes.json
+  --from $D/ms-learn-dump-v1.0.0-2025-11-20.yaml \
+  --to   $D/ms-learn-dump-v1.0.0-2026-06-30.yaml \
+  --output changes.json
 
-# Analyze for breaking changes with version suggestion
-mcpcontract breaking \
-  --diff docs/users/quickstart/changes.json \
-  --suggest-version \
-  --output docs/users/quickstart/analysis.json
+# Classify changes and suggest a SemVer bump
+mcpcontract breaking --diff changes.json --suggest-version --output analysis.json
 
-# Generate human-readable changelog
-mcpcontract changelog \
-  --analysis docs/users/quickstart/analysis.json \
-  --format release \
-  --output docs/users/quickstart/CHANGELOG.md
+# Render a human-readable changelog
+mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
 ```
 
-**Changelog formats:**
-- `release` (default) - Comprehensive with categorization and migration guidance
-- `compact` - Brief one-line summaries with icons
+You'll see **8 changes (4 breaking)** and a recommended **MAJOR** bump
+(`1.0.0 → 2.0.0`) — new tool output schemas and capability changes, with the
+deprecated `question` parameter removed. `breaking` exits `1` when breaking
+changes are found, which is handy for gating CI. Use `--format compact` for a
+brief one-line-per-change summary.
 
-## What You Just Did
+## What you just did
 
-✅ **Extracted** capabilities from a live MCP server  
-✅ **Validated** the capability dump against the schema  
-✅ **Rendered** human-readable documentation  
-✅ **Tracked** changes and generated release notes (optional)
+- **Extracted** capabilities from a live MCP server
+- **Validated** the dump against the mcpdesc schema
+- **Rendered** human-readable documentation
+- **Compared** two versions and generated release notes
 
-**Generated files:**
-- `docs/users/quickstart/ms-learn-dump.yaml` - Extracted capabilities
-- `docs/users/quickstart/ms-learn-documentation.md` - Human-readable documentation
-- `docs/users/quickstart/changes.json` - Structural diff (optional)
-- `docs/users/quickstart/analysis.json` - Breaking change analysis (optional)
-- `docs/users/quickstart/CHANGELOG.md` - Release notes (optional)
+## Next steps
 
-## Next Steps
-
-### Learn More
-
-- **[Command Reference](README.md)** - Full CLI documentation
-- **[Tutorials](docs/users/tutorials/)** - Full workflow walkthrough, changelog, rules, and split deep-dives
-- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol docs
-
-### Try These Commands
-
-```bash
-# View all available commands
-mcpcontract --help
-
-# List available templates
-mcpcontract document --list docs/users/quickstart/ms-learn-dump.yaml
-
-# Validate with strict mode
-mcpcontract validate docs/users/quickstart/ms-learn-dump.yaml --schema mcpdesc --strict
-
-# Generate detailed documentation
-mcpcontract document docs/users/quickstart/ms-learn-dump.yaml \
-  --template mcpdesc-documentation \
-  --output docs/users/quickstart/ms-learn-documentation-detailed.md
-
-# Generate compact changelog
-mcpcontract changelog \
-  --analysis docs/users/quickstart/analysis.json \
-  --format compact \
-  --output CHANGELOG-compact.md
-
-# Browse compatibility rules catalog
-mcpcontract rules list
-mcpcontract rules show tool-removed
-```
-
-### Common Workflows
-
-**Test with your own server:**
-```bash
-mcpcontract dump \
-  --transport streamable-http \
-  --url http://localhost:3000/mcp \
-  --format yaml \
-  --output docs/users/quickstart/my-dump.yaml
-```
-
-**Use a config file for repeated operations:**
-```yaml
-# config.yaml
-mcpServers:
-  my-server:
-    url: http://localhost:3000/mcp
-    transport:
-      type: streamable-http
-```
-
-```bash
-mcpcontract dump --config config.yaml --output dump.yaml --format yaml
-```
-
-## Need Help?
-
-```bash
-# Get help for any command
-mcpcontract dump --help
-mcpcontract validate --help
-mcpcontract document --help
-```
-
-**Documentation:**
-- [Repository](https://github.com/cisco-open/mcptoolkit-contract) - Source code and issues
-
----
-
-**Ready for more?** Browse the [tutorials](docs/users/tutorials/) for changelog generation, rules catalog, and splitting large dumps.
+- [Complete workflow tutorial](users/tutorials/complete-workflow.md) — the full pipeline in depth
+- [Rules catalog](users/tutorials/rules-catalog.md) — understand and customize compatibility rules
+- [Splitting large dumps](users/tutorials/splitting-large-dumps.md) — organize multi-service servers
+- [Command reference](../README.md) — every command and flag
+- [mcpdesc schema](users/reference/schemas.md) — the document format

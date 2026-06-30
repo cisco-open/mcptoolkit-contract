@@ -445,18 +445,16 @@ mcpcontract changelog \
 
 ## Related Commands
 
-- [`dump`](./01-basic-dump.md) - Create the initial dump
-- [`document`](./02-render-documentation.md) - Generate documentation from split dumps
-- [`diff`](./04-comparing-versions.md) - Compare split dumps across versions
-- [`validate`](../quick-start.md) - Validate split configurations
+- [Complete workflow](./complete-workflow.md) - dump, document, diff, and validate the split outputs
+- [split-example.md](../examples/split-example.md) - complete working example
+- [mcpdesc schema](../reference/schemas.md) - the document format split operates on
 
 ## Need Help?
 
-- Check [split-example.md](../examples/split-example.md) for complete working example
 - Run `mcpcontract split --help` for quick reference
-- See [AGENTS.md](../../AGENTS.md) for AI assistant guidance
+- See [AGENTS.md](../../../AGENTS.md) for AI assistant guidance
 - Report issues on GitHub
 
 ---
 
-**Next Steps**: After splitting, generate [focused documentation](./02-render-documentation.md) for each category.
+**Next Steps**: After splitting, generate [focused documentation](./complete-workflow.md#step-3-generate-documentation) for each category.

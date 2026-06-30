@@ -28,19 +28,18 @@ check() {
   fi
 }
 
-# User-facing entry points (referenced from README.md / QUICK_START.md / SUPPORT.md)
+# User-facing entry points (referenced from README.md / quick-start.md / SUPPORT.md)
 echo "Checking user-facing docs..."
+check "docs/quick-start.md"
 check "docs/users/README.md"
-check "docs/users/mcp-compatibility-guidelines.md"
-check "docs/users/schemas.md"
-check "docs/users/dump-schema.md"
-check "docs/users/dump-to-mcpdesc.md"
+check "docs/users/reference/schemas.md"
+check "docs/users/reference/compatibility.md"
+check "docs/users/reference/convert-legacy.md"
 
 # Tutorials referenced from user docs and each other
 echo "Checking tutorials..."
 check "docs/users/tutorials/complete-workflow.md"
-check "docs/users/tutorials/changelog-tutorial.md"
-check "docs/users/tutorials/rules-catalog-guide.md"
+check "docs/users/tutorials/rules-catalog.md"
 check "docs/users/tutorials/splitting-large-dumps.md"
 
 # Example artifacts referenced from tutorials and README
@@ -49,8 +48,9 @@ for file in \
     http-with-auth-config.yaml \
     split-federation-services.yaml \
     split-example.md \
-    ietf-network-mgmt-mcp-dump.json \
-    ietf-network-mgmt.md; do
+    microsoft-learn/README.md \
+    microsoft-learn/ms-learn-dump.yaml \
+    microsoft-learn/ms-learn-documentation.md; do
   check "docs/users/examples/$file"
 done
 

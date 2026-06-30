@@ -104,18 +104,14 @@ mcpcontract/
 │   └── integration/          # ✅ Integration tests (Jest)
 │       └── full-workflow.test.ts      # 10 end-to-end tests
 └── docs/
+    ├── quick-start.md        # 5-minute walkthrough (Microsoft Learn server)
     ├── users/                # User-facing guides, tutorials, examples
-    │   ├── tutorials/        # Walkthroughs (complete-workflow, changelog, rules, splitting)
-    │   ├── examples/         # Example artifacts
-    │   ├── quickstart/       # Quick-start sample data
-    │   ├── README.md
-    │   ├── schemas.md
-    │   ├── dump-schema.md
-    │   ├── dump-to-mcpdesc.md
-    │   └── mcp-compatibility-guidelines.md
-    ├── maintainers/          # Design notes and developer reference
-    │   └── design/           # architecture.md, design-decisions.md, workflow-examples.md
-    └── dust/                 # Archived historical notes (not in release)
+    │   ├── tutorials/        # Walkthroughs (complete-workflow, rules-catalog, splitting)
+    │   ├── reference/        # schemas.md, compatibility.md, convert-legacy.md
+    │   ├── examples/         # Example artifacts (microsoft-learn/, split, html/)
+    │   └── README.md
+    └── maintainers/          # Design notes and developer reference
+        └── design/           # architecture.md, design-decisions.md, workflow-examples.md
 ```
 
 ## Adding a New Command
@@ -458,7 +454,7 @@ mcpcontract rules export --catalog rules/my-team-catalog \
 - **Conditional Rules**: Support operators (equals, notEquals, contains, notContains, hasAdditions, hasRemovals, onlyAdditions, onlyRemovals)
 - **Exit Codes**: 0 (compatible), 1 (breaking), 2 (error)
 
-**MCP Compatibility Philosophy** ([mcp-compatibility-guidelines.md](docs/users/mcp-compatibility-guidelines.md)):
+**MCP Compatibility Philosophy** ([compatibility.md](docs/users/reference/compatibility.md)):
 - **Postel's Law**: "Be liberal in what you accept" - clients handle unknown values gracefully
 - **Open-World Assumption**: Schema evolves over time, unknown elements ignored
 - **Semantic Versioning**: MAJOR (breaking), MINOR (new features), PATCH (fixes)

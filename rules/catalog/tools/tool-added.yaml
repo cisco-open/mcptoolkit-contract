@@ -54,7 +54,7 @@ references:
   - title: MCP Tools Specification
     url: https://spec.modelcontextprotocol.io/specification/server/tools/
   - title: MCP Compatibility Guidelines
-    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+    url: https://github.com/cisco/mcpcontract/docs/users/reference/compatibility.md
 
 tags:
   - tools
