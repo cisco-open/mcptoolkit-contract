@@ -13,7 +13,7 @@ For demonstration the examples use placeholder names (`my-server`, `http://local
 
 ## Prerequisites
 
-`mcpcontract` installed (`npm install -g @cisco-open/mcptoolkit-contract`) and an MCP server reachable on a known transport (streamable-http, SSE, or stdio).
+`mcpcontract` installed (`npm install -g @cisco_open/mcptoolkit-contract`) and an MCP server reachable on a known transport (streamable-http, SSE, or stdio).
 
 ---
 
@@ -186,7 +186,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '18' }
-      - run: npm install -g @cisco-open/mcptoolkit-contract
+      - run: npm install -g @cisco_open/mcptoolkit-contract
       - name: Start server
         run: npm install && npm start &
       - run: sleep 5

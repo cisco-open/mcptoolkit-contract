@@ -8,12 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0-rc.3] - 2026-06-29](#100-rc3---2026-06-29)
 - [[1.0.0-rc2] - 2026-06-25](#100-rc2---2026-06-25)
 - [[1.0.0-rc1] - 2026-06-04](#100-rc1---2026-06-04)
 
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.0.0-rc.3] - 2026-06-29
+
+### Changed
+
+- Renamed npm scope from `@cisco-open` to `@cisco_open` to match the cisco_open npm organisation; all install instructions updated
 
 ## [1.0.0-rc2] - 2026-06-25
 

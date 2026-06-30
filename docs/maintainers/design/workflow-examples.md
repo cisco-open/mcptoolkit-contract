@@ -289,7 +289,7 @@ jobs:
         run: npm run build
       
       - name: Install mcpcontract
-        run: npm install -g @cisco-open/mcptoolkit-contract
+        run: npm install -g @cisco_open/mcptoolkit-contract
       
       - name: Start MCP server
         run: |

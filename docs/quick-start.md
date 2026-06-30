@@ -6,7 +6,7 @@ Get started with `mcpcontract` in 5 minutes using the Microsoft Learn MCP Server
 
 ```bash
 # Install from npm (recommended)
-npm install -g @cisco-open/mcptoolkit-contract
+npm install -g @cisco_open/mcptoolkit-contract
 
 # Or clone and build from source
 git clone https://github.com/cisco-open/mcptoolkit-contract.git
