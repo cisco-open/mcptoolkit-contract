@@ -6,7 +6,7 @@ Quick reference for AI agents and developers extending this CLI tool.
 
 **mcpcontract** - CLI toolkit for MCP (Model Context Protocol) server contract management.
 
-**Purpose**: Extract capabilities from live MCP servers, generate registry-compatible manifests, validate against schemas, render documentation, and track changes between versions.
+**Purpose**: Extract capabilities from live MCP servers, validate against schemas, render documentation, and track changes between versions.
 
 **Tech Stack**: TypeScript, Node.js 20+, Commander.js, Ajv, Handlebars, YAML
 
@@ -16,10 +16,9 @@ Quick reference for AI agents and developers extending this CLI tool.
 - `dump` - Extract capabilities from live MCP server
 - `split` - Split large dumps into focused subsets by filtering rules
 - `convert` - Convert between internal dump format and mcpdesc YAML (bidirectional)
-- `manifest` - Generate server.json from dump + metadata
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
-- `diff` - Compare manifests/dumps and generate structural diff
+- `diff` - Compare dumps and generate structural diff
 - `breaking` - Analyze diff for breaking changes using rules (with --suggest-version for semantic versioning)
 - `changelog` - Generate human-readable changelog from breaking analysis (formats: release, compact)
 - `completion` - Generate shell completion scripts
@@ -36,10 +35,9 @@ mcpcontract/
 │   │   ├── dump.ts          # ✅ Extract server capabilities
 │   │   ├── split.ts         # ✅ Split large dumps (Phase 1: tools)
 │   │   ├── convert.ts       # ✅ Convert between dump and mcpdesc formats
-│   │   ├── manifest.ts      # ✅ Generate server.json
 │   │   ├── validate.ts      # ✅ Validate against schemas
 │   │   ├── document.ts      # ✅ Generate documentation
-│   │   ├── diff.ts          # ✅ Compare manifests, generate structural diff
+│   │   ├── diff.ts          # ✅ Compare dumps, generate structural diff
 │   │   ├── breaking.ts      # ✅ Detect breaking changes using rules
 │   │   ├── changelog.ts     # ✅ Generate version changelog
 │   │   ├── completion.ts    # ✅ Generate shell completions
@@ -51,7 +49,6 @@ mcpcontract/
 │       ├── config.ts         # Config parser
 │       ├── formatters.ts     # JSON/YAML/Markdown output
 │       ├── types.ts          # Type definitions
-│       ├── manifest-builder.ts  # ✅ Manifest generation
 │       ├── validator.ts      # ✅ Schema validation
 │       ├── renderer.ts       # ✅ Template rendering
 │       ├── differ.ts         # ✅ Structural diff engine (734 lines)
@@ -64,15 +61,11 @@ mcpcontract/
 │   ├── cli-schema-compatibility.json  # CLI-schema compatibility matrix
 │   ├── mcp-description/     # mcpdesc dump schema — latest: 0.7.0
 │   ├── dump-extension/      # x-cisco-metadata extension — latest: 0.2.0
-│   ├── manifest-info/       # Manifest info input — 1.0.0
 │   ├── diff/                # Structural diff — 1.0.0
 │   ├── diff-breaking/       # Breaking-change analysis — 2.0.0
 │   ├── split-config/        # Split config — 1.0.0
-│   ├── server/              # Registry manifest — latest: 2025-12-11
 │   ├── adl-mcp-server-profile/  # ADL profile (reserved, planned)
 │   ├── dump-schema.json     # Legacy alias → mcp-description latest
-│   ├── server.schema.json   # Legacy alias → server latest
-│   ├── manifest-info-schema.json  # Legacy alias
 │   ├── diff-schema.json     # Legacy alias
 │   ├── diff-breaking-schema.json  # Legacy alias
 │   └── split-config-schema.json   # Legacy alias
@@ -91,9 +84,6 @@ mcpcontract/
 │   ├── card-view.html.hbs          # HTML card-view documentation
 │   ├── default-dump.md.hbs         # mcpdesc-documentation format
 │   ├── reference-dump.md.hbs       # reference-documentation format
-│   ├── default-manifest.md.hbs     # manifest-documentation format
-│   ├── reference-manifest.md.hbs   # manifest-reference format
-│   ├── registry-ready.md.hbs       # registry-submission format
 │   ├── changelog-release.md.hbs    # Comprehensive release notes
 │   ├── changelog-compact.md.hbs    # Brief changelog format
 │   ├── changelog-detailed.md.hbs   # Legacy detailed format
@@ -105,8 +95,6 @@ mcpcontract/
 │   ├── fixtures/             # Test data
 │   │   ├── configs/          # MCP configs
 │   │   ├── dumps/            # Capability dumps
-│   │   ├── info/             # Server metadata
-│   │   ├── manifests/        # Generated manifests
 │   │   └── split/            # Split configs and dumps
 │   ├── generators/           # ✅ Test generators
 │   │   └── catalog-test-generator.ts  # Auto-generate from catalog
@@ -355,7 +343,6 @@ When implementing features or fixes:
      "releaseDate": "2026-01-XX",
      "schemas": {
        "dump": "0.3.4",
-       "manifest": "1.0.0",
        "diff": "1.0.0",
        "breaking": "2.0.0",
        "split": "1.0.0"
@@ -436,7 +423,7 @@ const output = options.format === 'yaml'
 
 ### Completed (v0.17.0)
 ✅ Phase 1: Foundation (dump command)  
-✅ Phase 2: Manifest generation  
+🗑️ Phase 2: Manifest generation (removed before GA — registry/manifest support dropped)  
 ✅ Phase 3: Validation  
 ✅ Phase 4: Rendering  
 ✅ Phase 5: Diff & Changelog  
@@ -527,9 +514,8 @@ const output = options.format === 'yaml'
 2. **Test & refine changelog output** - Validate with diverse MCP servers
    - Validate against diverse MCP server implementations
 
-3. **Test & refine documentation rendering** - Validate manifest/dump docs
+3. **Test & refine documentation rendering** - Validate dump docs
    - Test templates with various server configurations
-   - Verify registry-ready format meets submission requirements
    - Ensure documentation clarity for both humans and AI agents
 
 **Post-1.0 Enhancements**:

@@ -28,7 +28,7 @@ describe('Agents Command Integration Tests', () => {
     it('should include all command descriptions', () => {
       const result = execSync(`${CLI_PATH} agents`).toString();
       
-      const commands = ['dump', 'manifest', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+      const commands = ['dump', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
       commands.forEach(cmd => {
         expect(result).toContain(`**${cmd}**`);
       });
@@ -58,7 +58,7 @@ describe('Agents Command Integration Tests', () => {
   });
 
   describe('Command-Specific Help', () => {
-    const commands = ['dump', 'manifest', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+    const commands = ['dump', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
 
     commands.forEach(cmd => {
       it(`should output ${cmd} command guide`, () => {
@@ -84,7 +84,6 @@ describe('Agents Command Integration Tests', () => {
       expect(result.length).toBeGreaterThan(1500);
       
       // Should NOT contain other command names in headers
-      expect(result).not.toContain('# manifest -');
       expect(result).not.toContain('# validate -');
     });
   });
@@ -103,7 +102,7 @@ describe('Agents Command Integration Tests', () => {
       
       expect(result).toContain('```bash');
       expect(result).toContain('mcpcontract dump');
-      expect(result).toContain('mcpcontract manifest');
+      expect(result).toContain('mcpcontract breaking');
     });
   });
 
@@ -119,7 +118,6 @@ describe('Agents Command Integration Tests', () => {
       
       // Should include all command guides
       expect(result).toContain('# dump - Extract MCP Server Capabilities');
-      expect(result).toContain('# manifest - Generate Server Manifest');
       expect(result).toContain('# validate - Validate Files Against Schemas');
       expect(result).toContain('# diff - Compare Server Versions');
       expect(result).toContain('# breaking - Detect Breaking Changes');
@@ -153,7 +151,7 @@ describe('Agents Command Integration Tests', () => {
         const stderr = error.stderr.toString();
         expect(stderr).toContain('Unknown command: invalidcommand');
         expect(stderr).toContain('Available commands:');
-        expect(stderr).toContain('dump, split, manifest, validate');
+        expect(stderr).toContain('dump, split, validate');
         expect(stderr).toContain('Usage: mcpcontract agents --command <name>');
       }
     });
@@ -228,7 +226,7 @@ describe('Agents Command Integration Tests', () => {
     });
 
     it('should explain when to use each command', () => {
-      const result = execSync(`${CLI_PATH} agents --command manifest`).toString();
+      const result = execSync(`${CLI_PATH} agents --command breaking`).toString();
       
       expect(result).toContain('## When to Use');
       expect(result).toContain('After');

@@ -10,7 +10,7 @@ The dump schema serves several critical purposes:
 
 1. **Server Discovery** - Captures the complete API surface of an MCP server for documentation and analysis
 2. **Version Tracking** - Enables comparison between server versions to detect breaking changes
-3. **Contract Generation** - Provides the foundation for generating registry-compatible manifests
+3. **Change Analysis** - Provides the foundation for diff, breaking-change, and changelog generation
 4. **Testing & Validation** - Serves as a reference for testing client implementations
 5. **Documentation** - Acts as the source of truth for generating human-readable API documentation
 
@@ -305,18 +305,15 @@ For stateful HTTP servers:
 
 ```bash
 # 1. Create a dump
-mcpcontract dump --config server.json --output server-dump.json
+mcpcontract dump --config server-config.json --output server-dump.json
 
 # 2. Validate the dump
 mcpcontract validate --type dump --file server-dump.json
 
-# 3. Generate manifest from dump
-mcpcontract manifest --mcpdesc server-dump.json --info metadata.yaml --output manifest.json
-
-# 4. Generate documentation
+# 3. Generate documentation
 mcpcontract document server-dump.json --output README.md
 
-# 5. Compare versions
+# 4. Compare versions
 mcpcontract diff --old v1-dump.json --new v2-dump.json --output changes.json
 
 # 6. Detect breaking changes

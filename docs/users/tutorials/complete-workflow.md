@@ -1,6 +1,6 @@
 # Tutorial: Complete `mcpcontract` Workflow
 
-This tutorial walks through the full pipeline — **dump → validate → manifest → document** — for any MCP server.
+This tutorial walks through the full pipeline — **dump → validate → document → diff → breaking → changelog** — for any MCP server.
 
 For demonstration the examples use placeholder names (`my-server`, `http://localhost:3000/mcp`). Substitute your own server name, URL, and transport.
 
@@ -8,8 +8,8 @@ For demonstration the examples use placeholder names (`my-server`, `http://local
 
 - Extract capabilities from a running MCP server
 - Validate capability dumps against the schema
-- Produce a registry-ready manifest from a dump + metadata file
 - Render human-readable documentation
+- Compare two versions and generate a changelog with breaking-change analysis
 
 ## Prerequisites
 
@@ -64,76 +64,61 @@ The validator auto-detects the schema version in the file, so old dumps validate
 
 ---
 
-## Step 3: Create Server Metadata (`server-info.json`)
+## Step 3: Generate Documentation
 
-The manifest needs complementary metadata — installation, repository, environment variables — that can't be extracted from a running server. Create `server-info.json`:
+```bash
+# Readable reference format:
+mcpcontract document dump.yaml \
+  --template reference-documentation \
+  --output REFERENCE.md
 
-```json
-{
-  "reverseDnsName": "com.example/my-server",
-  "description": "A short description of what the server does.",
-  "repository": { "url": "https://github.com/example-org/my-server", "source": "github" },
-  "license": "Apache-2.0",
-  "categories": ["Development Tools"],
-  "packages": [
-    {
-      "registryType": "npm",
-      "identifier": "@example/my-server",
-      "runtimeHint": "npx",
-      "transport": { "type": "streamable-http", "url": "http://localhost:{PORT}/mcp" },
-      "environmentVariables": [
-        { "name": "PORT", "description": "HTTP port", "default": "3000", "isRequired": false }
-      ]
-    }
-  ]
-}
+# Full mcpdesc documentation:
+mcpcontract document dump.yaml \
+  --template mcpdesc-documentation \
+  --output CAPABILITIES.md
+
+# Interactive HTML card view:
+mcpcontract document dump.yaml \
+  --template card-view \
+  --output capabilities.html
 ```
 
-Run `mcpcontract manifest --info-template > server-info.json` to bootstrap this file with all available fields.
+List all available templates: `mcpcontract document --list dump.yaml`
 
 ---
 
-## Step 4: Generate the Manifest
+## Step 4: Compare Two Versions
+
+When a new release of the server ships, dump it again and compare the two dumps to produce a structural diff:
 
 ```bash
-mcpcontract manifest \
-  --mcpdesc dump.yaml \
-  --info server-info.json \
-  --add-capabilities-meta \
-  --validate \
-  --format yaml \
-  --output manifest.yaml
-```
-
-`--add-capabilities-meta` embeds tool/resource/prompt counts in the manifest for registry display. `--validate` runs schema validation before writing.
-
----
-
-## Step 5: Validate the Manifest
-
-```bash
-mcpcontract validate manifest.yaml --schema manifest
-# Strict mode for CI/CD:
-mcpcontract validate manifest.yaml --schema manifest --strict
+mcpcontract diff --from dump-v1.yaml --to dump-v2.yaml --output diff.json
 ```
 
 ---
 
-## Step 6: Generate Documentation
+## Step 5: Detect Breaking Changes
+
+Apply compatibility rules to the diff. The output combines the diff data with severity annotations:
 
 ```bash
-# Registry-ready format (concise, for submission):
-mcpcontract document manifest.yaml \
-  --template registry-ready \
-  --output README.md
-
-# Full reference format:
-mcpcontract document manifest.yaml \
-  --template default \
-  --output MANIFEST.md
+mcpcontract breaking \
+  --diff diff.json \
+  --rules rules/breaking-changes.yaml \
+  --output analysis.json
 ```
 
-List all available templates: `mcpcontract document --list manifest.yaml`
+Exit codes: `0` (compatible), `1` (breaking changes found), `2` (error) — useful for gating CI.
+
+---
+
+## Step 6: Generate a Changelog
+
+```bash
+mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+```
+
+Use `--format compact` for a brief one-line-per-change summary.
 
 ---
 
@@ -149,23 +134,18 @@ mcpcontract dump \
   --format yaml \
   --output dump.yaml
 
-mcpcontract validate dump.yaml --schema dump
+mcpcontract validate dump.yaml --schema dump --strict
 
-mcpcontract manifest \
-  --mcpdesc dump.yaml \
-  --info server-info.json \
-  --add-capabilities-meta \
-  --validate \
-  --format yaml \
-  --output manifest.yaml
+mcpcontract document dump.yaml \
+  --template reference-documentation \
+  --output REFERENCE.md
 
-mcpcontract validate manifest.yaml --schema manifest --strict
+# Compare against a previous dump and produce a changelog
+mcpcontract diff --from dump-v1.yaml --to dump.yaml --output diff.json
+mcpcontract breaking --diff diff.json --output analysis.json
+mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
 
-mcpcontract document manifest.yaml \
-  --template registry-ready \
-  --output README.md
-
-echo "Done: dump → manifest → README.md"
+echo "Done: dump → REFERENCE.md + CHANGELOG.md"
 ```
 
 ---
@@ -194,14 +174,12 @@ jobs:
         run: |
           mcpcontract dump --url http://localhost:3000/mcp \
             --transport streamable-http --output dump.yaml
-          mcpcontract manifest --mcpdesc dump.yaml --info server-info.json \
-            --validate --output manifest.yaml
-          mcpcontract document manifest.yaml --template registry-ready --output README.md
+          mcpcontract document dump.yaml --template reference-documentation --output REFERENCE.md
       - name: Commit
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add README.md manifest.yaml
+          git add REFERENCE.md
           git commit -m "docs: update MCP documentation" || exit 0
           git push
 ```
@@ -213,9 +191,9 @@ jobs:
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `Connection refused` | Server not running or wrong port | `curl http://localhost:3000/mcp` to check |
-| Validation error at `/packages/0/transport/url` | Missing required field | Check info JSON for all required fields |
-| `Version mismatch` warning | Info file version ≠ dump version | Remove version from info to inherit from dump |
-| Capabilities missing from docs | Forgot `--add-capabilities-meta` | Re-run `manifest` with that flag |
+| Validation error in dump | Dump does not match schema | Run `mcpcontract validate dump.yaml --schema dump` for details |
+| `Version mismatch` warning | Dump schema version differs from CLI | Regenerate the dump with the current CLI version |
+| No changes detected in diff | Dumps are identical | Confirm `--from` and `--to` point at different versions |
 
 ---
 

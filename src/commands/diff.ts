@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * diff command - Generate structural diff between two MCP descriptions or manifests
+ * diff command - Generate structural diff between two MCP descriptions
  */
 
 import { Command } from 'commander';
@@ -14,9 +14,9 @@ import { extractDumpSchemaVersion } from '../lib/validator.js';
 import { parseAsContractDump, isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 
 export const diffCommand = new Command('diff')
-  .description('Generate a structural diff between two MCP descriptions or manifests')
-  .requiredOption('--from <file>', 'Source version (MCP description or manifest, JSON/YAML)')
-  .requiredOption('--to <file>', 'Target version (MCP description or manifest, JSON/YAML)')
+  .description('Generate a structural diff between two MCP descriptions')
+  .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
+  .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
   .option('--output <file>', 'Structural diff output file (default: stdout)')
   .option('--detect-renames', 'Use similarity scoring to detect renames (not yet implemented)', false)
   .option('--quiet', 'Suppress informational messages', false)
@@ -27,8 +27,8 @@ export const diffCommand = new Command('diff')
 ${helper.commandDescription(cmd)}
 
 Options:
-  --from <file>                 Source version (MCP description or manifest, JSON/YAML) [required]
-  --to <file>                   Target version (MCP description or manifest, JSON/YAML) [required]
+  --from <file>                 Source version (MCP description, JSON/YAML) [required]
+  --to <file>                   Target version (MCP description, JSON/YAML) [required]
   --output <file>               Structural diff output file (default: stdout)
   --detect-renames              Use similarity scoring to detect renames (default: false)
   --quiet                       Suppress informational messages (default: false)

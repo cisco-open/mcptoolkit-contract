@@ -11,7 +11,7 @@ Use the split command when you need to:
 - **Organize by service**: Split federation server tools by backend service
 - **Domain separation**: Create separate documentation for different functional domains
 - **Focused analysis**: Compare changes in specific capability subsets
-- **Team workflows**: Generate service-specific manifests for different teams
+- **Team workflows**: Generate service-specific documentation for different teams
 - **Reduce cognitive load**: Work with manageable chunks instead of overwhelming lists
 
 ## Prerequisites
@@ -334,9 +334,9 @@ mcpcontract document \
   --output docs/secure-access-networks.md
 ```
 
-## Workflow: Split → Manifest → Publish
+## Workflow: Split → Document
 
-Create service-specific manifests for registry submission:
+Create service-specific documentation from a federation dump:
 
 ```bash
 # 1. Split by service
@@ -344,19 +344,14 @@ mcpcontract split federation-dump.json \
   --config split-by-service.yaml \
   --output-dir ./by-service
 
-# 2. Generate manifests
-mcpcontract manifest \
-  --mcpdesc by-service/dump-platform-identity.json \
-  --info platform-identity-info.json \
-  --output manifests/platform-identity-manifest.json
+# 2. Generate documentation per service
+mcpcontract document \
+  --input by-service/dump-platform-identity.json \
+  --output docs/platform-identity.md
 
-mcpcontract manifest \
-  --mcpdesc by-service/dump-secure-access-networks.json \
-  --info secure-access-info.json \
-  --output manifests/secure-access-manifest.json
-
-# 3. Publish to registry (your process)
-./publish-to-registry.sh manifests/
+mcpcontract document \
+  --input by-service/dump-secure-access-networks.json \
+  --output docs/secure-access-networks.md
 ```
 
 ## Workflow: Compare Service-Specific Changes
@@ -453,7 +448,6 @@ mcpcontract changelog \
 
 - [`dump`](./01-basic-dump.md) - Create the initial dump
 - [`document`](./02-render-documentation.md) - Generate documentation from split dumps
-- [`manifest`](./03-creating-manifests.md) - Create service-specific manifests
 - [`diff`](./04-comparing-versions.md) - Compare split dumps across versions
 - [`validate`](../quick-start.md) - Validate split configurations
 
@@ -466,4 +460,4 @@ mcpcontract changelog \
 
 ---
 
-**Next Steps**: After splitting, generate [focused documentation](./02-render-documentation.md) or create [service-specific manifests](./03-creating-manifests.md) for each category.
+**Next Steps**: After splitting, generate [focused documentation](./02-render-documentation.md) for each category.

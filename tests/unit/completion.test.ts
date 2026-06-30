@@ -25,7 +25,7 @@ describe('Bash Completion', () => {
 
   it('should include all commands in completion', () => {
     const script = generateCompletion();
-    const commands = ['dump', 'manifest', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
+    const commands = ['dump', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
     
     for (const cmd of commands) {
       expect(script).toContain(cmd);
@@ -44,7 +44,6 @@ describe('Bash Completion', () => {
     
     // Check that key commands have options defined in the no-dash section
     expect(script).toMatch(/dump\)\s+local opts="--config --mcp-server/);
-    expect(script).toMatch(/manifest\)\s+local opts="--mcpdesc --info/);
     expect(script).toMatch(/diff\)\s+local opts="--from --to/);
     expect(script).toMatch(/breaking\)\s+local opts="--diff --rules/);
     expect(script).toMatch(/changelog\)\s+local opts="--diff --breaking/);
@@ -99,7 +98,7 @@ describe('Bash Completion', () => {
   it('should support enum value completion for --schema', () => {
     const script = generateCompletion();
     expect(script).toContain('--schema)');
-    expect(script).toContain('"mcpdesc mcp-description dump manifest manifest-info diff diff-breaking dump-split"');
+    expect(script).toContain('"mcpdesc mcp-description dump diff diff-breaking dump-split"');
   });
 
   it('should support enum value completion for --category', () => {
@@ -117,7 +116,7 @@ describe('Bash Completion', () => {
   it('should support enum value completion for --type', () => {
     const script = generateCompletion();
     expect(script).toContain('--type)');
-    expect(script).toContain('"manifest mcpdesc dump auto"');
+    expect(script).toContain('"mcpdesc dump auto"');
   });
 });
 
@@ -138,7 +137,6 @@ describe('Zsh Completion', () => {
   it('should include command descriptions', () => {
     const script = generateCompletion();
     expect(script).toContain('dump:Extract capabilities from a live MCP server');
-    expect(script).toContain('manifest:Generate server.json from MCP description and metadata');
     expect(script).toContain('rules:Browse and explore rules catalog');
   });
 

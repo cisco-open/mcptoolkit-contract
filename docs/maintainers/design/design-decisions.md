@@ -6,23 +6,24 @@ Companion design doc: [architecture.md](architecture.md) (module-level overview)
 
 ---
 
-## 1. Scope and Three-Artifact Model
+## 1. Scope and Two-Artifact Model
 
-mcpcontract works with three related but distinct artifacts:
+mcpcontract works with two related but distinct artifacts:
 
 | Artifact | Schema | Produced by | Purpose |
 |---|---|---|---|
 | **Dump** | `dump/0.3.8` (internal) | `mcpcontract dump` | Snapshot of a live server at time *T* |
 | **MCP Description** (mcpdesc) | `mcp-description/0.7.0` (external spec) | `mcpcontract dump`, `mcpcontract convert` | Formal capability declaration ("OpenAPI for MCP") |
-| **Registry Manifest** | `server/2025-12-11` (MCP Registry) | `mcpcontract manifest` | Distribution/installation metadata |
 
-**Arbitration: why three schemas instead of one?**
+**Arbitration: why two schemas instead of one?**
 
-- **Ownership separation.** `server.json` is governed by the MCP Registry (Anthropic); we cannot change it on our own cadence. mcpdesc is an external specification we contribute to. Dump is an internal observation record.
-- **Concern separation.** Dump is *observational* (what was answered when we asked), mcpdesc is *declarative* (what the server claims to offer), manifest is *distributional* (how to install and reach it).
-- **Update cadence.** Dumps evolve with MCP protocol; manifests evolve with registry policy; mcpdesc evolves with tooling needs. Coupling them would slow all three.
+- **Ownership separation.** mcpdesc is an external specification we contribute to; the dump is an internal observation record we control.
+- **Concern separation.** Dump is *observational* (what was answered when we asked), mcpdesc is *declarative* (what the server claims to offer).
+- **Update cadence.** Dumps evolve with the MCP protocol; mcpdesc evolves with tooling needs. Coupling them would slow both.
 
 A standalone alternative to the ADL-profile-based mcpdesc was explored (see `dust/.../36-MCP-DESCRIPTION-STANDALONE.md`) but rejected: building on the IETF ADL draft reuses its envelope (lifecycle, data_classification, security) and gains future interop, at the cost of a thin profile layer.
+
+> **Note:** Registry/manifest (`server.json`) support was removed before GA. mcpcontract focuses on dump, document, and change tracking (diff/breaking/changelog); registry submission is out of scope.
 
 ---
 
@@ -33,14 +34,14 @@ A standalone alternative to the ADL-profile-based mcpdesc was explored (see `dus
 **Arbitrations made:**
 
 - **Commander over yargs/oclif.** Wanted a `git`-style nested subcommand UX without oclif's plugin scaffolding. Commander is a thin layer over Node's `process.argv` and is easy to extend with custom help.
-- **Ajv over Zod.** MCP and registry schemas are authored in JSON Schema; Ajv validates them directly. Zod would require duplicating each schema as a TypeScript declaration.
+- **Ajv over Zod.** MCP schemas are authored in JSON Schema; Ajv validates them directly. Zod would require duplicating each schema as a TypeScript declaration.
 - **Handlebars over EJS.** Logic-less templates discourage embedding business rules in documentation. We accept Handlebars' verbosity (`{{#each}}`/`{{#if}}`) for that constraint.
 - **ES modules with `.js` extensions.** Required by Node's ESM resolution. Painful in TypeScript editor experience but eliminates the dual-build CJS/ESM complexity.
-- **Layered structure.** [src/commands/](../../../src/commands/) holds Commander wiring + argument parsing only; all logic lives in [src/lib/](../../../src/lib/). This makes commands trivially shellable from other commands (e.g., `manifest --validate` calls into the validator).
+- **Layered structure.** [src/commands/](../../../src/commands/) holds Commander wiring + argument parsing only; all logic lives in [src/lib/](../../../src/lib/). This makes commands trivially shellable from other commands (e.g., `breaking` calls into the rules engine).
 
 ---
 
-## 3. The Pipeline: dump → manifest → validate → document → diff → breaking → changelog
+## 3. The Pipeline: dump → validate → document → diff → breaking → changelog
 
 Each command takes structured input and produces a versioned artifact that the next command in the pipeline can consume. Artifacts are **immutable JSON/YAML**, designed for CI/CD checkpointing.
 
@@ -55,19 +56,9 @@ Extracts every capability surface (tools, resources, resource templates, prompts
 - **Wizard mode (`--wizard`)** uses `@inquirer/prompts` for guided dumps. Triggered automatically when `dump` is invoked with no args.
 - **Direct mcpdesc output.** Since v0.25.0, `dump` outputs mcpdesc format natively (not the legacy ContractDump format that needed a separate `convert` step). The legacy format and `convert` command are retained for backward compat.
 
-### 3.2 manifest
+### 3.2 validate
 
-Merges a dump (capabilities) with a `server-info.json` (distribution metadata) to produce a registry-ready `server.json`.
-
-**Decisions:**
-
-- **`--add-capabilities-meta`** writes capability counts/names into `_meta["io.modelcontextprotocol.registry/publisher-provided"].discoveredCapabilities`. This is the agreed-on namespace for publisher-provided metadata in the registry.
-- **Version precedence**: dump version wins if present, with a warning if `info.version` disagrees. Rationale: the dump is the source of truth for what was actually running.
-- **`--validate`** runs schema validation before writing. Failure is a hard error.
-
-### 3.3 validate
-
-Schema validation backed by Ajv. Supports `dump`, `mcpdesc`, `manifest`, `manifest-info`, `diff`, `diff-breaking`, `dump-split` schemas.
+Schema validation backed by Ajv. Supports `dump`, `mcpdesc`, `diff`, `diff-breaking`, `dump-split` schemas.
 
 **Decisions:**
 
@@ -75,19 +66,19 @@ Schema validation backed by Ajv. Supports `dump`, `mcpdesc`, `manifest`, `manife
 - **Version-aware.** The validator auto-detects schema version from the document's `version`/`$schema` field and loads the matching historical schema from `schemas/<type>/<version>.json`. Old dumps validate without re-dumping.
 - **Compatibility matrix.** `mcpcontract validate --show-compatibility` reads `schemas/cli-schema-compatibility.json` to tell users which CLI version matches which schema.
 
-### 3.4 document
+### 3.3 document
 
-Handlebars templating with two built-ins (`default`, `registry-ready`) plus dump-specific variants (`default-dump`, `reference-dump`, `card-view`).
+Handlebars templating with dump-specific variants (`mcpdesc-documentation`, `reference-documentation`, `card-view`).
 
 **Decisions:**
 
-- **Auto-detect input.** Manifest vs dump vs mcpdesc is detected from the schema-version field, so users typically don't need `--template`.
+- **Auto-detect input.** dump vs mcpdesc is detected from the schema-version field, so users typically don't need `--template`.
 - **Helpers are minimal but composable.** `json`, `eq`, `capitalize`, `count`, `groupBy`, `contains`. Adding more helpers is discouraged; complex transforms should happen upstream.
 - **Custom templates** are paths, not names — to avoid a plugin system.
 
-### 3.5 diff
+### 3.4 diff
 
-Structural diff between two dumps or two manifests, normalizing across format differences.
+Structural diff between two dumps, normalizing across format differences.
 
 **Key implementation choices:**
 
@@ -95,7 +86,7 @@ Structural diff between two dumps or two manifests, normalizing across format di
 - **MCP-aware change names.** Instead of generic JSON Patch, we emit named change types like `tool-removed`, `parameter-enum-values-changed`, `resource-uri-changed`. These names are the join key against the rules catalog.
 - **Stable output schema.** Diff JSON is consumed by `breaking` and `changelog`. Its shape is part of the public contract.
 
-### 3.6 breaking
+### 3.5 breaking
 
 Applies a YAML rules catalog to a diff artifact to classify each change as breaking / non-breaking / informational with a severity.
 
@@ -106,7 +97,7 @@ Applies a YAML rules catalog to a diff artifact to classify each change as break
 - **YAML over code.** Rules are authored in YAML so they can be audited, version-controlled, and overridden by organizations without forking the CLI.
 - **Exit codes are part of the contract.** `0` compatible, `1` breaking found, `2` error. Designed for `breaking --diff x.json || alert-pipeline.sh`.
 
-### 3.7 changelog
+### 3.6 changelog
 
 Renders a human-readable changelog from a diff (and optional breaking analysis) via Handlebars templates.
 
@@ -228,7 +219,7 @@ This is more conservative than typical "add fields freely" patterns because dump
 
 1. **Auto-generated unit tests** (`tests/unit/catalog-generated.test.ts`, 47 tests). Generated from `rules/catalog/*.yaml` by `tests/generators/catalog-test-generator.ts`. Every catalog example is a test case. Drift between rules engine and catalog breaks the build.
 2. **Hand-written unit tests** (`tests/unit/`, 15+ tests). Cover the rules engine, splitter, completion script generation, and the HTTP header passthrough.
-3. **Integration tests** (`tests/integration/`, 11+ tests). End-to-end workflows: dump fixtures → manifest → validate → diff → changelog.
+3. **Integration tests** (`tests/integration/`, 11+ tests). End-to-end workflows: dump fixtures → validate → diff → breaking → changelog.
 
 **Plus:**
 
@@ -271,11 +262,9 @@ Captured here so we don't re-litigate them.
 |---|---|
 | dump | 0.3.8 |
 | mcp-description | 0.7.0 |
-| manifest-info | 1.0.0 |
 | diff | 1.0.0 |
 | diff-breaking | 2.0.0 |
 | split-config | 1.0.0 |
-| server (registry) | 2025-12-11 |
 
 **Test count:** 73+ tests (47 auto-generated from catalog, 15 unit, 11 integration) plus shell-driven smoke tests and link-checker.
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Schema validator for dump and manifest files
+ * Schema validator for dump and diff files
  */
 
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,7 @@ import addFormatsModule from 'ajv-formats';
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
 
-export type SchemaType = 'mcpdesc' | 'mcp-description' | 'dump' | 'manifest' | 'manifest-info' | 'diff' | 'diff-breaking' | 'dump-split';
+export type SchemaType = 'mcpdesc' | 'mcp-description' | 'dump' | 'diff' | 'diff-breaking' | 'dump-split';
 
 /**
  * Auto-detect schema type from parsed data by inspecting top-level keys.
@@ -37,14 +37,8 @@ export function detectSchemaType(data: unknown): SchemaType | undefined {
   // diff: has "comparison" and "statistics"
   if ('comparison' in obj && 'statistics' in obj) return 'diff';
 
-  // manifest-info: has "reverseDnsName"
-  if ('reverseDnsName' in obj) return 'manifest-info';
-
   // legacy dump: has "version" (schema URL) + "dumpDetails"
   if ('version' in obj && 'dumpDetails' in obj) return 'dump';
-
-  // server manifest: has "name" + "packages"
-  if ('name' in obj && 'packages' in obj) return 'manifest';
 
   return undefined;
 }
@@ -106,10 +100,6 @@ export class Validator {
         return 'mcp-description';
       case 'dump':
         return 'dump';
-      case 'manifest':
-        return 'server';
-      case 'manifest-info':
-        return 'manifest-info';
       case 'diff':
         return 'diff';
       case 'diff-breaking':
@@ -335,49 +325,6 @@ export class Validator {
     schemaType: SchemaType
   ): ValidationIssue[] {
     const warnings: ValidationIssue[] = [];
-
-    if (schemaType === 'manifest' && typeof data === 'object' && data !== null) {
-      const manifest = data as any;
-
-      // Check reverse-DNS name format
-      if (manifest.name && typeof manifest.name === 'string') {
-        if (!manifest.name.includes('/')) {
-          warnings.push({
-            path: '/name',
-            message: 'Name should be in reverse-DNS format (e.g., io.example/server-name)',
-          });
-        }
-      }
-
-      // Check version format (semver-like)
-      if (manifest.version && typeof manifest.version === 'string') {
-        if (!/^\d+\.\d+\.\d+/.test(manifest.version)) {
-          warnings.push({
-            path: '/version',
-            message: 'Version should follow semantic versioning (e.g., 1.0.0)',
-          });
-        }
-      }
-
-      // Check if packages or remotes exist
-      if (!manifest.packages && !manifest.remotes) {
-        warnings.push({
-          path: '/',
-          message: 'Manifest should have at least one package or remote configuration',
-        });
-      }
-
-      // Check repository URL format
-      if (manifest.repository && manifest.repository.url) {
-        const url = manifest.repository.url;
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          warnings.push({
-            path: '/repository/url',
-            message: 'Repository URL should use http:// or https:// protocol',
-          });
-        }
-      }
-    }
 
     if (schemaType === 'dump' && typeof data === 'object' && data !== null) {
       const dump = data as any;

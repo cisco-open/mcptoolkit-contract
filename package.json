@@ -17,14 +17,14 @@
     "test:generate": "node tests/generators/catalog-test-generator.ts",
     "test:manual": "tests/run-manual-tests.sh",
     "test:links": "tests/check-doc-links.sh",
-    "prerelease": "npm run test:links && npm run build && npm test",
+    "sync-badge": "node scripts/sync-badge.mjs",
+    "prerelease": "npm run sync-badge && npm run test:links && npm run build && npm test",
     "clean": "rm -rf build"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "contract",
-    "manifest",
     "validation",
     "documentation"
   ],

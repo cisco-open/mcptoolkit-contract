@@ -87,7 +87,7 @@ _mcpcontract_completion() {
     fi
 
     # Commands
-    local commands="dump split convert manifest validate document diff breaking changelog completion rules agents"
+    local commands="dump split convert validate document diff breaking changelog completion rules agents"
     
     # If no command yet, complete commands
     if [[ \${cword} -eq 1 ]]; then
@@ -112,9 +112,6 @@ _mcpcontract_completion() {
                 dump)
                     COMPREPLY=( $(compgen -W "json yaml markdown" -- "\${cur}") )
                     ;;
-                manifest)
-                    COMPREPLY=( $(compgen -W "json yaml" -- "\${cur}") )
-                    ;;
                 validate)
                     COMPREPLY=( $(compgen -W "text json" -- "\${cur}") )
                     ;;
@@ -128,11 +125,11 @@ _mcpcontract_completion() {
             return
             ;;
         --schema)
-            COMPREPLY=( $(compgen -W "mcpdesc mcp-description dump manifest manifest-info diff diff-breaking dump-split" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "mcpdesc mcp-description dump diff diff-breaking dump-split" -- "\${cur}") )
             return
             ;;
         --type)
-            COMPREPLY=( $(compgen -W "manifest mcpdesc dump auto" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "mcpdesc dump auto" -- "\${cur}") )
             return
             ;;
         --category)
@@ -150,7 +147,7 @@ _mcpcontract_completion() {
         --template|-t)
             case "\${cmd}" in
                 document)
-                    COMPREPLY=( $(compgen -W "manifest-documentation manifest-reference mcpdesc-documentation reference-documentation card-view registry-submission" -- "\${cur}") )
+                    COMPREPLY=( $(compgen -W "mcpdesc-documentation reference-documentation card-view" -- "\${cur}") )
                     ;;
                 *)
                     compopt -o default
@@ -236,7 +233,7 @@ _mcpcontract_completion() {
         agents)
             # Special handling for agents command
             if [[ "\${prev}" == "--command" ]]; then
-                local subcommands="dump split convert manifest validate diff breaking changelog document rules completion"
+                local subcommands="dump split convert validate diff breaking changelog document rules completion"
                 COMPREPLY=( $(compgen -W "\${subcommands}" -- "\${cur}") )
             elif [[ "\${cur}" == -* ]]; then
                 local opts="--command --workflows --all"
@@ -262,10 +259,6 @@ _mcpcontract_completion() {
                         ;;
                     convert)
                         local opts="--to-format --output --format --compact --quiet --guide --help"
-                        COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
-                        ;;
-                    manifest)
-                        local opts="--mcpdesc --info --output --format --pretty --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     validate)
@@ -307,10 +300,6 @@ _mcpcontract_completion() {
                         ;;
                     convert)
                         local opts="-o -f -q -h"
-                        COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
-                        ;;
-                    manifest)
-                        local opts="-d -i -o -f -p -h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     validate)
@@ -358,10 +347,6 @@ _mcpcontract_completion() {
                                 local opts=\"--config --mcp-server --server-name --transport --url --header --command --args --env --output --format --pretty --quiet --info --skip-cors-check --cors-origin --page-size --help\"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
-                            manifest)
-                                local opts="--mcpdesc --info --output --format --pretty --help"
-                                COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
-                                ;;
                             diff)
                                 local opts="--from --to --output --detect-renames --quiet --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
@@ -399,10 +384,9 @@ _mcp_contract() {
         'dump:Extract capabilities from a live MCP server'
         'split:Split large MCP description into focused subsets'
         'convert:Convert between dump and mcpdesc formats'
-        'manifest:Generate server.json from MCP description and metadata'
         'validate:Validate files against MCP schemas'
         'document:Generate human-readable documentation'
-        'diff:Compare manifests and detect changes'
+        'diff:Compare MCP descriptions and detect changes'
         'breaking:Analyze breaking changes'
         'changelog:Generate changelog between versions'
         'completion:Generate shell completion script'
@@ -471,20 +455,10 @@ _mcp_contract() {
                         '--guide[Print conversion guide for AI assistants]' \\
                         '(-h --help)'{-h,--help}'[Show help]'
                     ;;
-                manifest)
-                    _arguments \\
-                        '(-d --mcpdesc)'{-d,--mcpdesc}'[MCP description file]:file:_files' \\
-                        '(-i --info)'{-i,--info}'[Info file]:file:_files' \\
-                        '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '(-f --format)'{-f,--format}'[Output format]:format:(json yaml)' \\
-                        '(-p --pretty)'{-p,--pretty}'[Pretty print]' \\
-                        '(-h --help)'{-h,--help}'[Show help]' \\
-                        '*:file:_files'
-                    ;;
                 validate)
                     _arguments \\
                         '1:file:_files' \\
-                        '--schema[Schema type]:type:(mcpdesc mcp-description dump manifest manifest-info diff diff-breaking dump-split)' \\
+                        '--schema[Schema type]:type:(mcpdesc mcp-description dump diff diff-breaking dump-split)' \\
                         '--strict[Treat warnings as errors]' \\
                         '(-f --format)'{-f,--format}'[Output format]:format:(text json)' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
@@ -496,10 +470,10 @@ _mcp_contract() {
                 document)
                     _arguments \\
                         '1:file:_files' \\
-                        '(-t --template)'{-t,--template}'[Template name]:template:(manifest-documentation manifest-reference mcpdesc-documentation reference-documentation card-view registry-submission)' \\
+                        '(-t --template)'{-t,--template}'[Template name]:template:(mcpdesc-documentation reference-documentation card-view)' \\
                         '(-r --rendering)'{-r,--rendering}'[Rendering mode]:mode:(full reference)' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '--type[Input type]:type:(manifest mcpdesc dump auto)' \\
+                        '--type[Input type]:type:(mcpdesc dump auto)' \\
                         '--list[List templates]' \\
                         '--show-extraction-details[Show session, CORS, and extraction info]' \\
                         '--markdown-engine[Markdown engine for HTML templates]:engine:(marked markdown-it snarkdown)' \\
@@ -509,8 +483,8 @@ _mcp_contract() {
                     ;;
                 diff)
                     _arguments \\
-                        '--from[Source MCP description/manifest]:file:_files' \\
-                        '--to[Target MCP description/manifest]:file:_files' \\
+                        '--from[Source MCP description]:file:_files' \\
+                        '--to[Target MCP description]:file:_files' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
                         '--detect-renames[Detect renames]' \\
                         '(-q --quiet)'{-q,--quiet}'[Suppress output]' \\
@@ -611,7 +585,7 @@ _mcp_contract() {
                     ;;
                 agents)
                     _arguments \
-                        '--command[Get help for specific command]:command:(dump manifest validate diff breaking changelog document rules completion)' \
+                        '--command[Get help for specific command]:command:(dump validate diff breaking changelog document rules completion)' \
                         '--workflows[Show all end-to-end workflows]' \
                         '--all[Output all commands in single document]'
                     ;;
@@ -632,10 +606,9 @@ _mcp_contract
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "dump" -d "Extract capabilities from a live MCP server"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "split" -d "Split large MCP description into focused subsets"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "convert" -d "Convert between dump and mcpdesc formats"
-complete -c mcpcontract -f -n "__fish_use_subcommand" -a "manifest" -d "Generate server.json from MCP description and metadata"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "validate" -d "Validate files against MCP schemas"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "document" -d "Generate human-readable documentation"
-complete -c mcpcontract -f -n "__fish_use_subcommand" -a "diff" -d "Compare manifests and detect changes"
+complete -c mcpcontract -f -n "__fish_use_subcommand" -a "diff" -d "Compare MCP descriptions and detect changes"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "breaking" -d "Analyze breaking changes"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "changelog" -d "Generate changelog between versions"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
@@ -684,16 +657,8 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -s q -l quiet -
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -l guide -d "Print conversion guide for AI assistants"
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -s h -l help -d "Show help"
 
-# manifest command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s d -l mcpdesc -d "MCP description file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s i -l info -d "Info file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s f -l format -d "Output format" -a "json yaml"
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s p -l pretty -d "Pretty print"
-complete -c mcpcontract -n "__fish_seen_subcommand_from manifest" -s h -l help -d "Show help"
-
 # validate command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc dump manifest manifest-info diff diff-breaking dump-split"
+complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc dump diff diff-breaking dump-split"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l strict -d "Treat warnings as errors"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s f -l format -d "Output format" -a "text json"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s o -l output -d "Output file" -F
@@ -702,10 +667,10 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l display -d 
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s h -l help -d "Show help"
 
 # document command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s t -l template -d "Template name" -a "manifest-documentation manifest-reference mcpdesc-documentation reference-documentation card-view registry-submission"
+complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s t -l template -d "Template name" -a "mcpdesc-documentation reference-documentation card-view"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s r -l rendering -d "Rendering mode" -a "full reference"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "manifest mcpdesc dump auto"
+complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "mcpdesc dump auto"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l list -d "List templates"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l show-extraction-details -d "Show session, CORS, and extraction info"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l markdown-engine -d "Markdown engine for HTML templates" -a "marked markdown-it snarkdown"
@@ -713,8 +678,8 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s q -l quiet 
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s h -l help -d "Show help"
 
 # diff command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l from -d "Source MCP description/manifest" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target MCP description/manifest" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l from -d "Source MCP description" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s o -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Detect renames"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s q -l quiet -d "Suppress output"
@@ -785,7 +750,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_s
 complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l summary -d "Export summary without examples"
 
 # agents command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split convert manifest validate diff breaking changelog document rules completion"
+complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split convert validate diff breaking changelog document rules completion"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l workflows -d "Show all end-to-end workflows"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l all -d "Output all commands in single document"
 `;

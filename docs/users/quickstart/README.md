@@ -8,17 +8,12 @@ These files are not a tutorial — they are **real output artifacts** you can in
 
 | File | Produced by | Notes |
 |---|---|---|
-| `ms-learn-dump.yaml` | `mcpcontract dump` | Raw capability dump (mcpdesc 0.3.x format, older CLI version) |
-| `ms-learn-dump.json` | `mcpcontract dump` | Same dump, JSON serialization |
-| `ms-learn-info.yaml` | hand-authored | Server metadata (name, description, package, links) used as input to `manifest` |
-| `ms-learn-info.json` | hand-authored | Same info, JSON serialization |
-| `ms-learn-manifest.yaml` | `mcpcontract manifest` | Generated server.json registry manifest |
-| `ms-learn-manifest.json` | `mcpcontract manifest` | Same manifest, JSON serialization |
+| `ms-learn-dump.yaml` | `mcpcontract dump` | Raw capability dump |
 | `ms-learn-documentation.md` | `mcpcontract document` | Rendered human-readable documentation |
 
 ## Regenerating with the latest CLI
 
-The files use an older dump schema version. To regenerate against the current CLI:
+To regenerate against the current CLI:
 
 ```bash
 mcpcontract dump \
@@ -27,12 +22,7 @@ mcpcontract dump \
   --server-name microsoft-learn \
   --output ms-learn-dump.yaml
 
-mcpcontract manifest \
-  --mcpdesc ms-learn-dump.yaml \
-  --info ms-learn-info.yaml \
-  --output ms-learn-manifest.yaml
-
-mcpcontract document --template mcpdesc-documentation ms-learn-dump.yaml \
+mcpcontract document --template reference-documentation ms-learn-dump.yaml \
   --output ms-learn-documentation.md
 ```
 

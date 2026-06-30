@@ -185,14 +185,6 @@ Contains tools that didn't match any category:
 
 All split dumps are fully compatible with existing mcpcontract commands:
 
-### Generate Manifest
-```bash
-mcpcontract manifest \
-  --mcpdesc dump-platform-identity.json \
-  --info platform-identity-info.json \
-  --output manifest-platform-identity.json
-```
-
 ### Generate Documentation
 ```bash
 mcpcontract document \

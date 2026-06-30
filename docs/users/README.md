@@ -9,7 +9,7 @@ This folder contains user-facing documentation for **mcpcontract**.
 
 ## Reference
 
-- [schemas.md](schemas.md) — how mcpdesc and server.json fit together
+- [schemas.md](schemas.md) — the mcpdesc (MCP description) schema
 - [dump-schema.md](dump-schema.md) — full mcpdesc/dump field reference
 - [dump-to-mcpdesc.md](dump-to-mcpdesc.md) — converting legacy dump files to mcpdesc format
 - [mcp-compatibility-guidelines.md](mcp-compatibility-guidelines.md) — backward compatibility philosophy and rules
@@ -18,12 +18,12 @@ This folder contains user-facing documentation for **mcpcontract**.
 
 See [tutorials/](tutorials/):
 
-- [`complete-workflow.md`](tutorials/complete-workflow.md) — full dump → validate → manifest → document workflow
+- [`complete-workflow.md`](tutorials/complete-workflow.md) — full dump → validate → document → diff → changelog workflow
 - [`changelog-tutorial.md`](tutorials/changelog-tutorial.md) — generate changelogs from version diffs
 - [`rules-catalog-guide.md`](tutorials/rules-catalog-guide.md) — browse and customize the rules catalog
 - [`splitting-large-dumps.md`](tutorials/splitting-large-dumps.md) — split federation dumps into focused subsets
 
 ## Examples and sample data
 
-- [examples/](examples/) — complete worked artifacts (dumps, manifests, diffs, changelogs)
+- [examples/](examples/) — complete worked artifacts (dumps, diffs, changelogs)
 - [quickstart/](quickstart/) — sample data used by the Quick Start guide

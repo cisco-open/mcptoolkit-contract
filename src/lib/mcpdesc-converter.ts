@@ -401,7 +401,7 @@ function normalizeXCiscoMetadata(raw: Record<string, unknown> | undefined): { du
 
 /**
  * Convert an mcpdesc document back to a ContractDump for internal processing.
- * Used by commands that accept mcpdesc files as input (manifest, split, diff, etc.)
+ * Used by commands that accept mcpdesc files as input (split, diff, etc.)
  * Supports both x-cisco-metadata v0.1.0 and v0.2.0 shapes.
  */
 export function mcpDescriptionToContractDump(doc: McpDescDocument): ContractDump {

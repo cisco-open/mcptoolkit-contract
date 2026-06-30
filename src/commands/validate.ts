@@ -34,9 +34,9 @@ export function validateCommand(): Command {
   const cmd = new Command('validate');
 
   cmd
-  .description('Validate an MCP description, manifest, diff, or split configuration against their specification schemas')
+  .description('Validate an MCP description, diff, or split configuration against their specification schemas')
   .argument('[file]', 'Path to file to validate (omit when using --show-compatibility)')
-  .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), dump (legacy), manifest, manifest-info, diff, diff-breaking, or dump-split')
+  .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), dump (legacy), diff, diff-breaking, or dump-split')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
@@ -85,7 +85,7 @@ export function validateCommand(): Command {
  */
 async function validateFile(filePath: string, options: ValidateCommandOptions): Promise<void> {
   // Validate explicit schema type if provided
-  const validSchemaTypes: SchemaType[] = ['mcpdesc', 'mcp-description', 'dump', 'manifest', 'manifest-info', 'diff', 'diff-breaking', 'dump-split'];
+  const validSchemaTypes: SchemaType[] = ['mcpdesc', 'mcp-description', 'dump', 'diff', 'diff-breaking', 'dump-split'];
   if (options.schema && !validSchemaTypes.includes(options.schema)) {
     throw new Error(
       `Invalid schema type: ${options.schema}. Must be one of: ${validSchemaTypes.join(', ')}`
@@ -282,21 +282,20 @@ function formatCompatibilityTable(data: CompatibilityData, displayMode: string):
   const lines: string[] = [];
   
   lines.push('Schema-CLI Compatibility Matrix\n');
-  lines.push('CLI Version/Date   mcpdesc  Dump   Manifest  Diff   Breaking  Split   Notes');
+  lines.push('CLI Version/Date   mcpdesc  Dump   Diff   Breaking  Split   Notes');
   lines.push('─'.repeat(100));
   
   for (const entry of data.compatibility) {
     const versionDate = `${entry.cliVersion}/${entry.releaseDate.substring(0, 10)}`;
     const mcpdesc = (entry.schemas as Record<string, string>)['mcp-description'] || 'n/a';
     const dump = entry.schemas.dump || 'n/a';
-    const manifest = entry.schemas.manifest || 'n/a';
     const diff = entry.schemas.diff || 'n/a';
     const breaking = entry.schemas.breaking || 'n/a';
     const split = entry.schemas.split || 'n/a';
     const notes = entry.notes ? entry.notes.substring(0, 25) : '';
     
     lines.push(
-      `${versionDate.padEnd(18)} ${mcpdesc.padEnd(8)} ${dump.padEnd(6)} ${manifest.padEnd(9)} ${diff.padEnd(6)} ${breaking.padEnd(9)} ${split.padEnd(7)} ${notes}`
+      `${versionDate.padEnd(18)} ${mcpdesc.padEnd(8)} ${dump.padEnd(6)} ${diff.padEnd(6)} ${breaking.padEnd(9)} ${split.padEnd(7)} ${notes}`
     );
   }
   

@@ -11,9 +11,6 @@ Used with `mcpcontract document --template <name>`:
 | `card-view.html.hbs` | `card-view` | HTML | Interactive browser-rendered documentation with collapsible cards |
 | `default-dump.md.hbs` | `mcpdesc-documentation` | Markdown | Readable dump documentation (tools, prompts, resources) |
 | `reference-dump.md.hbs` | `reference-documentation` | Markdown | Terse reference format for embedding in wikis |
-| `default-manifest.md.hbs` | `manifest-documentation` | Markdown | Human-readable server.json documentation |
-| `reference-manifest.md.hbs` | `manifest-reference` | Markdown | Compact manifest reference |
-| `registry-ready.md.hbs` | `registry-submission` | Markdown | Submission-ready documentation for MCP registries |
 
 ## Changelog templates
 
@@ -42,9 +39,6 @@ Available Handlebars helpers (registered by `src/lib/renderer.ts`): `eq`, `neq`,
 ```bash
 # Generate HTML docs from a dump
 mcpcontract document --template card-view my-server-dump.yaml -o docs.html
-
-# Generate registry-ready markdown
-mcpcontract document --template registry-submission my-server-dump.yaml -o REGISTRY.md
 
 # Generate a release changelog
 mcpcontract changelog --breaking analysis.json --format release -o CHANGELOG.md

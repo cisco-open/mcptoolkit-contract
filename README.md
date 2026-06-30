@@ -1,6 +1,6 @@
 # MCP Toolkit: Server Contract
 
-The `mcpcontract` CLI extracts capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, generate documentation and registry-ready manifests.
+The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.3-orange.svg)](CHANGELOG.md)
@@ -19,11 +19,11 @@ npm install -g @cisco_open/mcptoolkit-contract
 # Verify installation
 mcpcontract --version
 
-# Extract the capabilities of an existing live MCP server
-mcpcontract dump --server-name "My Server" --url http://localhost:3000/mcp --transport streamable-http --output dump.json
+# Extract the capabilities from a live MCP server 
+mcpcontract dump --transport streamable-http --url "https://learn.microsoft.com/api/mcp" --format yaml --output "dump.yaml"
 
-# Generate documentation
-mcpcontract document manifest.json --template registry-ready --output README.md
+# Generate documentation in markdown format
+mcpcontract document dump.yaml --template reference-documentation --output doc.md
 ```
 
 **For a complete walkthrough**, check the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial.
@@ -90,16 +90,16 @@ mcpcontract dump \
 
 ### ✅ document - Generate documentation
 
-Generate human-readable documentation from an MCP description or manifest.
+Generate human-readable documentation from an MCP description.
 
 ```bash
-mcpcontract document server.json --template registry-ready --output README.md
-mcpcontract document server.json --template default --output MANIFEST.md
+mcpcontract document dump.yaml --template reference-documentation --output doc.md
+mcpcontract document dump.yaml --template mcpdesc-documentation --output README.md
 ```
 
 ### ✅ diff - Compare two releases of an MCP server
 
-Generate structural diff between two MCP descriptions or manifests.
+Generate structural diff between two MCP descriptions.
 
 ```bash
 mcpcontract diff --from dump-v1.json --to dump-v2.json --output diff.json
@@ -213,30 +213,13 @@ mcpcontract split federation-dump.json \
 
 **Status**: ✅ Fully implemented and tested (Phase 1: tools filtering only)
 
-### ⚠️ manifest - Generate server.json manifests
-
-> **EXPERIMENTAL** - Under active development, may change
-
-Generate MCP registry-compatible manifest from capability dump and metadata.
-
-```bash
-mcpcontract manifest \
-  --mcpdesc capabilities-dump.json \
-  --info server-info.json \
-  --output server.json \
-  --add-capabilities-meta
-```
-
 ### ✅ validate - Check compliance with specifications
 
-Check a document is compliant with the MCP Description or Manifest specifications.
+Check a document is compliant with the MCP Description specification.
 
 ```bash
 # Validate an MCP description
 mcpcontract validate dump.yaml --schema mcpdesc --strict
-
-# Validate an MCP manifest
-mcpcontract validate server.json --schema manifest
 ```
 
 ## 🏗️ Project Structure
@@ -251,7 +234,7 @@ mcpcontract/
 │   └── index.ts         # CLI entry point
 ├── schemas/             # JSON schemas (versioned: dump/, mcp-description/, diff/, …)
 ├── rules/               # Compatibility rules (YAML) + documentation catalog
-├── templates/           # Handlebars templates (manifests, dumps, changelogs)
+├── templates/           # Handlebars templates (dumps, changelogs)
 ├── tests/               # Jest unit + integration tests, shell smoke tests
 └── docs/
     ├── users/           # User guides, tutorials, examples

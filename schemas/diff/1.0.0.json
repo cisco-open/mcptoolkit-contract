@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://developer.cisco.com/mcpcontract/schema/diff/1.0.0",
   "title": "MCP Contract Diff",
-  "description": "Structural diff between two MCP dumps or manifests",
+  "description": "Structural diff between two MCP descriptions",
   "type": "object",
   "required": ["schemaVersion", "metadata", "comparison", "changes", "statistics"],
   "properties": {
@@ -18,7 +18,7 @@
       "properties": {
         "old": {
           "type": "object",
-          "description": "Server info from old dump/manifest",
+          "description": "Server info from old dump",
           "properties": {
             "name": {
               "type": "string",
@@ -43,7 +43,7 @@
         },
         "new": {
           "type": "object",
-          "description": "Server info from new dump/manifest",
+          "description": "Server info from new dump",
           "properties": {
             "name": {
               "type": "string",

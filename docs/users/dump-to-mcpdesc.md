@@ -345,7 +345,7 @@ tags:
 Then apply via `--info`:
 
 ```bash
-mcpcontract dump --config server.json --info enrichment.yaml -o output.mcpdesc.json
+mcpcontract dump --config server-config.json --info enrichment.yaml -o output.mcpdesc.json
 ```
 
 Or on an existing mcpdesc file, use `convert` with the dump command:
