@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Schema validator for dump and manifest files
+ * Schema validator for dump and diff files
  */
 
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,7 @@ import addFormatsModule from 'ajv-formats';
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
 
-export type SchemaType = 'mcpdesc' | 'mcp-description' | 'dump' | 'manifest' | 'manifest-info' | 'diff' | 'diff-breaking' | 'dump-split';
+export type SchemaType = 'mcpdesc' | 'mcp-description' | 'diff' | 'diff-breaking' | 'dump-split';
 
 /**
  * Auto-detect schema type from parsed data by inspecting top-level keys.
@@ -36,15 +36,6 @@ export function detectSchemaType(data: unknown): SchemaType | undefined {
 
   // diff: has "comparison" and "statistics"
   if ('comparison' in obj && 'statistics' in obj) return 'diff';
-
-  // manifest-info: has "reverseDnsName"
-  if ('reverseDnsName' in obj) return 'manifest-info';
-
-  // legacy dump: has "version" (schema URL) + "dumpDetails"
-  if ('version' in obj && 'dumpDetails' in obj) return 'dump';
-
-  // server manifest: has "name" + "packages"
-  if ('name' in obj && 'packages' in obj) return 'manifest';
 
   return undefined;
 }
@@ -104,12 +95,6 @@ export class Validator {
       case 'mcpdesc':
       case 'mcp-description':
         return 'mcp-description';
-      case 'dump':
-        return 'dump';
-      case 'manifest':
-        return 'server';
-      case 'manifest-info':
-        return 'manifest-info';
       case 'diff':
         return 'diff';
       case 'diff-breaking':
@@ -165,16 +150,6 @@ export class Validator {
       const desc = data as any;
       if (desc.mcpdesc && typeof desc.mcpdesc === 'string') {
         return desc.mcpdesc;
-      }
-    }
-    if (schemaType === 'dump' && typeof data === 'object' && data !== null) {
-      const dump = data as any;
-      if (dump.version && typeof dump.version === 'string') {
-        // Extract version from URL like "https://developer.cisco.com/mcp_contract_dump/schema/0.4.0"
-        const match = dump.version.match(/\/schema\/([^/]+)$/);
-        if (match) {
-          return match[1];
-        }
       }
     }
     // Add other schema types as needed
@@ -331,87 +306,10 @@ export class Validator {
    * Perform semantic validation beyond JSON Schema
    */
   private performSemanticValidation(
-    data: unknown,
-    schemaType: SchemaType
+    _data: unknown,
+    _schemaType: SchemaType
   ): ValidationIssue[] {
     const warnings: ValidationIssue[] = [];
-
-    if (schemaType === 'manifest' && typeof data === 'object' && data !== null) {
-      const manifest = data as any;
-
-      // Check reverse-DNS name format
-      if (manifest.name && typeof manifest.name === 'string') {
-        if (!manifest.name.includes('/')) {
-          warnings.push({
-            path: '/name',
-            message: 'Name should be in reverse-DNS format (e.g., io.example/server-name)',
-          });
-        }
-      }
-
-      // Check version format (semver-like)
-      if (manifest.version && typeof manifest.version === 'string') {
-        if (!/^\d+\.\d+\.\d+/.test(manifest.version)) {
-          warnings.push({
-            path: '/version',
-            message: 'Version should follow semantic versioning (e.g., 1.0.0)',
-          });
-        }
-      }
-
-      // Check if packages or remotes exist
-      if (!manifest.packages && !manifest.remotes) {
-        warnings.push({
-          path: '/',
-          message: 'Manifest should have at least one package or remote configuration',
-        });
-      }
-
-      // Check repository URL format
-      if (manifest.repository && manifest.repository.url) {
-        const url = manifest.repository.url;
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          warnings.push({
-            path: '/repository/url',
-            message: 'Repository URL should use http:// or https:// protocol',
-          });
-        }
-      }
-    }
-
-    if (schemaType === 'dump' && typeof data === 'object' && data !== null) {
-      const dump = data as any;
-
-      // Check session header consistency
-      if (dump.dumpDetails?.dumpExecution?.sessionIdSupported === true) {
-        if (!dump.dumpDetails.dumpExecution.sessionIdHeader) {
-          warnings.push({
-            path: '/dumpDetails/dumpExecution',
-            message: 'Session ID is supported but sessionIdHeader is missing - this may indicate incomplete dump data',
-          });
-        }
-      }
-
-      // Check protocol version
-      if (dump.serverInfo && dump.serverInfo.protocolVersion) {
-        if (dump.serverInfo.protocolVersion !== '2025-06-18') {
-          warnings.push({
-            path: '/serverInfo/protocolVersion',
-            message: `Protocol version ${dump.serverInfo.protocolVersion} may not be compatible with current tools`,
-          });
-        }
-      }
-
-      // Check for empty capabilities
-      if (dump.tools && dump.tools.length === 0 &&
-          dump.resources && dump.resources.length === 0 &&
-          dump.prompts && dump.prompts.length === 0) {
-        warnings.push({
-          path: '/',
-          message: 'Dump contains no tools, resources, or prompts - server may have no capabilities',
-        });
-      }
-    }
 
     return warnings;
   }
@@ -428,22 +326,4 @@ export class ValidationError extends Error {
     super(message);
     this.name = 'ValidationError';
   }
-}
-
-/**
- * Extract schema version from dump file.
- * Legacy: only applies to ContractDump format files. Remove at v1.0.
- */
-export function extractDumpSchemaVersion(data: unknown): string | undefined {
-  if (typeof data === 'object' && data !== null) {
-    const dump = data as any;
-    if (dump.version && typeof dump.version === 'string') {
-      // Extract version from URL like "https://developer.cisco.com/mcp_contract_dump/schema/0.4.0"
-      const match = dump.version.match(/\/schema\/([^/]+)$/);
-      if (match) {
-        return match[1];
-      }
-    }
-  }
-  return undefined;
 }

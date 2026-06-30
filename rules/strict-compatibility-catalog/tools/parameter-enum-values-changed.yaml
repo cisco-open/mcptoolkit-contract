@@ -111,7 +111,7 @@ references:
   - title: Strict Compatibility Rules Documentation
     url: https://github.com/cisco/mcpcontract/rules/strict-compatibility.yaml
   - title: Default MCP Compatibility Guidelines
-    url: https://github.com/cisco/mcpcontract/docs/users/mcp-compatibility-guidelines.md
+    url: https://github.com/cisco/mcpcontract/docs/users/reference/compatibility.md
   - title: When to Use Strict Mode
     url: https://github.com/cisco/mcpcontract/docs/build/17-rules-catalog.md
 

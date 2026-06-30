@@ -3,20 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * diff command - Generate structural diff between two MCP descriptions or manifests
+ * diff command - Generate structural diff between two MCP descriptions
  */
 
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as yaml from 'yaml';
 import { Differ } from '../lib/differ.js';
-import { extractDumpSchemaVersion } from '../lib/validator.js';
 import { parseAsContractDump, isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 
 export const diffCommand = new Command('diff')
-  .description('Generate a structural diff between two MCP descriptions or manifests')
-  .requiredOption('--from <file>', 'Source version (MCP description or manifest, JSON/YAML)')
-  .requiredOption('--to <file>', 'Target version (MCP description or manifest, JSON/YAML)')
+  .description('Generate a structural diff between two MCP descriptions')
+  .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
+  .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
   .option('--output <file>', 'Structural diff output file (default: stdout)')
   .option('--detect-renames', 'Use similarity scoring to detect renames (not yet implemented)', false)
   .option('--quiet', 'Suppress informational messages', false)
@@ -27,8 +26,8 @@ export const diffCommand = new Command('diff')
 ${helper.commandDescription(cmd)}
 
 Options:
-  --from <file>                 Source version (MCP description or manifest, JSON/YAML) [required]
-  --to <file>                   Target version (MCP description or manifest, JSON/YAML) [required]
+  --from <file>                 Source version (MCP description, JSON/YAML) [required]
+  --to <file>                   Target version (MCP description, JSON/YAML) [required]
   --output <file>               Structural diff output file (default: stdout)
   --detect-renames              Use similarity scoring to detect renames (default: false)
   --quiet                       Suppress informational messages (default: false)
@@ -97,42 +96,18 @@ EXAMPLES:
         process.exit(2);
       }
 
-      // Auto-detect and convert mcpdesc format to ContractDump for internal processing
-      if (isMcpDescDocument(fromData)) {
-        fromData = parseAsContractDump(fromData);
-      }
-      if (isMcpDescDocument(toData)) {
-        toData = parseAsContractDump(toData);
-      }
-
-      // Check schema version compatibility (for dumps only)
-      const fromVersion = extractDumpSchemaVersion(fromData);
-      const toVersion = extractDumpSchemaVersion(toData);
-
-      if (fromVersion && toVersion) {
-        // Extract MAJOR.MINOR from schema versions (e.g., "0.3.1" -> "0.3")
-        const fromMajorMinor = fromVersion.split('.').slice(0, 2).join('.');
-        const toMajorMinor = toVersion.split('.').slice(0, 2).join('.');
-        
-        if (fromMajorMinor !== toMajorMinor) {
-          // Different MAJOR.MINOR versions - not compatible
-          console.error(`❌ Error: Schema version mismatch detected\n`);
-          console.error(`   From file: ${fromFile} (schema ${fromVersion})`);
-          console.error(`   To file:   ${toFile} (schema ${toVersion})\n`);
-          console.error(`   Diff and breaking change analysis require compatible schema versions.\n`);
-          console.error(`   To compare these versions:`);
-          console.error(`   1. Regenerate ${fromFile} with CLI v0.16.0+, OR`);
-          console.error(`   2. Use appropriate CLI version for schema ${fromVersion}\n`);
-          console.error(`   Check compatibility: mcpcontract validate --show-compatibility`);
-          process.exit(1);
-        } else if (fromVersion !== toVersion) {
-          // Same MAJOR.MINOR but different patch versions - compatible but worth noting
-          if (!quiet) {
-            console.error(`⚠️  Note: Comparing different schema patch versions: ${fromVersion} → ${toVersion}`);
-            console.error(`   This is safe (patch versions are backward compatible)\n`);
-          }
+      // Require MCP description (mcpdesc) format; convert to the internal model for processing
+      for (const [label, data] of [['source', fromData], ['target', toData]] as const) {
+        if (!isMcpDescDocument(data as Record<string, unknown>)) {
+          console.error(
+            `❌ Error: ${label} file is not an MCP description (mcpdesc) document.\n` +
+            `   Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>`
+          );
+          process.exit(2);
         }
       }
+      fromData = parseAsContractDump(fromData);
+      toData = parseAsContractDump(toData);
 
       // Create differ and compare
       const differ = new Differ({ detectRenames });

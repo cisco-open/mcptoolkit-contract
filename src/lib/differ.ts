@@ -3,15 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Differ - Generates structural diffs between MCP dumps or manifests
+ * Differ - Generates structural diffs between MCP dumps
  * 
- * This class compares two MCP contract dumps or manifests and produces a detailed
+ * This class compares two MCP contract dumps and produces a detailed
  * diff describing all changes using MCP-specific terminology (tool-added, 
  * parameter-removed, etc.).
  */
 
 import { randomUUID as uuidv4 } from 'node:crypto';
-import * as semver from 'semver';
 
 export interface DiffOptions {
   detectRenames?: boolean;
@@ -136,81 +135,9 @@ export interface Dump {
   }>;
 }
 
-export interface Manifest {
-  name: string;
-  version: string;
-  description: string;
-  packages?: any[];
-  remotes?: any[];
-}
-
 export class Differ {
   constructor(_options: DiffOptions = {}) {
     // Options will be used for future features like --detect-renames
-  }
-
-  /**
-   * Auto-detect if a file is a dump/mcpdesc or manifest
-   */
-  private detectType(data: any): 'dump' | 'manifest' {
-    if (data.mcpdesc || data.dumpDetails || data.serverInfo) {
-      return 'dump';
-    }
-    if (data.packages || data.remotes) {
-      return 'manifest';
-    }
-    // Default to dump if unclear
-    return 'dump';
-  }
-
-  /**
-   * Validate schema version compatibility
-   * Returns: { compatible: boolean, warning?: string, error?: string }
-   */
-  private validateSchemaVersions(fromSchema: string, toSchema: string): {
-    compatible: boolean;
-    warning?: string;
-    error?: string;
-  } {
-    // Extract version from schema URLs
-    const fromMatch = fromSchema.match(/\/schema\/(\d+\.\d+\.\d+)$/);
-    const toMatch = toSchema.match(/\/schema\/(\d+\.\d+\.\d+)$/);
-
-    if (!fromMatch || !toMatch) {
-      return { compatible: true }; // Can't validate, proceed
-    }
-
-    const fromVer = fromMatch[1];
-    const toVer = toMatch[1];
-
-    if (fromVer === toVer) {
-      return { compatible: true };
-    }
-
-    const fromSemver = semver.parse(fromVer);
-    const toSemver = semver.parse(toVer);
-
-    if (!fromSemver || !toSemver) {
-      return { compatible: true }; // Can't parse, proceed
-    }
-
-    // Major version difference - incompatible
-    if (fromSemver.major !== toSemver.major) {
-      return {
-        compatible: false,
-        error: `Incompatible schema versions: ${fromVer} vs ${toVer}. Please provide files with compatible schema versions.`
-      };
-    }
-
-    // Minor or patch difference - proceed with warning
-    if (fromSemver.minor !== toSemver.minor || fromSemver.patch !== toSemver.patch) {
-      return {
-        compatible: true,
-        warning: `Detected minor schema version difference: ${fromVer} vs ${toVer}. The command will proceed but may produce inaccurate results.`
-      };
-    }
-
-    return { compatible: true };
   }
 
   /**
@@ -225,7 +152,7 @@ export class Differ {
     const changes: Change[] = [];
 
     // Build comparison metadata
-    // Note: schemaVersion here is the legacy dump schema $id — remove at v1.0
+    // schemaVersion records the mcpdesc version of each input document
     const comparison: ComparisonMetadata = {
       from: {
         file: fromFile,
@@ -242,17 +169,6 @@ export class Differ {
         sessionIdHeader: toDump.dumpDetails?.dumpExecution?.sessionIdHeader
       }
     };
-
-    // Validate schema versions
-    if (fromDump.version && toDump.version) {
-      const validation = this.validateSchemaVersions(fromDump.version, toDump.version);
-      if (!validation.compatible) {
-        throw new Error(validation.error);
-      }
-      if (validation.warning) {
-        console.warn(`⚠️  ${validation.warning}`);
-      }
-    }
 
     // Check session support changes (breaking change)
     if (comparison.from.sessionIdSupported !== undefined &&
@@ -1232,17 +1148,6 @@ export class Differ {
    * Main entry point for comparison
    */
   async compare(fromData: any, toData: any, fromFile: string, toFile: string): Promise<DiffResult> {
-    const fromType = this.detectType(fromData);
-    const toType = this.detectType(toData);
-
-    if (fromType !== toType) {
-      throw new Error(`Cannot compare different types: ${fromType} vs ${toType}`);
-    }
-
-    if (fromType === 'dump') {
-      return this.compareDumps(fromData as Dump, toData as Dump, fromFile, toFile);
-    } else {
-      throw new Error('Manifest comparison not yet implemented. Use dumps only for now.');
-    }
+    return this.compareDumps(fromData as Dump, toData as Dump, fromFile, toFile);
   }
 }

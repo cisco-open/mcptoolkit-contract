@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Renderer for generating documentation from MCP manifests
+ * Renderer for generating documentation from MCP descriptions
  */
 
 import Handlebars from 'handlebars';
@@ -11,7 +11,7 @@ import { readFile } from 'fs/promises';
 import { parse as yamlParse } from 'yaml';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { contractDumpToMcpDescription, isMcpDescDocument, isContractDump } from './mcpdesc-converter.js';
+import { isMcpDescDocument, isContractDump } from './mcpdesc-converter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,7 +19,7 @@ const __dirname = dirname(__filename);
 export interface RenderOptions {
   /** Template name or path to custom template file */
   template?: string;
-  /** Data to render (manifest or dump) */
+  /** Data to render (MCP description / dump) */
   data: any;
 }
 
@@ -478,12 +478,9 @@ export class Renderer {
   private getBuiltInTemplatePath(templateName: string): string {
     // Map template names to files
     const templateMap: Record<string, string> = {
-      'manifest-documentation': 'default-manifest.md.hbs',
-      'manifest-reference': 'reference-manifest.md.hbs',
       'mcpdesc-documentation': 'default-dump.md.hbs',
       'dump-documentation': 'default-dump.md.hbs',
       'reference-documentation': 'reference-dump.md.hbs',
-      'registry-submission': 'registry-ready.md.hbs',
       'card-view': 'card-view.html.hbs',
     };
 
@@ -540,30 +537,6 @@ export class Renderer {
   }
 
   /**
-   * Render a manifest file
-   */
-  async renderManifest(manifestPath: string, templateName?: string): Promise<string> {
-    const fileContent = await readFile(manifestPath, 'utf-8');
-    
-    // Auto-detect format and parse
-    let manifestData: any;
-    try {
-      manifestData = JSON.parse(fileContent);
-    } catch {
-      try {
-        manifestData = yamlParse(fileContent);
-      } catch (yamlError) {
-        throw new Error(`Failed to parse manifest as JSON or YAML: ${(yamlError as Error).message}`);
-      }
-    }
-    
-    return this.render({
-      template: templateName || 'default',
-      data: manifestData,
-    });
-  }
-
-  /**
    * Render an MCP description file.
    * Templates receive mcpdesc-native data. Legacy ContractDump inputs are
    * converted to mcpdesc automatically.
@@ -583,9 +556,14 @@ export class Renderer {
       }
     }
 
-    // Ensure data is in mcpdesc format (convert legacy ContractDump if needed)
-    if (isContractDump(data) && !isMcpDescDocument(data)) {
-      data = contractDumpToMcpDescription(data);
+    // Require mcpdesc format (legacy capability dumps are no longer supported)
+    if (!isMcpDescDocument(data)) {
+      if (isContractDump(data)) {
+        throw new Error(
+          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
+        );
+      }
+      throw new Error('Input is not an MCP description (mcpdesc) document');
     }
 
     // Add _meta convenience alias for x-cisco-metadata (avoids bracket notation in templates)
@@ -609,12 +587,9 @@ export class Renderer {
    */
   getAvailableTemplates(): Array<{ name: string; description: string }> {
     return [
-      { name: 'manifest-documentation', description: 'Detailed manifest documentation with all metadata' },
-      { name: 'manifest-reference', description: 'Concise manifest reference format' },
       { name: 'mcpdesc-documentation', description: 'Detailed MCP description with tools, prompts, and resources' },
       { name: 'reference-documentation', description: 'Concise reference format with summary and details sections' },
       { name: 'card-view', description: 'Self-contained HTML card view with collapsible sections' },
-      { name: 'registry-submission', description: 'User-facing README format for MCP registry submission' },
     ];
   }
 }

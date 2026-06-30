@@ -1,6 +1,6 @@
 {
   "name": "@cisco_open/mcptoolkit-contract",
-  "version": "1.0.0-rc.3",
+  "version": "1.0.0-rc.4",
   "description": "CLI toolkit for MCP server contract management: dumps capabilities, generates changelogs and renders documentation",
   "type": "module",
   "main": "./build/index.js",
@@ -17,14 +17,14 @@
     "test:generate": "node tests/generators/catalog-test-generator.ts",
     "test:manual": "tests/run-manual-tests.sh",
     "test:links": "tests/check-doc-links.sh",
-    "prerelease": "npm run test:links && npm run build && npm test",
+    "sync-badge": "node scripts/sync-badge.mjs",
+    "prerelease": "npm run sync-badge && npm run test:links && npm run build && npm test",
     "clean": "rm -rf build"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "contract",
-    "manifest",
     "validation",
     "documentation"
   ],

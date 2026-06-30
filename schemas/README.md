@@ -8,14 +8,12 @@ JSON Schema definitions used by `mcpcontract` for validation and documentation g
 |---|---|---|---|
 | `mcp-description/` | mcpdesc | 0.7.0 | Capability dump format produced by `mcpcontract dump` |
 | `dump-extension/` | x-cisco-metadata | 0.2.0 | Cisco-specific extension block embedded in mcpdesc documents |
-| `manifest-info/` | manifest-info | 1.0.0 | Server metadata input for `mcpcontract manifest` |
-| `server/` | server | 2025-12-11 | Output manifest (server.json) for MCP registries |
 | `diff/` | diff | 1.0.0 | Structural diff output from `mcpcontract diff` |
 | `diff-breaking/` | diff-breaking | 2.0.0 | Breaking-change analysis from `mcpcontract breaking` |
 | `split-config/` | split-config | 1.0.0 | Split configuration for `mcpcontract split` |
 | `adl-mcp-server-profile/` | ADL profile | 1.0.0 | ADL MCP Server Profile (reserved — see below) |
 
-Legacy single-file aliases in this directory (e.g. `dump-schema.json`, `server.schema.json`) are symlink-style copies of the latest versioned schema for backward compatibility.
+Legacy single-file aliases in this directory (e.g. `diff-schema.json`, `split-config-schema.json`) are symlink-style copies of the latest versioned schema for backward compatibility.
 
 ## Version management
 

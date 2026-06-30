@@ -1,7 +1,7 @@
 # MCP Backward Compatibility Rules
 # Based on docs/scope/BACKWARD-COMPATIBILITY.md
 #
-# This file defines rules for determining whether changes in MCP dumps/manifests
+# This file defines rules for determining whether changes in MCP dumps
 # are backward compatible or breaking.
 #
 # Schema Version: 1.0.0

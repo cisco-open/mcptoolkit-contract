@@ -6,7 +6,6 @@ User-facing and maintainer documentation for **mcpcontract**.
 |---|---|
 | [users/](users/) | Anyone using `mcpcontract` — guides, tutorials, schema references, examples |
 | [maintainers/](maintainers/) | Contributors and maintainers — design notes, implementation history |
-| [dust/](dust/) | Deprecated/superseded notes retained for short-term reference only |
 
 Other entry points at the repository root:
 

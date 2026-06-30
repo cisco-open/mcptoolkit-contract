@@ -6,7 +6,7 @@ Quick reference for AI agents and developers extending this CLI tool.
 
 **mcpcontract** - CLI toolkit for MCP (Model Context Protocol) server contract management.
 
-**Purpose**: Extract capabilities from live MCP servers, generate registry-compatible manifests, validate against schemas, render documentation, and track changes between versions.
+**Purpose**: Extract capabilities from live MCP servers, validate against schemas, render documentation, and track changes between versions.
 
 **Tech Stack**: TypeScript, Node.js 20+, Commander.js, Ajv, Handlebars, YAML
 
@@ -15,11 +15,10 @@ Quick reference for AI agents and developers extending this CLI tool.
 **Commands**: 
 - `dump` - Extract capabilities from live MCP server
 - `split` - Split large dumps into focused subsets by filtering rules
-- `convert` - Convert between internal dump format and mcpdesc YAML (bidirectional)
-- `manifest` - Generate server.json from dump + metadata
+- `convert` - **[DEPRECATED]** Convert between the legacy capability-dump format and mcpdesc YAML (bidirectional); retained only to migrate older dumps
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
-- `diff` - Compare manifests/dumps and generate structural diff
+- `diff` - Compare dumps and generate structural diff
 - `breaking` - Analyze diff for breaking changes using rules (with --suggest-version for semantic versioning)
 - `changelog` - Generate human-readable changelog from breaking analysis (formats: release, compact)
 - `completion` - Generate shell completion scripts
@@ -36,10 +35,9 @@ mcpcontract/
 │   │   ├── dump.ts          # ✅ Extract server capabilities
 │   │   ├── split.ts         # ✅ Split large dumps (Phase 1: tools)
 │   │   ├── convert.ts       # ✅ Convert between dump and mcpdesc formats
-│   │   ├── manifest.ts      # ✅ Generate server.json
 │   │   ├── validate.ts      # ✅ Validate against schemas
 │   │   ├── document.ts      # ✅ Generate documentation
-│   │   ├── diff.ts          # ✅ Compare manifests, generate structural diff
+│   │   ├── diff.ts          # ✅ Compare dumps, generate structural diff
 │   │   ├── breaking.ts      # ✅ Detect breaking changes using rules
 │   │   ├── changelog.ts     # ✅ Generate version changelog
 │   │   ├── completion.ts    # ✅ Generate shell completions
@@ -51,7 +49,6 @@ mcpcontract/
 │       ├── config.ts         # Config parser
 │       ├── formatters.ts     # JSON/YAML/Markdown output
 │       ├── types.ts          # Type definitions
-│       ├── manifest-builder.ts  # ✅ Manifest generation
 │       ├── validator.ts      # ✅ Schema validation
 │       ├── renderer.ts       # ✅ Template rendering
 │       ├── differ.ts         # ✅ Structural diff engine (734 lines)
@@ -64,15 +61,10 @@ mcpcontract/
 │   ├── cli-schema-compatibility.json  # CLI-schema compatibility matrix
 │   ├── mcp-description/     # mcpdesc dump schema — latest: 0.7.0
 │   ├── dump-extension/      # x-cisco-metadata extension — latest: 0.2.0
-│   ├── manifest-info/       # Manifest info input — 1.0.0
 │   ├── diff/                # Structural diff — 1.0.0
 │   ├── diff-breaking/       # Breaking-change analysis — 2.0.0
 │   ├── split-config/        # Split config — 1.0.0
-│   ├── server/              # Registry manifest — latest: 2025-12-11
 │   ├── adl-mcp-server-profile/  # ADL profile (reserved, planned)
-│   ├── dump-schema.json     # Legacy alias → mcp-description latest
-│   ├── server.schema.json   # Legacy alias → server latest
-│   ├── manifest-info-schema.json  # Legacy alias
 │   ├── diff-schema.json     # Legacy alias
 │   ├── diff-breaking-schema.json  # Legacy alias
 │   └── split-config-schema.json   # Legacy alias
@@ -91,9 +83,6 @@ mcpcontract/
 │   ├── card-view.html.hbs          # HTML card-view documentation
 │   ├── default-dump.md.hbs         # mcpdesc-documentation format
 │   ├── reference-dump.md.hbs       # reference-documentation format
-│   ├── default-manifest.md.hbs     # manifest-documentation format
-│   ├── reference-manifest.md.hbs   # manifest-reference format
-│   ├── registry-ready.md.hbs       # registry-submission format
 │   ├── changelog-release.md.hbs    # Comprehensive release notes
 │   ├── changelog-compact.md.hbs    # Brief changelog format
 │   ├── changelog-detailed.md.hbs   # Legacy detailed format
@@ -105,8 +94,6 @@ mcpcontract/
 │   ├── fixtures/             # Test data
 │   │   ├── configs/          # MCP configs
 │   │   ├── dumps/            # Capability dumps
-│   │   ├── info/             # Server metadata
-│   │   ├── manifests/        # Generated manifests
 │   │   └── split/            # Split configs and dumps
 │   ├── generators/           # ✅ Test generators
 │   │   └── catalog-test-generator.ts  # Auto-generate from catalog
@@ -117,18 +104,14 @@ mcpcontract/
 │   └── integration/          # ✅ Integration tests (Jest)
 │       └── full-workflow.test.ts      # 10 end-to-end tests
 └── docs/
+    ├── quick-start.md        # 5-minute walkthrough (Microsoft Learn server)
     ├── users/                # User-facing guides, tutorials, examples
-    │   ├── tutorials/        # Walkthroughs (complete-workflow, changelog, rules, splitting)
-    │   ├── examples/         # Example artifacts
-    │   ├── quickstart/       # Quick-start sample data
-    │   ├── README.md
-    │   ├── schemas.md
-    │   ├── dump-schema.md
-    │   ├── dump-to-mcpdesc.md
-    │   └── mcp-compatibility-guidelines.md
-    ├── maintainers/          # Design notes and developer reference
-    │   └── design/           # architecture.md, design-decisions.md, workflow-examples.md
-    └── dust/                 # Archived historical notes (not in release)
+    │   ├── tutorials/        # Walkthroughs (complete-workflow, rules-catalog, splitting)
+    │   ├── reference/        # schemas.md, compatibility.md, convert-legacy.md
+    │   ├── examples/         # Example artifacts (microsoft-learn/, split, html/)
+    │   └── README.md
+    └── maintainers/          # Design notes and developer reference
+        └── design/           # architecture.md, design-decisions.md, workflow-examples.md
 ```
 
 ## Adding a New Command
@@ -331,22 +314,22 @@ When implementing features or fixes:
    **Check if schema changed:**
    ```bash
    # Compare current schema with latest versioned schema
-   git diff HEAD schemas/dump/$(cat schemas/latest.json | jq -r '.dump').json
+   git diff HEAD schemas/mcp-description/$(cat schemas/latest.json | jq -r '."mcp-description"').json
    ```
    
    **If schema changed, bump schema version:**
    ```bash
-   # 1. Update $id in schema file (e.g., schemas/dump/0.3.4.json)
-   #    Change: "https://developer.cisco.com/mcp_contract_dump/schema/0.3.3"
-   #    To:     "https://developer.cisco.com/mcp_contract_dump/schema/0.3.4"
+   # 1. Update $id in schema file (e.g., schemas/mcp-description/0.8.0.json)
+   #    Change: "https://developer.cisco.com/mcp-description/schema/0.7.0"
+   #    To:     "https://developer.cisco.com/mcp-description/schema/0.8.0"
    
-   # 2. Update const in version property to match new $id
+   # 2. Update the const in the mcpdesc/version property to match new $id
    
-   # 3. Save as new version file
-   cp schemas/dump-schema.json schemas/dump/0.3.4.json
+   # 3. Save as new version file (copy the previous latest)
+   cp schemas/mcp-description/0.7.0.json schemas/mcp-description/0.8.0.json
    
    # 4. Update schemas/latest.json to point to new version
-   # Change "dump": "0.3.3" to "dump": "0.3.4"
+   # Change "mcp-description": "0.7.0" to "mcp-description": "0.8.0"
    
    # 5. Update schemas/cli-schema-compatibility.json
    # Add new entry at the top of compatibility array:
@@ -354,8 +337,7 @@ When implementing features or fixes:
      "cliVersion": "0.X.Y",
      "releaseDate": "2026-01-XX",
      "schemas": {
-       "dump": "0.3.4",
-       "manifest": "1.0.0",
+       "mcp-description": "0.8.0",
        "diff": "1.0.0",
        "breaking": "2.0.0",
        "split": "1.0.0"
@@ -365,7 +347,7 @@ When implementing features or fixes:
    ```
    
    **Schema Version Guidelines:**
-   - Historical schemas stored in `schemas/<type>/<version>.json` (e.g., `schemas/dump/0.3.1.json`)
+   - Historical schemas stored in `schemas/<type>/<version>.json` (e.g., `schemas/mcp-description/0.7.0.json`)
    - `schemas/latest.json` maps schema types to latest versions
    - `schemas/cli-schema-compatibility.json` tracks which CLI versions work with which schemas
    - Only preserve schemas from v0.14.0+ (earlier versions not needed)
@@ -432,113 +414,13 @@ const output = options.format === 'yaml'
   : formatJSON(data, options.pretty);
 ```
 
-## Current Status & Roadmap
-
-### Completed (v0.17.0)
-✅ Phase 1: Foundation (dump command)  
-✅ Phase 2: Manifest generation  
-✅ Phase 3: Validation  
-✅ Phase 4: Rendering  
-✅ Phase 5: Diff & Changelog  
-✅ Phase 6.1: Rules Catalog (v0.8.2)  
-✅ Phase 6.2: Testing Framework (v0.8.2)  
-✅ Phase 6.3: Custom Catalog Support (v0.9.0)  
-✅ Phase 6.4: Changelog Enhancement (v0.11.0)  
-✅ Phase 6.5: Enhanced Metadata Tracking (v0.12.0)  
-✅ Phase 7.1: Split Command (v0.14.0)  
-✅ Phase 7.1.1: Split Metadata Enhancement (v0.14.1)  
-✅ Phase 7.1.2: Description Preservation Fix (v0.14.2)  
-✅ Phase 7.1.3: Streamable HTTP Headers Support (v0.14.3)  
-✅ Phase 7.2: CORS Support Detection (v0.17.0)  
-✅ Help System & Shell Completions (v0.9.0)
-
-**Status**: CORS detection integrated for browser compatibility assessment
-
-**v0.17.0 Features**:
-- **CORS support detection** - Automatically detects if MCP servers are browser-compatible
-  - Captures CORS response headers and session header exposure
-  - Performs OPTIONS preflight test
-  - Calculates browserReady heuristic (true/false/null)
-  - CLI options: --skip-cors-check, --cors-origin
-  - New schema fields in dumpExecution.corsSupport
-  - Diff/breaking/changelog integration with 9 CORS rules
-  - Documentation templates updated to show browser compatibility
-  - See design doc: `docs/maintainers/implementation/29-CORS_SUPPORT.md`
-- **Versioned schema validation** - Historical schema support (v0.14.0+)
-- **Schema version enforcement** - Diff/breaking commands validate schema compatibility
-- **Dump schema 0.3.3** - Added CORS support fields
-
-**v0.14.3 Features**:
-- **Streamable HTTP headers support** - Custom HTTP headers now work for streamable-http transport
-  - Headers passed via `requestInit` parameter to SDK's `StreamableHTTPClientTransport`
-  - Enables Bearer token authentication and API keys for HTTP-based MCP servers
-  - Full parity with SSE transport header support
-  - See design doc: `docs/maintainers/implementation/27-streamable-http-headers-auth.md`
-  - Phase 2 (full OAuth) deferred pending real-world requirements
-
-**v0.14.2 Features**:
-- **Description preservation fix** - Original dump description remains completely unchanged
-  - Removed description modification logic from split operations
-  - Split metadata fully captured in `dumpExecution.splitOperation`
-  - Clean separation: original dump metadata vs split operation metadata
-
-**v0.14.1 Features**:
-- **Enhanced split metadata** - Complete audit trail in `dumpExecution.splitOperation`
-  - Tool identification: toolName, toolVersion, createdAt
-  - Configuration: sourceFile, category, configFile, schemaVersion
-  - Execution details: originalCounts, filteredCounts, filterRules
-  - No schema changes required (uses existing additionalProperties support)
-  - Two-level provenance: original dump tool → split tool
-  - Preserves all original metadata (toolName, toolVersion, dumpExecution fields)
-  - Original description preserved unchanged (split info only in metadata)
-
-**v0.14.0 Features**:
-- **Split command**: Organize large federation dumps into focused subsets
-  - Regex-based name pattern filtering for tools
-  - Multiple output categories from single input
-  - Unmatched items handling (ignore/warn/error/separate-file)
-  - Split metadata tracking in outputs
-  - Dry-run mode and output validation
-  - Schema type: `dump-split`
-  - 13 unit tests, full shell completion support
-- Phase 1 scope: Tools filtering only (prompts/resources/resourceTemplates in Phase 2)
-
-**v0.12.0 Features**:
-- Protocol version tracking (e.g., 2024-11-05, 2024-12-01)
-- Capabilities array (e.g., ['tools', 'resources', 'prompts', 'logging'])
-- Automatic detection and highlighting in changelogs
-- New Handlebars helper: `contains` for array operations
-
-**v0.11.0 Features**:
-- Categorized changelogs (breaking/new/updates/deleted)
-- Semantic versioning recommendations (--suggest-version flag)
-- Two new templates: release (comprehensive) and compact (brief)
-- Complete serverInfo metadata preservation (name + version tracking)
-- Server rename detection in changelog output
-- What/why/before/after change descriptions
-
-### Next Steps (Toward v1.0)
-
-**Pre-1.0 Refinement**:
-1. **Phase 7.2: Extend split to all capabilities** (v0.15.0)
-   - Add prompts, resources, resourceTemplates filtering
-   - Same pattern-matching approach as tools
-
-2. **Test & refine changelog output** - Validate with diverse MCP servers
-   - Validate against diverse MCP server implementations
-
-3. **Test & refine documentation rendering** - Validate manifest/dump docs
-   - Test templates with various server configurations
-   - Verify registry-ready format meets submission requirements
-   - Ensure documentation clarity for both humans and AI agents
+## Future Enhancements
 
 **Post-1.0 Enhancements**:
 - Phase 7.3: Advanced split filters (tag-based, description patterns, excludes)
 - Web-based catalog browser for compatibility rules
 - Interactive documentation interface
 - Enhanced discoverability for non-CLI users
-
-**1.0 Release Criteria**: Changelog + Documentation validation complete, production-ready quality
 
 ## Custom Catalog Support (v0.9.0)
 
@@ -572,7 +454,7 @@ mcpcontract rules export --catalog rules/my-team-catalog \
 - **Conditional Rules**: Support operators (equals, notEquals, contains, notContains, hasAdditions, hasRemovals, onlyAdditions, onlyRemovals)
 - **Exit Codes**: 0 (compatible), 1 (breaking), 2 (error)
 
-**MCP Compatibility Philosophy** ([mcp-compatibility-guidelines.md](docs/users/mcp-compatibility-guidelines.md)):
+**MCP Compatibility Philosophy** ([compatibility.md](docs/users/reference/compatibility.md)):
 - **Postel's Law**: "Be liberal in what you accept" - clients handle unknown values gracefully
 - **Open-World Assumption**: Schema evolves over time, unknown elements ignored
 - **Semantic Versioning**: MAJOR (breaking), MINOR (new features), PATCH (fixes)

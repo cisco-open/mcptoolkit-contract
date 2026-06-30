@@ -119,7 +119,6 @@ describe('Splitter', () => {
         expect(splitOp.splitConfig.sourceFile).toBe('test-federation-dump.json');
         expect(splitOp.splitConfig.category).toBe(result.category);
         expect(splitOp.splitConfig.configFile).toBe('split-config-basic.yaml');
-        expect(splitOp.splitConfig.schemaVersion).toBeDefined();
         
         // Check split execution details
         expect(splitOp.splitExecution.originalCounts.tools).toBe(8);
@@ -247,27 +246,16 @@ categories:
 
   describe('edge cases', () => {
     it('should handle empty tools array', async () => {
-      // Create a dump with no tools
+      // Create an mcpdesc document with no tools
       const emptyDumpContent = {
-        version: "https://developer.cisco.com/mcp_contract_dump/schema/0.3.1",
-        dumpDetails: {
-          toolName: "mcpcontract",
-          toolVersion: "0.13.1",
-          description: "Empty dump",
-          createdAt: "2025-12-15T10:00:00.000Z",
-          mcpServerConfig: { name: "test", transport: "sse" },
-          dumpExecution: { mcpProtocolUsed: "2025-06-18" }
-        },
-        serverInfo: {
+        mcpdesc: "0.7.0",
+        info: {
           name: "empty-server",
           version: "1.0.0",
-          protocolVersion: "2025-06-18",
-          capabilities: {}
+          protocolVersion: "2025-06-18"
         },
-        tools: [],
-        resources: [],
-        resourceTemplates: [],
-        prompts: []
+        transports: [{ type: "sse" }],
+        capabilities: {}
       };
 
       const tmpMcpdescPath = resolve(FIXTURES_DIR, 'empty-dump.json');

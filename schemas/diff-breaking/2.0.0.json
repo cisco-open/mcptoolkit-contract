@@ -18,7 +18,7 @@
       "properties": {
         "old": {
           "type": "object",
-          "description": "Server info from old dump/manifest",
+          "description": "Server info from old dump",
           "properties": {
             "name": {
               "type": "string",
@@ -43,7 +43,7 @@
         },
         "new": {
           "type": "object",
-          "description": "Server info from new dump/manifest",
+          "description": "Server info from new dump",
           "properties": {
             "name": {
               "type": "string",

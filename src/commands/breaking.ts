@@ -10,7 +10,6 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import { RulesEngine } from '../lib/rules-engine.js';
-import { extractDumpSchemaVersion } from '../lib/validator.js';
 
 export const breakingCommand = new Command('breaking')
   .description('Spot non-backward compatible changes from a structural diff')
@@ -97,35 +96,6 @@ EXAMPLES:
       } catch (error) {
         console.error(`❌ Error parsing diff file: ${(error as Error).message}`);
         process.exit(2);
-      }
-
-      // Check schema version compatibility from diff metadata
-      if (diffData.metadata?.old && diffData.metadata?.new) {
-        const fromVersion = extractDumpSchemaVersion(diffData.metadata.old);
-        const toVersion = extractDumpSchemaVersion(diffData.metadata.new);
-
-        if (fromVersion && toVersion) {
-          // Extract MAJOR.MINOR from schema versions (e.g., "0.3.1" -> "0.3")
-          const fromMajorMinor = fromVersion.split('.').slice(0, 2).join('.');
-          const toMajorMinor = toVersion.split('.').slice(0, 2).join('.');
-          
-          if (fromMajorMinor !== toMajorMinor) {
-            // Different MAJOR.MINOR versions - not compatible
-            console.error(`❌ Error: Schema version mismatch detected in diff\n`);
-            console.error(`   Old version: schema ${fromVersion}`);
-            console.error(`   New version: schema ${toVersion}\n`);
-            console.error(`   Breaking change analysis requires compatible schema versions.\n`);
-            console.error(`   To analyze these versions:`);
-          console.error(`   1. Regenerate MCP descriptions with matching CLI versions, OR`);
-            console.error(`   2. Use appropriate CLI version for schema ${fromVersion}\n`);
-            console.error(`   Check compatibility: mcpcontract validate --show-compatibility`);
-            process.exit(1);
-          } else if (fromVersion !== toVersion && !quiet) {
-            // Same MAJOR.MINOR but different patch versions - compatible but worth noting
-            console.error(`⚠️  Note: Analyzing diff with different schema patch versions: ${fromVersion} → ${toVersion}`);
-            console.error(`   This is safe (patch versions are backward compatible)\n`);
-          }
-        }
       }
 
       // Determine rules file

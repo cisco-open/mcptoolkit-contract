@@ -251,7 +251,6 @@ export interface RuntimeFindings {
       sourceFile: string;      // Original dump filename
       category: string;        // Category name from split config
       configFile: string;      // Split config filename
-      schemaVersion: string;   // Schema version of source dump
     };
     
     // Split execution details (parallel to dumpExecution)

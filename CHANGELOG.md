@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
 - [[1.0.0-rc.3] - 2026-06-29](#100-rc3---2026-06-29)
 - [[1.0.0-rc2] - 2026-06-25](#100-rc2---2026-06-25)
 - [[1.0.0-rc1] - 2026-06-04](#100-rc1---2026-06-04)
@@ -15,6 +16,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.0.0-rc.4] - 2026-06-30
+
+### Changed
+
+- **Reorganized user documentation** for clarity and to reduce redundancy:
+  - Added `docs/users/reference/` — merged `schemas.md` + `dump-schema.md` into a single `schemas.md`, moved the compatibility guidelines to `compatibility.md`, and shrank the deprecated-`convert` guide to a concise `convert-legacy.md` note.
+  - Consolidated tutorials — folded the changelog tutorial into `complete-workflow.md` and renamed `rules-catalog-guide.md` to `rules-catalog.md`.
+  - Moved the Microsoft Learn sample dumps to `docs/users/examples/microsoft-learn/` and rewrote the quick start around a real `diff`/`breaking`/`changelog` demo using two historical snapshots.
+  - Dropped the synthetic IETF example (kept the federation split example) and slimmed the README, removing duplicated command/rules detail.
+
+### Removed
+
+- **MCP server registry/manifest support removed.** Dropped the `manifest` command, the `server` and `manifest-info` schemas, the manifest/registry document templates, and the related `validate --schema` / `document --type` / `document --template` options. mcpcontract now focuses on dump, document, and change tracking (diff/breaking/changelog). Pre-GA removal — no deprecation cycle or migration tooling.
+- **Legacy on-disk capability-dump format removed.** `mcpcontract dump` now emits only the MCP Description (mcpdesc) format. The `dump` schema (`schemas/dump/`, `dump-schema.json`) and its `validate --schema dump` option are gone, and `diff`/`document`/`split` reject legacy dump files as input. Convert older files to mcpdesc first with `mcpcontract convert`.
+
+### Deprecated
+
+- **`mcpcontract convert` is deprecated** and will be removed in a future release. It remains available solely to migrate older capability dumps to the mcpdesc format and now prints a deprecation warning.
 
 ## [1.0.0-rc.3] - 2026-06-29
 

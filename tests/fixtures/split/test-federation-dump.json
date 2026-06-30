@@ -1,26 +1,18 @@
 {
-  "version": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.3",
-  "dumpDetails": {
-    "toolName": "mcpcontract",
-    "toolVersion": "0.17.0",
-    "description": "Test federation server dump for unit tests",
-    "createdAt": "2025-12-15T10:00:00.000Z",
-    "mcpServerConfig": {
-      "name": "test-federation-server",
-      "transport": "streamable-http",
-      "url": "https://federation.test.example.com/mcp"
-    },
-    "dumpExecution": {
-      "mcpProtocolUsed": "2025-06-18"
-    }
-  },
-  "serverInfo": {
+  "mcpdesc": "0.7.0",
+  "info": {
     "name": "test-federation-server",
     "version": "1.0.0",
-    "protocolVersion": "2025-06-18",
-    "capabilities": {
-      "tools": {}
+    "protocolVersion": "2025-06-18"
+  },
+  "transports": [
+    {
+      "type": "streamable-http",
+      "url": "https://federation.test.example.com/mcp"
     }
+  ],
+  "capabilities": {
+    "tools": {}
   },
   "tools": [
     {
@@ -29,9 +21,14 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "description": "Subscription ID" }
+          "id": {
+            "type": "string",
+            "description": "Subscription ID"
+          }
         },
-        "required": ["id"]
+        "required": [
+          "id"
+        ]
       }
     },
     {
@@ -40,7 +37,10 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "accountId": { "type": "string", "description": "Account ID" }
+          "accountId": {
+            "type": "string",
+            "description": "Account ID"
+          }
         }
       }
     },
@@ -50,10 +50,19 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "description": "Subscription ID" },
-          "data": { "type": "object", "description": "Updated subscription data" }
+          "id": {
+            "type": "string",
+            "description": "Subscription ID"
+          },
+          "data": {
+            "type": "object",
+            "description": "Updated subscription data"
+          }
         },
-        "required": ["id", "data"]
+        "required": [
+          "id",
+          "data"
+        ]
       }
     },
     {
@@ -62,10 +71,17 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "username": { "type": "string" },
-          "password": { "type": "string" }
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
         },
-        "required": ["username", "password"]
+        "required": [
+          "username",
+          "password"
+        ]
       }
     },
     {
@@ -74,7 +90,10 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "filter": { "type": "string", "description": "Optional filter expression" }
+          "filter": {
+            "type": "string",
+            "description": "Optional filter expression"
+          }
         }
       }
     },
@@ -84,10 +103,18 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "description": "Policy name" },
-          "rules": { "type": "array", "description": "Policy rules" }
+          "name": {
+            "type": "string",
+            "description": "Policy name"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Policy rules"
+          }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       }
     },
     {
@@ -104,13 +131,31 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "reportId": { "type": "string", "description": "Report identifier" }
+          "reportId": {
+            "type": "string",
+            "description": "Report identifier"
+          }
         },
-        "required": ["reportId"]
+        "required": [
+          "reportId"
+        ]
       }
     }
   ],
-  "resources": [],
-  "resourceTemplates": [],
-  "prompts": []
+  "x-cisco-metadata": {
+    "version": "0.2.0",
+    "dump": {
+      "toolName": "mcpcontract",
+      "toolVersion": "0.17.0",
+      "createdAt": "2025-12-15T10:00:00.000Z",
+      "serverConfig": {
+        "name": "test-federation-server",
+        "transport": "streamable-http",
+        "url": "https://federation.test.example.com/mcp"
+      },
+      "runtimeObservations": {
+        "mcpProtocolUsed": "2025-06-18"
+      }
+    }
+  }
 }

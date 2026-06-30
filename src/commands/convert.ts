@@ -36,7 +36,7 @@ export function convertCommand(): Command {
   const cmd = new Command('convert');
 
   cmd
-    .description('Convert between dump and mcpdesc formats')
+    .description('[DEPRECATED] Convert between the legacy capability-dump format and mcpdesc')
     .argument('[input]', 'Input file path (dump or mcpdesc, JSON or YAML)')
     .option('--to-format <format>', 'Target format: dump or mcpdesc (auto-detected from input if omitted)')
     .option('-o, --output <path>', 'Output file path (default: stdout)')
@@ -74,6 +74,12 @@ async function printGuide(): Promise<void> {
 }
 
 async function runConvert(inputPath: string, options: ConvertCommandOptions): Promise<void> {
+  // Deprecation notice (the legacy capability-dump format is being retired)
+  console.error(
+    '⚠\uFE0F  `mcpcontract convert` is deprecated and will be removed in a future release.\n' +
+    '   It remains available to migrate older capability dumps to the MCP description (mcpdesc) format.'
+  );
+
   // Read and parse input
   const content = await readFile(inputPath, 'utf-8');
   let data: Record<string, unknown>;
@@ -123,16 +129,6 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   } else {
     const doc = data as unknown as McpDescDocument;
     const dump = mcpDescriptionToContractDump(doc);
-    // Populate dump schema version from schemas/dump-schema.json
-    if (!dump.version) {
-      try {
-        const schemaPath = new URL('../../schemas/dump-schema.json', import.meta.url).pathname;
-        const schema = JSON.parse(await readFile(schemaPath, 'utf-8'));
-        dump.version = schema.$id as string;
-      } catch {
-        // Leave empty if schema unavailable
-      }
-    }
     result = dump;
   }
 

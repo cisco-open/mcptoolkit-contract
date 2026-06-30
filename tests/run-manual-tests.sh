@@ -59,39 +59,11 @@ else
 fi
 echo ""
 
-# Test 3: Manifest generation
-echo "Test 3: Manifest command"
-echo "------------------------"
-if [ -f tests/fixtures/dumps/sample-server-dump.json ]; then
-  node build/index.js manifest \
-    --mcpdesc tests/fixtures/dumps/sample-server-dump.json \
-    --info tests/fixtures/info/sample-server-info.json \
-    --output tests/fixtures/manifests/test-manifest.json \
-    --pretty \
-    --add-capabilities-meta \
-    --quiet
-
-  if [ -f tests/fixtures/manifests/test-manifest.json ]; then
-    echo "✓ Manifest generated successfully"
-    if grep -q '"name"' tests/fixtures/manifests/test-manifest.json && \
-       grep -q '"version"' tests/fixtures/manifests/test-manifest.json && \
-       grep -q '"description"' tests/fixtures/manifests/test-manifest.json; then
-      echo "✓ Manifest has required fields"
-    fi
-  else
-    echo "✗ Manifest file not created"
-  fi
-else
-  echo "⚠ Manifest test skipped (sample fixtures not present)"
-fi
-echo ""
-
-# Test 4: Help output
-echo "Test 4: Help commands"
+# Test 3: Help output
+echo "Test 3: Help commands"
 echo "---------------------"
 node build/index.js --help > /dev/null 2>&1 && echo "✓ Main help working"
 node build/index.js dump --help > /dev/null 2>&1 && echo "✓ Dump help working"
-node build/index.js manifest --help > /dev/null 2>&1 && echo "✓ Manifest help working"
 node build/index.js rules --help > /dev/null 2>&1 && echo "✓ Rules help working"
 echo ""
 
@@ -260,19 +232,13 @@ test ${#COMPREPLY[@]} -eq 3 || exit 1  # Should match: dump, document, diff
 COMP_WORDS=(mcpcontract "")
 COMP_CWORD=1
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 10 || exit 1  # All 10 commands
+test ${#COMPREPLY[@]} -eq 11 || exit 1  # All 11 commands
 
 # Test 3: dump options (without -- prefix)
 COMP_WORDS=(mcpcontract dump "")
 COMP_CWORD=2
 _mcpcontract_completion
 test ${#COMPREPLY[@]} -eq 14 || exit 1  # All dump options
-
-# Test 4: manifest options (without -- prefix)
-COMP_WORDS=(mcpcontract manifest "")
-COMP_CWORD=2
-_mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 6 || exit 1  # All manifest options
 
 # Test 5: rules subcommand completion
 COMP_WORDS=(mcpcontract rules "")
@@ -302,7 +268,7 @@ test ${#COMPREPLY[@]} -eq 3 || exit 1  # json, yaml, markdown
 COMP_WORDS=(mcpcontract validate --schema "")
 COMP_CWORD=3
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 5 || exit 1  # dump, manifest, manifest-info, diff, diff-breaking
+test ${#COMPREPLY[@]} -eq 6 || exit 1  # mcpdesc, mcp-description, dump, diff, diff-breaking, dump-split
 
 # Test 10: Enum value completion for --category
 COMP_WORDS=(mcpcontract rules list --category "")
@@ -316,14 +282,13 @@ COMPLETION_TEST
 chmod +x /tmp/test-mcpcontract-completion.sh
 if bash /tmp/test-mcpcontract-completion.sh 2>/dev/null; then
   echo "✓ Command completion working (mcpcontract d → dump, document, diff)"
-  echo "✓ All commands completion working (10 commands)"
+  echo "✓ All commands completion working (11 commands)"
   echo "✓ dump options completion working (14 options without -- prefix)"
-  echo "✓ manifest options completion working (6 options without -- prefix)"
   echo "✓ rules subcommand completion working (6 subcommands)"
   echo "✓ rules list options completion working (7 options without -- prefix)"
   echo "✓ Enum completion for --transport (4 values)"
   echo "✓ Enum completion for --format (3 values for dump)"
-  echo "✓ Enum completion for --schema (5 values)"
+  echo "✓ Enum completion for --schema (6 values)"
   echo "✓ Enum completion for --category (5 values)"
   echo "✓ Completion works without bash-completion package"
 else
@@ -340,8 +305,6 @@ echo ""
 echo "Test fixtures location: tests/fixtures/"
 echo "  - configs/  : MCP server configurations"
 echo "  - dumps/    : Capability dumps"
-echo "  - info/     : Server info files (for manifest generation)"
-echo "  - manifests/: Generated manifests"
 echo ""
 echo "Rules catalog locations:"
 echo "  - rules/catalog/                     : Default catalog"

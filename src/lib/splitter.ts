@@ -168,7 +168,7 @@ export class Splitter {
 
     // Create new dump structure preserving all original metadata
     const filteredDump: ContractDump = {
-      version: this.dump.version, // Legacy dump schema $id — remove at v1.0
+      version: this.dump.version, // Internal model field; dropped on mcpdesc output
       dumpDetails: {
         ...this.dump.dumpDetails,
         // Keep original description unchanged - split info is in splitOperation
@@ -186,7 +186,6 @@ export class Splitter {
               sourceFile: basename(sourceFile),
               category: category.name,
               configFile: basename(configFile),
-              schemaVersion: this.dump.version,
             },
             
             // Split execution details
@@ -313,7 +312,7 @@ export class Splitter {
       
       if (unmatchedConfig?.action === 'separate-file' && unmatchedConfig.outputFile) {
         const unmatchedDump: ContractDump = {
-          version: this.dump.version, // Legacy dump schema $id — remove at v1.0
+          version: this.dump.version, // Internal model field; dropped on mcpdesc output
           dumpDetails: {
             ...this.dump.dumpDetails,
             // Keep original description unchanged - split info is in splitOperation
@@ -327,7 +326,6 @@ export class Splitter {
                   sourceFile: basename(options.mcpdescPath),
                   category: 'unmatched',
                   configFile: basename(options.configPath),
-                  schemaVersion: this.dump.version,
                 },
                 splitExecution: {
                   originalCounts: {

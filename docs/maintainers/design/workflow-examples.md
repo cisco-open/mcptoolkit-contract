@@ -2,138 +2,52 @@
 
 This document provides end-to-end examples of using `mcpcontract` for different scenarios.
 
-## Workflow 1: Local NPM Package Server
+## Workflow 1: Document a Live Server
 
-**Goal**: Publish a local MCP server to the registry.
+**Goal**: Extract a server's capabilities and publish human-readable documentation.
 
 ### Step 1: Extract Capabilities
 
-First, ensure your server is running and accessible. Then dump its capabilities:
-
 ```bash
-# Start your MCP server
+# Start your MCP server (if local)
 node dist/index.js &
 
-# Dump capabilities
+# Dump capabilities → mcpdesc
 mcpcontract dump \
   --server-name "openapi-analyzer" \
   --transport streamable-http \
   --url "http://localhost:3001/mcp" \
-  --output capabilities-dump.json \
+  --output capabilities.mcpdesc.json \
   --pretty
 ```
 
-**Output**: `capabilities-dump.json` containing all tools, resources, prompts, etc.
+**Output**: `capabilities.mcpdesc.json` containing all tools, resources, prompts, etc.
 
-### Step 2: Create Server Info File
-
-Create a `server-info.json` with package and repository information:
-
-```json
-{
-  "reverseDnsName": "io.example.developer/openapi-analyzer",
-  "title": "OpenAPI Analyzer",
-  "description": "MCP server for OpenAPI document analysis and validation",
-  "repository": {
-    "url": "https://github.com/example-org/openapi-analyzer-mcp",
-    "source": "github"
-  },
-  "packages": [{
-    "registryType": "npm",
-    "registryBaseUrl": "https://registry.npmjs.org",
-    "identifier": "@example-org/openapi-analyzer-mcp",
-    "runtimeHint": "npx",
-    "transport": {
-      "type": "stdio"
-    },
-    "environmentVariables": [{
-      "name": "PORT",
-      "description": "HTTP server port",
-      "default": "3001",
-      "format": "number"
-    }]
-  }]
-}
-```
-
-### Step 3: Generate Manifest
+### Step 2: Validate the Dump
 
 ```bash
-mcpcontract manifest \
-  --mcpdesc capabilities-dump.json \
-  --info server-info.json \
-  --output server.json \
-  --add-capabilities-meta \
-  --validate \
-  --pretty
+mcpcontract validate capabilities.mcpdesc.json --schema mcpdesc --strict
 ```
 
-**Output**: `server.json` conforming to MCP registry schema.
-
-**Console Output**:
-```
-✓ Loaded capability dump (9 tools, 1 resource, 1 prompt)
-✓ Loaded server info
-✓ Version match: 0.3.0
-⚠ Warning: Package transport (stdio) differs from dump transport (streamable-http)
-✓ Generated manifest
-✓ Validated against server.schema.json
-✓ Wrote manifest to server.json
-```
-
-### Step 4: Validate Manifest
+### Step 3: Render Documentation
 
 ```bash
-mcpcontract validate server.json --schema manifest
-```
+# Markdown reference
+mcpcontract document capabilities.mcpdesc.json \
+  --template reference-documentation \
+  --output REFERENCE.md
 
-**Output**:
-```
-✓ Valid manifest: server.json
-
-Validation Summary:
-- Schema: server.schema.json (2025-10-17)
-- Required fields: PASS
-- Field types: PASS
-- Format validation: PASS
-
-No issues found.
-```
-
-### Step 5: Generate Documentation
-
-```bash
-mcpcontract render server.json \
-  --template-name default \
-  --output MANIFEST.md
-```
-
-**Output**: `MANIFEST.md` - Human-readable documentation.
-
-### Step 6: Submit to Registry
-
-```bash
-# Clone registry repo
-git clone https://github.com/modelcontextprotocol/registry
-cd registry
-
-# Add your server
-cp ../server.json servers/example/openapi-analyzer/server.json
-
-# Create PR
-git checkout -b add-openapi-analyzer
-git add servers/example/openapi-analyzer/server.json
-git commit -m "Add OpenAPI Analyzer MCP Server"
-git push origin add-openapi-analyzer
+# Interactive HTML card view
+mcpcontract document capabilities.mcpdesc.json \
+  --template card-view \
+  --output capabilities.html
 ```
 
 ---
 
-## Workflow 2: Cloud-Hosted Remote Server
+## Workflow 2: Authenticated Remote Server
 
-**Goal**: Create manifest for a hosted MCP service.
-
-### Step 1: Dump Capabilities
+**Goal**: Document a hosted MCP service that requires an API key.
 
 ```bash
 mcpcontract dump \
@@ -141,126 +55,72 @@ mcpcontract dump \
   --transport streamable-http \
   --url "https://mcp.example.com/search" \
   --headers "X-API-Key:${API_KEY}" \
-  --output hosted-search-dump.json \
+  --output hosted-search.mcpdesc.json \
   --pretty
+
+mcpcontract validate hosted-search.mcpdesc.json --schema mcpdesc
+
+mcpcontract document hosted-search.mcpdesc.json \
+  --template reference-documentation \
+  --output hosted-search.md
 ```
 
-### Step 2: Create Remote Server Info
-
-```json
-{
-  "reverseDnsName": "com.example.cloud/hosted-search",
-  "title": "Hosted Search Service",
-  "description": "Cloud-hosted MCP server for federated search",
-  "websiteUrl": "https://developer.example.com/hosted-search",
-  "remotes": [{
-    "type": "streamable-http",
-    "url": "https://mcp.example.com/search",
-    "headers": [{
-      "name": "X-API-Key",
-      "description": "Service API key",
-      "isRequired": true,
-      "isSecret": true
-    }]
-  }]
-}
-```
-
-### Step 3: Generate & Validate
-
-```bash
-# Generate manifest
-mcpcontract manifest \
-  --mcpdesc hosted-search-dump.json \
-  --info hosted-search-remote-info.json \
-  --output hosted-search-server.json \
-  --add-capabilities-meta \
-  --validate
-
-# Validate
-mcpcontract validate hosted-search-server.json --schema manifest
-
-# Render docs
-mcpcontract document hosted-search-server.json \
-  --template registry-ready \
-  --output REGISTRY-SUBMISSION.md
-```
+> Bearer tokens and other headers are passed with `--headers "Name:Value"` for both SSE and streamable-http transports. Never hardcode secrets — read them from environment variables.
 
 ---
 
-## Workflow 3: Multi-Package Server (NPM + Docker)
+## Workflow 3: Track Changes Between Versions
 
-**Goal**: Server distributed via both npm and Docker Hub.
-
-### Step 1: Dump Capabilities
+**Goal**: Detect breaking changes and generate release notes when a server evolves.
 
 ```bash
-mcpcontract dump \
-  --config local-server-config.json \
-  --output filesystem-dump.json \
-  --pretty
+# 1. Dump the new version
+mcpcontract dump --url https://mcp.example.com --transport streamable-http \
+  --output v2.mcpdesc.json
+
+# 2. Structural diff against the previous dump
+mcpcontract diff --from v1.mcpdesc.json --to v2.mcpdesc.json --output diff.json
+
+# 3. Classify breaking changes (and suggest a SemVer bump)
+mcpcontract breaking --diff diff.json --suggest-version --output analysis.json
+
+# 4. Generate a human-readable changelog
+mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
 ```
 
-### Step 2: Create Multi-Package Info
-
-```json
-{
-  "reverseDnsName": "io.github.example/filesystem",
-  "title": "Filesystem Server",
-  "description": "MCP server for secure filesystem operations",
-  "repository": {
-    "url": "https://github.com/example/filesystem-mcp",
-    "source": "github"
-  },
-  "packages": [
-    {
-      "registryType": "npm",
-      "identifier": "@example/filesystem-mcp",
-      "runtimeHint": "npx",
-      "transport": {"type": "stdio"},
-      "packageArguments": [{
-        "type": "positional",
-        "valueHint": "target_dir",
-        "description": "Directory to allow access",
-        "isRequired": true
-      }]
-    },
-    {
-      "registryType": "oci",
-      "identifier": "docker.io/example/filesystem-mcp:1.0.0",
-      "transport": {"type": "stdio"},
-      "runtimeArguments": [{
-        "type": "named",
-        "name": "-v",
-        "value": "{host_path}:/mnt/data",
-        "description": "Mount directory"
-      }]
-    }
-  ]
-}
-```
-
-### Step 3: Generate with Multiple Packages
-
-```bash
-mcpcontract manifest \
-  --mcpdesc filesystem-dump.json \
-  --info filesystem-multipackage-info.json \
-  --output filesystem-server.json \
-  --validate \
-  --pretty
-```
+`breaking` exits `0` (compatible), `1` (breaking changes found), or `2` (error) — gate your CI on the exit code.
 
 ---
 
-## Workflow 4: CI/CD Integration
+## Workflow 4: Split a Large Federation Dump
 
-**Goal**: Automated manifest generation and validation in GitHub Actions.
+**Goal**: Partition a federation server's tools into focused, per-service subsets.
 
-### `.github/workflows/update-manifest.yml`
+```bash
+# 1. Dump the federation server
+mcpcontract dump --url https://federation.example.com/mcp \
+  --transport streamable-http --output federation.mcpdesc.json
+
+# 2. Split by service using a config file
+mcpcontract split federation.mcpdesc.json \
+  --config split-by-service.yaml \
+  --output-dir ./by-service
+
+# 3. Document each subset
+mcpcontract document --input by-service/dump-platform-identity.json \
+  --output docs/platform-identity.md
+```
+
+See [splitting-large-dumps.md](../../users/tutorials/splitting-large-dumps.md) for split-config syntax and pattern matching.
+
+---
+
+## Workflow 5: CI/CD Documentation Pipeline
+
+**Goal**: Regenerate documentation automatically in GitHub Actions.
 
 ```yaml
-name: Update MCP Manifest
+name: Update MCP Documentation
 
 on:
   push:
@@ -271,279 +131,98 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-manifest:
+  update-docs:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build project
-        run: npm run build
-      
-      - name: Install mcpcontract
-        run: npm install -g @cisco_open/mcptoolkit-contract
-      
+      - uses: actions/setup-node@v4
+        with: { node-version: '18' }
+      - run: npm ci && npm run build
+      - run: npm install -g @cisco_open/mcptoolkit-contract
       - name: Start MCP server
         run: |
           node dist/index.js &
           sleep 5
-        
       - name: Dump capabilities
         run: |
           mcpcontract dump \
             --server-name "my-server" \
             --transport streamable-http \
             --url "http://localhost:3001/mcp" \
-            --output capabilities-dump.json \
-            --pretty
-      
-      - name: Generate manifest
-        run: |
-          mcpcontract manifest \
-            --mcpdesc capabilities-dump.json \
-            --info .mcp/server-info.json \
-            --output server.json \
-            --add-capabilities-meta \
-            --validate \
-            --pretty
-      
-      - name: Validate manifest
-        run: |
-          mcpcontract validate server.json --schema manifest --strict
-      
+            --output capabilities.mcpdesc.json --pretty
+      - name: Validate
+        run: mcpcontract validate capabilities.mcpdesc.json --schema mcpdesc --strict
       - name: Render documentation
         run: |
-          mcpcontract render server.json \
-            --template-name default \
-            --output docs/MANIFEST.md
-      
-      - name: Check for changes
-        id: git-check
-        run: |
-          git diff --exit-code server.json docs/MANIFEST.md || echo "changed=true" >> $GITHUB_OUTPUT
-      
+          mcpcontract document capabilities.mcpdesc.json \
+            --template reference-documentation \
+            --output docs/REFERENCE.md
       - name: Commit updates
-        if: steps.git-check.outputs.changed == 'true'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add server.json docs/MANIFEST.md
-          git commit -m "chore: update MCP manifest and docs [skip ci]"
+          git add docs/REFERENCE.md
+          git commit -m "chore: update MCP docs [skip ci]" || exit 0
           git push
-```
-
-### Project Structure
-
-```
-your-mcp-server/
-├── .mcp/
-│   └── server-info.json       # Static metadata
-├── src/
-│   └── index.ts
-├── docs/
-│   └── MANIFEST.md            # Auto-generated
-├── server.json                # Auto-generated
-├── capabilities-dump.json     # Auto-generated
-└── .github/
-    └── workflows/
-        └── update-manifest.yml
-```
-
----
-
-## Workflow 5: Validation in Pre-commit Hook
-
-**Goal**: Ensure manifest stays valid before commits.
-
-### `.husky/pre-commit`
-
-```bash
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-echo "Validating MCP manifest..."
-
-# Check if server.json exists
-if [ ! -f "server.json" ]; then
-  echo "⚠️  No server.json found, skipping validation"
-  exit 0
-fi
-
-# Validate manifest
-if ! mcpcontract validate server.json --schema manifest; then
-  echo "❌ Manifest validation failed!"
-  echo "Run: mcpcontract validate server.json --schema manifest"
-  exit 1
-fi
-
-echo "✓ Manifest is valid"
 ```
 
 ---
 
 ## Workflow 6: Custom Template for Internal Documentation
 
-**Goal**: Generate documentation matching internal style guide.
+**Goal**: Generate documentation matching an internal style guide.
 
-### Step 1: Create Custom Template
+### Step 1: Create a Custom Template
 
 **`templates/internal-docs.md.hbs`:**
 
 ```handlebars
 ---
-title: {{title}}
+title: {{info.name}}
 category: MCP Servers
-version: {{version}}
+version: {{info.version}}
 ---
 
-# {{title}}
+# {{info.name}}
+
+## Tools
+
+{{#each tools}}
+### `{{name}}`
 
 {{description}}
-
-## Quick Start
-
-{{#if packages}}
-{{#each packages}}
-{{#if (eq registryType "npm")}}
-```bash
-npx {{identifier}}
-```
-{{/if}}
 {{/each}}
-{{/if}}
-
-## Configuration
-
-{{#if packages}}
-{{#each packages}}
-{{#if environmentVariables}}
-### Environment Variables
-
-{{#each environmentVariables}}
-#### `{{name}}`
-
-{{description}}
-
-- **Required**: {{#if isRequired}}Yes{{else}}No{{/if}}
-- **Default**: {{#if default}}`{{default}}`{{else}}None{{/if}}
-{{#if isSecret}}- **⚠️ Secret**: This is a sensitive value{{/if}}
-
-{{/each}}
-{{/if}}
-{{/each}}
-{{/if}}
-
-## Links
-
-- [Source Code]({{repository.url}})
-{{#if websiteUrl}}- [Documentation]({{websiteUrl}}){{/if}}
 ```
 
-### Step 2: Render with Custom Template
+### Step 2: Render with the Custom Template
 
 ```bash
-mcpcontract render server.json \
+mcpcontract document capabilities.mcpdesc.json \
   --template templates/internal-docs.md.hbs \
   --output docs/mcp-servers/openapi-analyzer.md
 ```
 
----
-
-## Tips & Best Practices
-
-### 1. Version Synchronization
-
-Always ensure the version in `server-info.json` matches your actual package version:
-
-```bash
-# Extract version from package.json
-VERSION=$(node -p "require('./package.json').version")
-
-# Update server-info.json programmatically
-cat server-info.json | jq ".version = \"$VERSION\"" > server-info.tmp.json
-mv server-info.tmp.json server-info.json
-```
-
-### 2. Validation in Package Scripts
-
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "manifest:dump": "mcpcontract dump --config .mcp/config.json --output capabilities-dump.json",
-    "manifest:generate": "mcpcontract manifest --mcpdesc capabilities-dump.json --info .mcp/server-info.json --output server.json --validate",
-    "manifest:validate": "mcpcontract validate server.json --schema manifest",
-    "manifest:render": "mcpcontract render server.json --output docs/MANIFEST.md",
-    "manifest:all": "npm run manifest:dump && npm run manifest:generate && npm run manifest:render"
-  }
-}
-```
-
-### 3. Keep Server Info in Version Control
-
-Store `server-info.json` in `.mcp/` directory and version it:
-
-```
-.mcp/
-├── server-info.json      # Versioned
-├── config-dev.json       # Local development
-└── config-prod.json      # Production
-```
-
-### 4. Use Environment Variables for Secrets
-
-Never hardcode secrets in server-info.json:
-
-```json
-{
-  "remotes": [{
-    "headers": [{
-      "name": "X-API-Key",
-      "description": "API key (set via environment)",
-      "isRequired": true,
-      "isSecret": true
-      // NO "default" or "value" for secrets!
-    }]
-  }]
-}
-```
+Custom templates are passed as file paths (not registered names). Available helpers are registered in [src/lib/renderer.ts](../../../src/lib/renderer.ts).
 
 ---
 
 ## Troubleshooting
 
-### Issue: Version Mismatch Warning
+### Issue: Connection refused
 
 ```
-⚠ Warning: Package version (1.0.1) differs from dump version (1.0.0)
+Error: connect ECONNREFUSED 127.0.0.1:3001
 ```
 
-**Solution**: Update server-info.json or rebuild with correct version.
-
-### Issue: Transport Incompatibility
-
-```
-⚠ Warning: Package transport (stdio) differs from dump transport (streamable-http)
-```
-
-**Explanation**: This is often expected - the dump connects one way, but users install another way. If intentional, you can ignore this warning.
+**Solution**: Ensure the server is running and reachable. Try `curl http://localhost:3001/mcp`.
 
 ### Issue: Schema Validation Failure
 
 ```
-❌ Validation failed: data.name should match pattern "^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$"
+❌ Validation failed
 ```
 
-**Solution**: Ensure reverse-DNS name format: `io.domain.org/server-name`
+**Solution**: Run `mcpcontract validate <file> --schema mcpdesc` for the full error list. If the dump was created with an older CLI, regenerate it with the current version.
 
 ### Issue: Missing Capabilities in Dump
 
@@ -551,4 +230,4 @@ Never hardcode secrets in server-info.json:
 ✓ Loaded capability dump (0 tools, 0 resources, 0 prompts)
 ```
 
-**Solution**: Ensure server was running and accessible during dump. Check server logs.
+**Solution**: Ensure the server was running and accessible during the dump. Check server logs and authentication headers.

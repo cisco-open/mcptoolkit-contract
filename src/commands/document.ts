@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Document command - Generate documentation from MCP descriptions or manifests
+ * Document command - Generate documentation from MCP descriptions
  */
 
 import { Command } from 'commander';
@@ -14,7 +14,7 @@ import { Renderer, type MarkdownEngine } from '../lib/renderer.js';
 export interface DocumentCommandOptions {
   template?: string;
   output?: string;
-  type?: 'manifest' | 'mcpdesc' | 'dump' | 'auto';
+  type?: 'mcpdesc' | 'dump' | 'auto';
   rendering?: 'full' | 'reference';
   list?: boolean;
   quiet?: boolean;
@@ -26,12 +26,12 @@ export function createDocumentCommand(): Command {
   const command = new Command('document');
 
   command
-    .description('Generate documentation from an MCP description or manifest file')
-    .argument('[file]', 'Path to MCP description file or manifest (server.json)')
-    .option('-t, --template <name>', 'Template: manifest-documentation, manifest-reference, mcpdesc-documentation, reference-documentation, card-view, registry-submission (or path to .hbs file)')
+    .description('Generate documentation from an MCP description file')
+    .argument('[file]', 'Path to MCP description file')
+    .option('-t, --template <name>', 'Template: mcpdesc-documentation, reference-documentation, card-view (or path to .hbs file)')
     .option('-r, --rendering <mode>', 'Rendering mode: full (detailed) or reference (concise)', 'full')
     .option('-o, --output <path>', 'Output file path (prints to stdout if not specified)')
-    .option('--type <type>', 'Input file type: manifest, mcpdesc, dump (legacy), or auto (auto-detect)', 'auto')
+    .option('--type <type>', 'Input file type: mcpdesc, dump (legacy), or auto (auto-detect)', 'auto')
     .option('--list', 'List available built-in templates')
     .option('--show-extraction-details', 'Show session, CORS, and extraction information sections', false)
     .option('--markdown-engine <engine>', 'Markdown engine for HTML templates: marked (default), markdown-it, snarkdown', 'marked')
@@ -100,13 +100,14 @@ async function documentCommand(file: string | undefined, options: DocumentComman
         }
       }
 
-      // Detect based on structure - improved logic
-      if (data.mcpdesc || (data.dumpDetails && data.serverInfo && data.version)) {
+      // Detect based on structure — mcpdesc only
+      if (data.mcpdesc) {
         fileType = 'mcpdesc';
         log(`  Detected: MCP description`);
-      } else if (data.name && data.version && data.packages) {
-        fileType = 'manifest';
-        log(`  Detected: server manifest`);
+      } else if (data.dumpDetails && data.serverInfo && data.version) {
+        throw new Error(
+          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
+        );
       } else {
         throw new Error('Unable to auto-detect file type. Please specify --type');
       }
@@ -123,13 +124,8 @@ async function documentCommand(file: string | undefined, options: DocumentComman
   // Determine template based on file type if not explicitly specified
   let templateToUse = options.template;
   if (!templateToUse) {
-    // Auto-select template based on detected file type and rendering mode
-    if (fileType === 'mcpdesc' || fileType === 'dump') {
-      templateToUse = options.rendering === 'reference' ? 'reference-documentation' : 'mcpdesc-documentation';
-    } else {
-      // Manifest uses reference or full template based on rendering mode
-      templateToUse = options.rendering === 'reference' ? 'manifest-reference' : 'manifest-documentation';
-    }
+    // Auto-select template based on rendering mode
+    templateToUse = options.rendering === 'reference' ? 'reference-documentation' : 'mcpdesc-documentation';
   }
   
   log(`  Template: ${templateToUse}`);
@@ -137,9 +133,7 @@ async function documentCommand(file: string | undefined, options: DocumentComman
   // Render based on type
   let output: string;
   try {
-    if (fileType === 'manifest') {
-      output = await renderer.renderManifest(file, templateToUse);
-    } else if (fileType === 'mcpdesc' || fileType === 'dump') {
+    if (fileType === 'mcpdesc' || fileType === 'dump') {
       output = await renderer.renderMcpDescription(file, templateToUse, {
         showDumpInformation: options.showExtractionDetails || false,
       });

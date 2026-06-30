@@ -738,10 +738,9 @@ Errors:
 
 ## Additional Resources
 
-- [MCP Compatibility Guidelines](../build/implementation/16-MCP-COMPATIBILITY-GUIDELINES.md) - Philosophy and best practices
-- [Rules Catalog Implementation](../build/implementation/17-rules-catalog.md) - Technical documentation
-- [Custom Catalog Implementation](../build/implementation/19-custom-catalog.md) - Implementation details
-- [CHANGELOG.md](../../CHANGELOG.md) - Version history and feature additions
+- [MCP Compatibility Guidelines](../reference/compatibility.md) - Philosophy and best practices
+- [mcpdesc schema](../reference/schemas.md) - The document format rules operate on
+- [CHANGELOG.md](../../../CHANGELOG.md) - Version history and feature additions
 
 ## Feedback
 

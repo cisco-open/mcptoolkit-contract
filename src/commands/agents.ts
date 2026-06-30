@@ -20,7 +20,7 @@ const OVERVIEW = `# mcpcontract - AI Coding Assistants Reference
 CLI toolkit for MCP (Model Context Protocol) server contract management.
 
 ## Purpose
-Helps developers document MCP servers, track version changes, analyze breaking changes, and generate registry-ready metadata.
+Helps developers document MCP servers, track version changes, and analyze breaking changes.
 
 ## When to Use This Command
 - AI coding assistant (Copilot, Claude, ChatGPT, etc.) needs help with mcpcontract CLI
@@ -84,7 +84,7 @@ mcpcontract agents --command breaking
 ## Key Parameters
 
 - \`--command <name>\` - Get help for specific command
-  - Available: dump, split, manifest, validate, diff, breaking, changelog, document, rules, completion
+  - Available: dump, split, validate, diff, breaking, changelog, document, rules, completion
 - \`--workflows\` - Show all end-to-end workflows
 - \`--all\` - Output complete reference in single document
 
@@ -96,10 +96,7 @@ mcpcontract agents --command breaking
 **split** - Split large MCP descriptions into focused subsets
 → Use when: You have a large federation MCP description and need to organize it by category
 
-**manifest** - Generate registry-ready metadata from MCP description
-→ Use when: You have an MCP description and want to add server metadata for publication
-
-**validate** - Validate files against JSON schemas (mcpdesc, manifest, diff)
+**validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
 
 **diff** - Compare two versions and generate structural diff
@@ -111,7 +108,7 @@ mcpcontract agents --command breaking
 **changelog** - Generate human-readable release notes from analysis
 → Use when: Creating version changelogs for users
 
-**document** - Render documentation from manifests or MCP descriptions
+**document** - Render documentation from MCP descriptions
 → Use when: Generating human-readable API documentation
 
 **rules** - Browse and explore backward compatibility rules catalog
@@ -158,37 +155,31 @@ const WORKFLOWS = `# Common Workflows
 mcpcontract dump --config old-mcp.json --output old-dump.json
 mcpcontract dump --config new-mcp.json --output new-dump.json
 
-# 2. Generate manifests (or use existing server.json files)
-mcpcontract manifest --mcpdesc old-dump.json --info info.yaml --output old.json
-mcpcontract manifest --mcpdesc new-dump.json --info info.yaml --output new.json
+# 2. Compare versions
+mcpcontract diff --from old-dump.json --to new-dump.json --output diff.json
 
-# 3. Compare versions
-mcpcontract diff --from old.json --to new.json --output diff.json
-
-# 4. Check for breaking changes with version recommendation
+# 3. Check for breaking changes with version recommendation
 mcpcontract breaking --diff diff.json --suggest-version --output analysis.json
 
-# 5. Generate release notes
+# 4. Generate release notes
 mcpcontract changelog --analysis analysis.json --format release --output CHANGELOG.md
 \`\`\`
 
 ## Workflow 2: Quick Validation Pipeline
 
 \`\`\`bash
-# Dump → Manifest → Validate in one pipeline
-mcpcontract dump --config mcp.json | \\
-  mcpcontract manifest --mcpdesc - --info info.yaml | \\
-  tee server.json | \\
-  mcpcontract validate --manifest -
+# Dump → Validate in one pipeline
+mcpcontract dump --config mcp.json --output dump.json
+mcpcontract validate dump.json --schema mcpdesc
 
 # Then generate documentation
-mcpcontract document server.json --output docs/API.md
+mcpcontract document dump.json --output docs/API.md
 \`\`\`
 
 ### Check Single Change for Breaking Issues
 \`\`\`bash
-# Compare two manifest files directly
-mcpcontract diff --from old-server.json --to new-server.json | \\
+# Compare two dump files directly
+mcpcontract diff --from old-dump.json --to new-dump.json | \\
   mcpcontract breaking --diff - --suggest-version
 \`\`\`
 
@@ -197,7 +188,6 @@ mcpcontract diff --from old-server.json --to new-server.json | \\
 **I need to...**
 - Document a new MCP server → Start with \`dump\`
 - Split a large MCP description into categories → Use \`split\`
-- Add metadata to capabilities → Use \`manifest\` after \`dump\`
 - Check if my files are valid → Use \`validate\`
 - See what changed between versions → Use \`diff\`
 - Know if changes are breaking → Use \`breaking\` (after \`diff\`)
@@ -209,8 +199,6 @@ mcpcontract diff --from old-server.json --to new-server.json | \\
 ## File Types Reference
 
 - **dump.json** - Server capabilities extracted from live server
-- **info.yaml** - Server metadata (manually created by you)
-- **server.json** - Complete manifest (MCP description + info combined)
 - **diff.json** - Structural differences between versions
 - **analysis.json** - Breaking change analysis with severity ratings
 
@@ -240,7 +228,6 @@ Connects to a live MCP server and extracts all capabilities (tools, resources, p
 ## When to Use
 - You have a running MCP server
 - Need to document what the server offers
-- Want to create registry-ready metadata
 - Tracking changes over time
 - Starting the documentation workflow
 
@@ -302,9 +289,9 @@ mcpcontract dump --config mcp.json --format yaml --output dump.yaml
 
 ### Pipe to Next Command
 \`\`\`bash
-# Dump and immediately create manifest
-mcpcontract dump --config mcp.json | \\
-  mcpcontract manifest --mcpdesc - --info info.yaml
+# Dump and immediately validate
+mcpcontract dump --config mcp.json --output dump.json
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ### Quiet Mode (No Progress Messages)
@@ -358,9 +345,9 @@ Example dump.json structure:
 
 ## Next Steps After Dump
 
-1. **Validate the dump**: \`mcpcontract validate dump.json --schema dump\`
-2. **Add metadata**: \`mcpcontract manifest --mcpdesc dump.json --info info.yaml\`
-3. **Generate docs**: \`mcpcontract document dump.json --output API.md\`
+1. **Validate the dump**: \`mcpcontract validate dump.json --schema mcpdesc\`
+2. **Generate docs**: \`mcpcontract document dump.json --output API.md\`
+3. **Compare versions**: \`mcpcontract diff --from old-dump.json --to dump.json\`
 
 ## Troubleshooting
 
@@ -509,9 +496,8 @@ Each split output contains:
 ## Next Steps After Split
 
 1. **Validate splits**: Automatically with \`--validate\` flag
-2. **Create manifests**: \`mcpcontract manifest --mcpdesc networking-tools.json --info info.yaml\`
-3. **Generate docs**: \`mcpcontract document networking-tools.json --output NETWORKING.md\`
-4. **Version tracking**: Use split outputs for focused version comparisons
+2. **Generate docs**: \`mcpcontract document networking-tools.json --output NETWORKING.md\`
+3. **Version tracking**: Use split outputs for focused version comparisons
 
 ## Troubleshooting
 
@@ -539,149 +525,12 @@ Each split output contains:
 - Review filter patterns for syntax errors
 `;
 
-const MANIFEST_GUIDE = `# manifest - Generate Server Manifest [EXPERIMENTAL]
-
-⚠️ **EXPERIMENTAL**: This command is under active development and may change.
-
-## Purpose
-Combines an MCP description with server metadata to create a registry-ready manifest file (server.json).
-
-## When to Use
-- After extracting capabilities with \`dump\`
-- Preparing to publish server to MCP registry
-- Need complete server documentation
-- Want to validate server metadata
-
-## Basic Usage
-\`\`\`bash
-mcpcontract manifest \\
-  --mcpdesc dump.json \\
-  --info info.yaml \\
-  --output server.json
-\`\`\`
-
-## Common Patterns
-
-### Standard Workflow
-\`\`\`bash
-# Create manifest with validation
-mcpcontract manifest \\
-  --mcpdesc dump.json \\
-  --info info.yaml \\
-  --add-capabilities-meta \\
-  --validate \\
-  --output server.json
-\`\`\`
-
-### From Piped Dump
-\`\`\`bash
-mcpcontract dump --config mcp.json | \\
-  mcpcontract manifest --mcpdesc - --info info.yaml --output server.json
-\`\`\`
-
-### Output to YAML
-\`\`\`bash
-mcpcontract manifest \\
-  --mcpdesc dump.json \\
-  --info info.yaml \\
-  --format yaml \\
-  --output server.yaml
-\`\`\`
-
-### Validate While Generating
-\`\`\`bash
-# Auto-validate against schema during generation
-mcpcontract manifest \\
-  --mcpdesc dump.json \\
-  --info info.yaml \\
-  --validate \\
-  --output server.json
-\`\`\`
-
-## Key Parameters
-
-### Required
-- \`--mcpdesc <file>\` - MCP description file (from \`dump\` command) or \`-\` for stdin
-- \`--info <file>\` - Server metadata file (YAML/JSON)
-
-### Optional
-- \`--output <file>\` - Output file (default: stdout)
-- \`--format <type>\` - Output format: json, yaml (default: json)
-- \`--validate\` - Validate against server.schema.json
-- \`--add-capabilities-meta\` - Add capabilities metadata to serverInfo
-- \`--pretty\` - Pretty-print JSON output
-
-## Info File Structure
-
-Create \`info.yaml\` with this structure:
-
-\`\`\`yaml
-reverseDnsName: com.example.myserver     # Required: Unique identifier
-description: What this server does       # Required: Brief description
-
-repository:                              # Optional but recommended
-  url: https://github.com/user/repo
-  source: github                         # or gitlab, bitbucket
-
-homepage: https://example.com/docs       # Optional: Documentation URL
-license: MIT                             # Optional: License identifier
-
-categories:                              # Optional: Classification
-  - Development Tools
-  - Documentation
-
-keywords:                                # Optional: Search keywords
-  - mcp
-  - tools
-
-packages:                                # Optional: Installation info
-  - registryType: npm
-    identifier: "@example/mcp-server"
-    runtimeHint: npx
-    transport:
-      type: stdio                        # or streamable-http
-      command: npx
-      args: ["@example/mcp-server"]
-\`\`\`
-
-## What You Get
-
-A complete server.json manifest containing:
-- All capability data (tools, resources, prompts, resourceTemplates)
-- Server metadata (reverseDnsName, description, etc.)
-- Package installation information
-- Repository and license details
-
-## Next Steps After Manifest
-
-1. **Validate**: \`mcpcontract validate server.json\`
-2. **Generate docs**: \`mcpcontract document server.json --output README.md\`
-3. **Compare versions**: \`mcpcontract diff --from old.json --to server.json\`
-
-## Troubleshooting
-
-### Validation fails
-- Check info.yaml has required fields (reverseDnsName, description)
-- Verify dump.json is valid (run \`mcpcontract validate dump.json --schema dump\`)
-- Check schema version compatibility
-
-### Missing metadata
-- Ensure info file exists and is readable
-- Verify YAML/JSON syntax is correct
-- Use \`--validate\` flag to catch errors early
-
-### Wrong format output
-- Specify \`--format yaml\` or \`--format json\` explicitly
-- Check file extension matches format
-`;
-
 const VALIDATE_GUIDE = `# validate - Validate Files Against Schemas
 
 ## Purpose
-Validates dump, manifest, or diff files against their JSON schemas to ensure correctness.
+Validates dump or diff files against their JSON schemas to ensure correctness.
 
 ## When to Use
-- Before publishing manifests
 - After generating dumps
 - In CI/CD pipelines
 - Debugging schema issues
@@ -690,24 +539,17 @@ Validates dump, manifest, or diff files against their JSON schemas to ensure cor
 ## Basic Usage
 \`\`\`bash
 # Auto-detect schema type
-mcpcontract validate server.json
+mcpcontract validate dump.json
 
 # Explicit schema type
-mcpcontract validate dump.json --schema dump
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ## Common Patterns
 
 ### Validate Dump
 \`\`\`bash
-mcpcontract validate dump.json --schema dump
-\`\`\`
-
-### Validate Manifest
-\`\`\`bash
-mcpcontract validate server.json --schema server
-# or
-mcpcontract validate server.json --schema manifest
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ### Validate Diff
@@ -717,12 +559,12 @@ mcpcontract validate diff.json --schema diff
 
 ### Validate from stdin
 \`\`\`bash
-mcpcontract dump --config mcp.json | mcpcontract validate --schema dump -
+mcpcontract dump --config mcp.json | mcpcontract validate --schema mcpdesc -
 \`\`\`
 
 ### Quiet Validation (Exit Code Only)
 \`\`\`bash
-if mcpcontract validate server.json --quiet; then
+if mcpcontract validate dump.json --quiet; then
   echo "Valid!"
 fi
 \`\`\`
@@ -733,16 +575,15 @@ fi
 - \`<file>\` - File to validate (or \`-\` for stdin)
 
 ### Optional
-- \`--schema <type>\` - Schema type: mcpdesc, dump, server, manifest, manifest-info, diff, diff-breaking
+- \`--schema <type>\` - Schema type: mcpdesc, dump, diff, diff-breaking, dump-split
 - \`--quiet\` - Suppress output (exit code only)
 
 ## Schema Types
 
 - \`dump\` or \`mcpdesc\` - Validates capability dumps / MCP descriptions
-- \`server\` or \`manifest\` - Validates server manifests
-- \`manifest-info\` - Validates info.yaml metadata files
 - \`diff\` - Validates structural diff files
 - \`diff-breaking\` - Validates breaking change analysis files
+- \`dump-split\` - Validates split configuration files
 
 ## Exit Codes
 
@@ -753,7 +594,6 @@ fi
 
 ### If validation passes
 - Proceed with next workflow step
-- Publish manifest (if server.json)
 - Generate documentation
 
 ### If validation fails
@@ -783,7 +623,7 @@ fi
 const DIFF_GUIDE = `# diff - Compare Server Versions
 
 ## Purpose
-Generates a structural diff between two MCP dumps or manifests, showing added, removed, and modified capabilities.
+Generates a structural diff between two MCP descriptions, showing added, removed, and modified capabilities.
 
 ## When to Use
 - Tracking changes between versions
@@ -795,14 +635,14 @@ Generates a structural diff between two MCP dumps or manifests, showing added, r
 ## Basic Usage
 \`\`\`bash
 mcpcontract diff \\
-  --from old-server.json \\
-  --to new-server.json \\
+  --from old-dump.json \\
+  --to new-dump.json \\
   --output diff.json
 \`\`\`
 
 ## Common Patterns
 
-### Compare Two Manifests
+### Compare Two Versions
 \`\`\`bash
 mcpcontract diff --from v1.json --to v2.json --output diff.json
 \`\`\`
@@ -884,7 +724,7 @@ A diff file containing changes in these categories:
 
 ### Unexpected differences
 - Check field ordering (shouldn't matter but might affect detection)
-- Verify files are same format (both dumps or both manifests)
+- Verify files are the same format (both dumps)
 - Review serverInfo changes carefully
 `;
 
@@ -1123,31 +963,23 @@ const DOCUMENT_GUIDE = `# document - Generate Documentation [EXPERIMENTAL]
 ⚠️ **EXPERIMENTAL**: This command is under active development and may change.
 
 ## Purpose
-Renders human-readable documentation from MCP manifests or MCP descriptions using customizable templates.
+Renders human-readable documentation from MCP descriptions using customizable templates.
 
 ## When to Use
 - Creating API documentation
-- Preparing registry submissions
 - Generating user guides
 - Publishing server capabilities
 
 ## Basic Usage
 \`\`\`bash
-mcpcontract document server.json --output README.md
+mcpcontract document dump.json --output README.md
 \`\`\`
 
 ## Common Patterns
 
 ### Default Template
 \`\`\`bash
-mcpcontract document server.json --output API.md
-\`\`\`
-
-### Registry-Ready Template
-\`\`\`bash
-mcpcontract document server.json \\
-  --template registry-submission \\
-  --output REGISTRY.md
+mcpcontract document dump.json --output API.md
 \`\`\`
 
 ### HTML Card View
@@ -1167,7 +999,7 @@ mcpcontract document dump.yaml --rendering reference --output REF.md
 
 ### Custom Template
 \`\`\`bash
-mcpcontract document server.json \\
+mcpcontract document dump.json \\
   --template custom-template.md.hbs \\
   --output docs/API.md
 \`\`\`
@@ -1183,13 +1015,13 @@ mcpcontract document spec.yaml \\
 ## Key Parameters
 
 ### Required
-- \`[file]\` - Manifest or dump file (or \`-\` for stdin, default: stdin)
+- \`[file]\` - MCP description file (or \`-\` for stdin, default: stdin)
 
 ### Optional
 - \`--output <file>\` - Output file (default: stdout)
 - \`--template <name|file>\` - Built-in template name or path to custom .hbs file
 - \`--rendering <mode>\` - Rendering mode: \`full\` (detailed, default) or \`reference\` (concise)
-- \`--type <type>\` - Input file type: \`manifest\`, \`mcpdesc\`, \`dump\` (legacy), or \`auto\` (default)
+- \`--type <type>\` - Input file type: \`mcpdesc\`, \`dump\` (legacy), or \`auto\` (default)
 - \`--markdown-engine <engine>\` - Markdown engine for HTML templates: \`marked\` (default), \`markdown-it\`, \`snarkdown\`
 - \`--show-extraction-details\` - Show session, CORS, and extraction information sections
 - \`--list\` - List available built-in templates
@@ -1198,15 +1030,7 @@ mcpcontract document spec.yaml \\
 
 Use \`mcpcontract document --list\` to see all templates.
 
-### manifest-documentation (default for manifests)
-- Comprehensive documentation with all metadata
-- All capabilities listed with details
-- Schema descriptions and examples
-
-### manifest-reference
-- Concise manifest reference format
-
-### mcpdesc-documentation (default for MCP descriptions)
+### mcpdesc-documentation (default)
 - Detailed MCP description with tools, prompts, and resources
 
 ### reference-documentation
@@ -1221,11 +1045,6 @@ Use \`mcpcontract document --list\` to see all templates.
 - Supports \`--markdown-engine\` option for rich text rendering
 - Output: HTML file (use \`--output spec.html\`)
 
-### registry-submission
-- User-facing README format for MCP registry submission
-- Follows registry formatting guidelines
-- Includes installation instructions and package metadata
-
 ### Custom Templates
 Create Handlebars (.hbs) templates with access to:
 - \`info\` - Name, version, description (mcpdesc format)
@@ -1239,7 +1058,6 @@ Create Handlebars (.hbs) templates with access to:
 
 1. **Review and edit**: Add examples, usage notes
 2. **Publish**: Add to repository README
-3. **Submit**: Use for registry submission
 
 ## Troubleshooting
 
@@ -1249,7 +1067,7 @@ Create Handlebars (.hbs) templates with access to:
 - Use absolute or relative path for custom templates
 
 ### Missing content
-- Verify input file is complete manifest or MCP description
+- Verify input file is a complete MCP description
 - Check serverInfo and capabilities exist
 - Ensure file format is valid JSON/YAML
 
@@ -1479,7 +1297,7 @@ export function agentsCommand(): Command {
   
   cmd
     .description('Agent-optimized help (for Copilot, Claude, ChatGPT, etc.)')
-    .option('--command <name>', 'Get help for specific command (dump, manifest, validate, diff, breaking, changelog, document, rules, completion)')
+    .option('--command <name>', 'Get help for specific command (dump, validate, diff, breaking, changelog, document, rules, completion)')
     .option('--workflows', 'Show all end-to-end workflows')
     .option('--all', 'Output all commands in single document (~7K tokens)')
     .action((options?: { command?: string; workflows?: boolean; all?: boolean }) => {
@@ -1494,7 +1312,6 @@ export function agentsCommand(): Command {
         const allGuides = [
           DUMP_GUIDE,
           SPLIT_GUIDE,
-          MANIFEST_GUIDE,
           VALIDATE_GUIDE,
           DIFF_GUIDE,
           BREAKING_GUIDE,
@@ -1531,7 +1348,6 @@ export function agentsCommand(): Command {
         const guides: Record<string, string> = {
           dump: DUMP_GUIDE,
           split: SPLIT_GUIDE,
-          manifest: MANIFEST_GUIDE,
           validate: VALIDATE_GUIDE,
           diff: DIFF_GUIDE,
           breaking: BREAKING_GUIDE,
@@ -1548,7 +1364,7 @@ export function agentsCommand(): Command {
           console.error(`Unknown command: ${options.command}`);
           console.error('');
           console.error('Available commands:');
-          console.error('  dump, split, manifest, validate, diff, breaking,');
+          console.error('  dump, split, validate, diff, breaking,');
           console.error('  changelog, document, rules, completion');
           console.error('');
           console.error('Usage: mcpcontract agents --command <name>');

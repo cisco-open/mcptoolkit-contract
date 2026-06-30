@@ -18,20 +18,6 @@ const getToolVersion = async (): Promise<string> => {
   return packageJson.version;
 };
 
-// Legacy: Extract schema reference from dump-schema.json $id field.
-// Used only for internal ContractDump.version stamping. Remove at v1.0.
-const getSchemaReference = async (): Promise<string> => {
-  // From build/lib/dumper.js, schemas are at ../schemas/
-  const schemaPath = new URL('../../schemas/dump-schema.json', import.meta.url).pathname;
-  const schema = JSON.parse(await readFile(schemaPath, 'utf-8'));
-  // Return full $id: "https://developer.cisco.com/mcp_contract_dump/schema/0.2.0"
-  const schemaId = schema.$id as string;
-  if (!schemaId) {
-    throw new Error('Could not extract schema $id from dump-schema.json');
-  }
-  return schemaId;
-};
-
 export class ContractDumper {
   private client: MCPClient;
   private config: ServerConfig;
@@ -73,14 +59,13 @@ export class ContractDumper {
 
       // Extract all capabilities and versions in parallel for efficiency
       // Use complete methods to get ALL items and track pagination
-      const [toolsResult, resourcesResult, resourceTemplatesResult, promptsResult, roots, toolVersion, schemaRef] = await Promise.all([
+      const [toolsResult, resourcesResult, resourceTemplatesResult, promptsResult, roots, toolVersion] = await Promise.all([
         this.client.listToolsComplete(),
         this.client.listResourcesComplete(),
         this.client.listResourceTemplatesComplete(),
         this.client.listPromptsComplete(),
         this.client.listRoots(),
-        getToolVersion(),
-        getSchemaReference()
+        getToolVersion()
       ]);
 
       // Build runtime findings
@@ -154,7 +139,7 @@ export class ContractDumper {
 
       // Build the dump
       const dump: ContractDump = {
-        version: schemaRef,
+        version: '',
         dumpDetails: {
           toolName: 'mcpcontract',
           toolVersion: toolVersion,
@@ -259,42 +244,5 @@ export class ContractDumper {
     }
 
     return masked;
-  }
-}
-
-/**
- * Validate a dump against the JSON schema.
- * Legacy: validates the internal ContractDump format. Remove at v1.0 when
- * ContractDump is replaced by mcpdesc-native internal representation.
- */
-export async function validateDump(dump: ContractDump, schemaPath?: string): Promise<void> {
-  // Default schema path
-  const defaultSchemaPath = new URL('../schemas/dump-schema.json', import.meta.url).pathname;
-  const actualSchemaPath = schemaPath || defaultSchemaPath;
-
-  try {
-    const schemaContent = await readFile(actualSchemaPath, 'utf-8');
-    JSON.parse(schemaContent); // Validate it's valid JSON
-
-    // Basic validation - check required fields
-    if (!dump.dumpDetails || !dump.serverInfo) {
-      throw new Error('Dump is missing required top-level fields');
-    }
-
-    if (!Array.isArray(dump.tools) || !Array.isArray(dump.resources) ||
-        !Array.isArray(dump.resourceTemplates) || !Array.isArray(dump.prompts)) {
-      throw new Error('Dump capability lists must be arrays');
-    }
-
-    // Validate protocol version
-    if (dump.dumpDetails.dumpExecution.mcpProtocolUsed !== '2025-06-18') {
-      throw new Error(`Invalid protocol version: ${dump.dumpDetails.dumpExecution.mcpProtocolUsed}`);
-    }
-
-    // For full JSON Schema validation, you would use a library like Ajv
-    // This is a basic structural validation
-    console.log('✓ Dump validation passed (basic structural check)');
-  } catch (error) {
-    throw new Error(`Dump validation failed: ${(error as Error).message}`);
   }
 }
