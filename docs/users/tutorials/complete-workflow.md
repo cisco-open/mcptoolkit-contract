@@ -57,10 +57,10 @@ See [http-with-auth-config.yaml](../examples/http-with-auth-config.yaml) for a c
 ## Step 2: Validate the Dump
 
 ```bash
-mcpcontract validate dump.yaml --schema dump
+mcpcontract validate dump.yaml --schema mcpdesc
 ```
 
-The validator auto-detects the schema version in the file, so old dumps validate without upgrading. Use `--strict` to treat warnings as errors (recommended in CI). Check version compatibility with `mcpcontract validate --show-compatibility`.
+The validator auto-detects the schema type when `--schema` is omitted. Use `--strict` to treat warnings as errors (recommended in CI). Check version compatibility with `mcpcontract validate --show-compatibility`.
 
 ---
 
@@ -134,7 +134,7 @@ mcpcontract dump \
   --format yaml \
   --output dump.yaml
 
-mcpcontract validate dump.yaml --schema dump --strict
+mcpcontract validate dump.yaml --schema mcpdesc --strict
 
 mcpcontract document dump.yaml \
   --template reference-documentation \
@@ -191,7 +191,7 @@ jobs:
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `Connection refused` | Server not running or wrong port | `curl http://localhost:3000/mcp` to check |
-| Validation error in dump | Dump does not match schema | Run `mcpcontract validate dump.yaml --schema dump` for details |
+| Validation error in dump | Dump does not match schema | Run `mcpcontract validate dump.yaml --schema mcpdesc` for details |
 | `Version mismatch` warning | Dump schema version differs from CLI | Regenerate the dump with the current CLI version |
 | No changes detected in diff | Dumps are identical | Confirm `--from` and `--to` point at different versions |
 

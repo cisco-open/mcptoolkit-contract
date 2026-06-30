@@ -36,7 +36,7 @@ export function validateCommand(): Command {
   cmd
   .description('Validate an MCP description, diff, or split configuration against their specification schemas')
   .argument('[file]', 'Path to file to validate (omit when using --show-compatibility)')
-  .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), dump (legacy), diff, diff-breaking, or dump-split')
+  .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), diff, diff-breaking, or dump-split')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
@@ -85,7 +85,7 @@ export function validateCommand(): Command {
  */
 async function validateFile(filePath: string, options: ValidateCommandOptions): Promise<void> {
   // Validate explicit schema type if provided
-  const validSchemaTypes: SchemaType[] = ['mcpdesc', 'mcp-description', 'dump', 'diff', 'diff-breaking', 'dump-split'];
+  const validSchemaTypes: SchemaType[] = ['mcpdesc', 'mcp-description', 'diff', 'diff-breaking', 'dump-split'];
   if (options.schema && !validSchemaTypes.includes(options.schema)) {
     throw new Error(
       `Invalid schema type: ${options.schema}. Must be one of: ${validSchemaTypes.join(', ')}`

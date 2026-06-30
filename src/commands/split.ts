@@ -87,7 +87,7 @@ async function validateDump(filePath: string, quiet: boolean): Promise<boolean> 
   const validator = new Validator();
   
   try {
-    const result = await validator.validateFile(filePath, 'dump');
+    const result = await validator.validateFile(filePath, 'mcpdesc');
     
     if (!result.valid) {
       console.error(`\n✗ Validation failed: ${filePath}`);

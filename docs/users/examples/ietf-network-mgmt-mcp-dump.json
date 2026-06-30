@@ -1,68 +1,58 @@
 {
-  "version": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.2",
-  "dumpDetails": {
-    "toolName": "sonnet",
-    "toolVersion": "4.5",
-    "createdAt": "2025-11-12T10:30:00.000Z",
-    "description": "This dump was generated using Copilot based on the specification of the IETF network management MCP server",
-    "mcpServerConfig": {
-      "name": "ietf-network-mgmt-server",
-      "transport": "stdio",
-      "command": "network-mcp-server",
-      "args": ["--device", "router-1", "--dialect", "huawei-vrp"]
-    },
-    "dumpExecution": {
-      "mcpProtocolUsed": "2025-06-18",
-      "sessionIdSupported": false,
-      "clientCapabilitiesSent": {
-        "roots": {
-          "listChanged": true
-        }
-      }
-    }
-  },
-  "serverInfo": {
+  "mcpdesc": "0.7.0",
+  "info": {
     "name": "IOS-XR-MCP",
     "version": "7.5.3",
-    "protocolVersion": "2025-06-18",
-    "capabilities": {
-      "prompts": {
-        "listChanged": false
-      },
-      "resources": {
-        "subscribe": true,
-        "listChanged": false
-      },
-      "tools": {
-        "listChanged": false
-      },
-      "network": {
-        "yangModules": [
-          "ietf-interfaces",
-          "ietf-ip",
-          "ietf-routing",
-          "openconfig-interfaces",
-          "openconfig-network-instance",
-          "openconfig-vlan",
-          "ietf-system"
-        ],
-        "cliDialect": "huawei-vrp",
-        "configDatastore": [
-          "running",
-          "candidate",
-          "operational"
-        ],
-        "notificationStream": [
-          "syslog",
-          "netconf-stream",
-          "snmp-trap"
-        ],
-        "maxBulkEdit": 1000,
-        "supportsRollback": true,
-        "rollbackTimeout": 300
-      }
+    "protocolVersion": "2025-06-18"
+  },
+  "transports": [
+    {
+      "type": "stdio",
+      "command": "network-mcp-server",
+      "args": [
+        "--device",
+        "router-1",
+        "--dialect",
+        "huawei-vrp"
+      ]
+    }
+  ],
+  "capabilities": {
+    "prompts": {
+      "listChanged": false
     },
-    "instructions": "MCP server for network equipment management. Supports YANG data models, CLI commands, configuration management with confirmed commits, and real-time monitoring. See IETF draft-zw-opsawg-mcp-network-mgmt-00 for full specification."
+    "resources": {
+      "subscribe": true,
+      "listChanged": false
+    },
+    "tools": {
+      "listChanged": false
+    },
+    "network": {
+      "yangModules": [
+        "ietf-interfaces",
+        "ietf-ip",
+        "ietf-routing",
+        "openconfig-interfaces",
+        "openconfig-network-instance",
+        "openconfig-vlan",
+        "ietf-system"
+      ],
+      "cliDialect": "huawei-vrp",
+      "configDatastore": [
+        "running",
+        "candidate",
+        "operational"
+      ],
+      "notificationStream": [
+        "syslog",
+        "netconf-stream",
+        "snmp-trap"
+      ],
+      "maxBulkEdit": 1000,
+      "supportsRollback": true,
+      "rollbackTimeout": 300
+    }
   },
   "tools": [
     {
@@ -83,7 +73,9 @@
             "maximum": 300
           }
         },
-        "required": ["cmd"]
+        "required": [
+          "cmd"
+        ]
       }
     },
     {
@@ -102,11 +94,16 @@
           "target": {
             "type": "string",
             "description": "Target datastore for configuration",
-            "enum": ["candidate", "running"],
+            "enum": [
+              "candidate",
+              "running"
+            ],
             "default": "candidate"
           }
         },
-        "required": ["commands"]
+        "required": [
+          "commands"
+        ]
       }
     },
     {
@@ -122,7 +119,11 @@
           "datastore": {
             "type": "string",
             "description": "Datastore to query",
-            "enum": ["running", "operational", "candidate"],
+            "enum": [
+              "running",
+              "operational",
+              "candidate"
+            ],
             "default": "operational"
           },
           "depth": {
@@ -132,7 +133,9 @@
             "minimum": 0
           }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       }
     },
     {
@@ -144,7 +147,9 @@
           "target": {
             "type": "string",
             "description": "Target datastore",
-            "enum": ["candidate"],
+            "enum": [
+              "candidate"
+            ],
             "default": "candidate"
           },
           "edit": {
@@ -155,7 +160,12 @@
               "properties": {
                 "operation": {
                   "type": "string",
-                  "enum": ["merge", "create", "replace", "delete"],
+                  "enum": [
+                    "merge",
+                    "create",
+                    "replace",
+                    "delete"
+                  ],
                   "default": "merge"
                 },
                 "path": {
@@ -167,11 +177,15 @@
                   "description": "YANG data to apply (omit for delete operations)"
                 }
               },
-              "required": ["path"]
+              "required": [
+                "path"
+              ]
             }
           }
         },
-        "required": ["edit"]
+        "required": [
+          "edit"
+        ]
       }
     },
     {
@@ -230,13 +244,21 @@
           "filename": {
             "type": "string",
             "description": "File to retrieve",
-            "enum": ["running-config", "startup-config", "candidate-config"],
+            "enum": [
+              "running-config",
+              "startup-config",
+              "candidate-config"
+            ],
             "default": "running-config"
           },
           "format": {
             "type": "string",
             "description": "Output format",
-            "enum": ["text", "xml", "json"],
+            "enum": [
+              "text",
+              "xml",
+              "json"
+            ],
             "default": "text"
           }
         },
@@ -252,7 +274,10 @@
           "filename": {
             "type": "string",
             "description": "Target file on device",
-            "enum": ["candidate-config", "startup-config"]
+            "enum": [
+              "candidate-config",
+              "startup-config"
+            ]
           },
           "content": {
             "type": "string",
@@ -261,7 +286,11 @@
           "format": {
             "type": "string",
             "description": "Content format",
-            "enum": ["text", "xml", "json"],
+            "enum": [
+              "text",
+              "xml",
+              "json"
+            ],
             "default": "text"
           },
           "validate": {
@@ -270,7 +299,10 @@
             "default": true
           }
         },
-        "required": ["filename", "content"]
+        "required": [
+          "filename",
+          "content"
+        ]
       }
     }
   ],
@@ -281,7 +313,9 @@
       "description": "Complete list of all network interfaces with operational and configuration state. Supports cursor-based pagination for large interface counts.",
       "mimeType": "application/yang-data+json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.9,
         "supportsSubscribe": true,
         "pagination": true
@@ -293,7 +327,9 @@
       "description": "Complete IPv4 routing information base (RIB) from operational datastore. Includes all routes with next-hop, metric, and protocol information.",
       "mimeType": "application/yang-data+json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.8,
         "supportsSubscribe": true,
         "pagination": true
@@ -305,7 +341,9 @@
       "description": "Complete IPv6 routing information base (RIB) from operational datastore. Includes all routes with next-hop, metric, and protocol information.",
       "mimeType": "application/yang-data+json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.8,
         "supportsSubscribe": true,
         "pagination": true
@@ -317,7 +355,9 @@
       "description": "Real-time CPU utilization percentage across all cores. Updated every 30 seconds. Supports subscription for continuous monitoring.",
       "mimeType": "application/json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.7,
         "supportsSubscribe": true,
         "updateInterval": 30,
@@ -333,7 +373,9 @@
       "description": "Memory usage summary including total, used, free, and cached memory. Updated every 30 seconds.",
       "mimeType": "application/json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.7,
         "supportsSubscribe": true,
         "updateInterval": 30,
@@ -348,7 +390,9 @@
       "description": "Current active configuration as plain text. This is the live configuration that determines device behavior.",
       "mimeType": "text/plain",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.9,
         "readOnly": true
       }
@@ -359,7 +403,9 @@
       "description": "Configuration loaded on device boot. This may differ from running-config if changes have not been saved.",
       "mimeType": "text/plain",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.8,
         "readOnly": true
       }
@@ -370,7 +416,9 @@
       "description": "Staged configuration changes that have not yet been committed. This datastore is used for two-phase commit operations.",
       "mimeType": "text/plain",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.6,
         "readOnly": false
       }
@@ -383,7 +431,9 @@
       "description": "Retrieve detailed information about a specific interface by name. Returns YANG-modeled data including operational state, statistics, and configuration. Supports both OpenConfig and IETF interface models.",
       "mimeType": "application/yang-data+json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.9,
         "supportsSubscribe": true,
         "readOnly": true,
@@ -402,7 +452,9 @@
       "description": "Retrieve the most recent syslog messages from the device. Maximum 10000 entries. Returns plain text with one message per line including timestamp and severity.",
       "mimeType": "text/plain; charset=utf-8",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.7,
         "supportsSubscribe": true,
         "readOnly": true,
@@ -423,7 +475,9 @@
       "description": "Retrieve crash information file for a specific hardware slot. Returns JSON array of crash records with timestamp, reason, and stack trace.",
       "mimeType": "application/json",
       "annotations": {
-        "audience": ["user"],
+        "audience": [
+          "user"
+        ],
         "priority": 0.5,
         "readOnly": true,
         "parameters": {
@@ -494,5 +548,33 @@
       ]
     }
   ],
-  "roots": []
+  "x-cisco-metadata": {
+    "version": "0.2.0",
+    "dump": {
+      "toolName": "sonnet",
+      "toolVersion": "4.5",
+      "createdAt": "2025-11-12T10:30:00.000Z",
+      "serverConfig": {
+        "name": "ietf-network-mgmt-server",
+        "transport": "stdio",
+        "command": "network-mcp-server",
+        "args": [
+          "--device",
+          "router-1",
+          "--dialect",
+          "huawei-vrp"
+        ]
+      },
+      "runtimeObservations": {
+        "mcpProtocolUsed": "2025-06-18",
+        "sessionIdSupported": false,
+        "instructions": "MCP server for network equipment management. Supports YANG data models, CLI commands, configuration management with confirmed commits, and real-time monitoring. See IETF draft-zw-opsawg-mcp-network-mgmt-00 for full specification."
+      },
+      "clientCapabilities": {
+        "roots": {
+          "listChanged": true
+        }
+      }
+    }
+  }
 }

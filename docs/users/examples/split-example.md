@@ -145,23 +145,29 @@ Contains only Platform Identity tools:
 Includes split metadata:
 ```json
 {
-  "dumpDetails": {
-    "splitInfo": {
-      "sourceFile": "test-federation-dump.json",
-      "category": "platform-identity",
-      "configFile": "split-config-basic.yaml",
-      "splitTimestamp": "2025-12-15T19:30:26.175Z",
-      "originalCounts": {
-        "tools": 8,
-        "prompts": 0,
-        "resources": 0,
-        "resourceTemplates": 0
-      },
-      "filteredCounts": {
-        "tools": 3,
-        "prompts": 0,
-        "resources": 0,
-        "resourceTemplates": 0
+  "x-cisco-metadata": {
+    "version": "0.2.0",
+    "dump": {
+      "splitOperation": {
+        "splitConfig": {
+          "sourceFile": "test-federation-dump.json",
+          "category": "platform-identity",
+          "configFile": "split-config-basic.yaml"
+        },
+        "splitExecution": {
+          "originalCounts": {
+            "tools": 8,
+            "prompts": 0,
+            "resources": 0,
+            "resourceTemplates": 0
+          },
+          "filteredCounts": {
+            "tools": 3,
+            "prompts": 0,
+            "resources": 0,
+            "resourceTemplates": 0
+          }
+        }
       }
     }
   }

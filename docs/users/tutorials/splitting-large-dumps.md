@@ -199,10 +199,10 @@ Summary:
 
 ### Step 6: Verify Split Metadata
 
-Each split dump includes complete audit trail metadata about its origin in `dumpExecution.splitOperation`:
+Each split dump includes complete audit trail metadata about its origin in `x-cisco-metadata.dump.splitOperation`:
 
 ```bash
-jq '.dumpDetails.dumpExecution.splitOperation' split-dumps/dump-platform-identity.json
+jq '.["x-cisco-metadata"].dump.splitOperation' split-dumps/dump-platform-identity.json
 ```
 
 **Output**:
@@ -214,8 +214,7 @@ jq '.dumpDetails.dumpExecution.splitOperation' split-dumps/dump-platform-identit
   "splitConfig": {
     "sourceFile": "federation-dump.json",
     "category": "platform-identity",
-    "configFile": "split-config.yaml",
-    "schemaVersion": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.1"
+    "configFile": "split-config.yaml"
   },
   "splitExecution": {
     "originalCounts": {

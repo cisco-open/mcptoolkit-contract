@@ -289,7 +289,7 @@ This MCP server implementation enables:
 This dump conforms to:
 - MCP specification 2025-06-18
 - IETF draft-zw-opsawg-mcp-network-mgmt-00
-- mcpcontract dump schema v0.2.0
+- mcpdesc 0.7.0 (x-cisco-metadata extension 0.2.0)
 
 All tools, resources, and prompts align with the examples and requirements in the IETF specification sections 4, 5, and 6 respectively.
 
@@ -297,7 +297,7 @@ All tools, resources, and prompts align with the examples and requirements in th
 
 - **Dump File**: `ietf-network-mgmt-mcp-dump.json`
 - **Specification**: https://www.ietf.org/archive/id/draft-zw-opsawg-mcp-network-mgmt-00.html
-- **Dump Schema**: `../../schemas/dump-schema.json`
+- **Schema**: `../../schemas/mcp-description/0.7.0.json`
 
 ## References
 

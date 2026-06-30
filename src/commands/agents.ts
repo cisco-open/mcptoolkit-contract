@@ -170,7 +170,7 @@ mcpcontract changelog --analysis analysis.json --format release --output CHANGEL
 \`\`\`bash
 # Dump → Validate in one pipeline
 mcpcontract dump --config mcp.json --output dump.json
-mcpcontract validate dump.json --schema dump
+mcpcontract validate dump.json --schema mcpdesc
 
 # Then generate documentation
 mcpcontract document dump.json --output docs/API.md
@@ -291,7 +291,7 @@ mcpcontract dump --config mcp.json --format yaml --output dump.yaml
 \`\`\`bash
 # Dump and immediately validate
 mcpcontract dump --config mcp.json --output dump.json
-mcpcontract validate dump.json --schema dump
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ### Quiet Mode (No Progress Messages)
@@ -345,7 +345,7 @@ Example dump.json structure:
 
 ## Next Steps After Dump
 
-1. **Validate the dump**: \`mcpcontract validate dump.json --schema dump\`
+1. **Validate the dump**: \`mcpcontract validate dump.json --schema mcpdesc\`
 2. **Generate docs**: \`mcpcontract document dump.json --output API.md\`
 3. **Compare versions**: \`mcpcontract diff --from old-dump.json --to dump.json\`
 
@@ -542,14 +542,14 @@ Validates dump or diff files against their JSON schemas to ensure correctness.
 mcpcontract validate dump.json
 
 # Explicit schema type
-mcpcontract validate dump.json --schema dump
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ## Common Patterns
 
 ### Validate Dump
 \`\`\`bash
-mcpcontract validate dump.json --schema dump
+mcpcontract validate dump.json --schema mcpdesc
 \`\`\`
 
 ### Validate Diff
@@ -559,7 +559,7 @@ mcpcontract validate diff.json --schema diff
 
 ### Validate from stdin
 \`\`\`bash
-mcpcontract dump --config mcp.json | mcpcontract validate --schema dump -
+mcpcontract dump --config mcp.json | mcpcontract validate --schema mcpdesc -
 \`\`\`
 
 ### Quiet Validation (Exit Code Only)

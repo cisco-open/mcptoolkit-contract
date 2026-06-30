@@ -449,7 +449,6 @@ export function mcpDescriptionToContractDump(doc: McpDescDocument): ContractDump
         sourceFile: meta.splitOperation.splitConfig.sourceFile,
         category: meta.splitOperation.splitConfig.category,
         configFile: meta.splitOperation.splitConfig.configFile || '',
-        schemaVersion: meta.splitOperation.splitConfig.schemaVersion || '',
       },
       splitExecution: meta.splitOperation.splitExecution || {
         originalCounts: { tools: 0, prompts: 0, resources: 0, resourceTemplates: 0 },
@@ -469,7 +468,7 @@ export function mcpDescriptionToContractDump(doc: McpDescDocument): ContractDump
 
   // Build ContractDump
   const dump: ContractDump = {
-    version: '',
+    version: doc.mcpdesc || '',
     dumpDetails: {
       toolName: meta?.toolName || 'unknown',
       toolVersion: meta?.toolVersion || 'unknown',
@@ -554,17 +553,21 @@ export function isContractDump(data: Record<string, unknown>): boolean {
 }
 
 /**
- * Parse input data as ContractDump, auto-detecting format.
- * If the input is mcpdesc, converts it. If it's ContractDump, returns as-is.
+ * Parse an MCP description (mcpdesc) document into the internal ContractDump model.
+ * The legacy on-disk capability-dump format is no longer accepted as input — use
+ * `mcpcontract convert` to migrate older dumps to mcpdesc first.
  */
 export function parseAsContractDump(data: Record<string, unknown>): ContractDump {
   if (isMcpDescDocument(data)) {
     return mcpDescriptionToContractDump(data as unknown as McpDescDocument);
   }
   if (isContractDump(data)) {
-    return data as unknown as ContractDump;
+    throw new Error(
+      'Legacy capability dumps are no longer supported as input. ' +
+      'Convert the file to the MCP description (mcpdesc) format first: mcpcontract convert <file>'
+    );
   }
-  throw new Error('Unrecognized input format: expected mcpdesc document or capability dump');
+  throw new Error('Unrecognized input format: expected an MCP description (mcpdesc) document');
 }
 
 // ============================================================================

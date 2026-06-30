@@ -11,7 +11,6 @@
  */
 
 import { randomUUID as uuidv4 } from 'node:crypto';
-import * as semver from 'semver';
 
 export interface DiffOptions {
   detectRenames?: boolean;
@@ -142,56 +141,6 @@ export class Differ {
   }
 
   /**
-   * Validate schema version compatibility
-   * Returns: { compatible: boolean, warning?: string, error?: string }
-   */
-  private validateSchemaVersions(fromSchema: string, toSchema: string): {
-    compatible: boolean;
-    warning?: string;
-    error?: string;
-  } {
-    // Extract version from schema URLs
-    const fromMatch = fromSchema.match(/\/schema\/(\d+\.\d+\.\d+)$/);
-    const toMatch = toSchema.match(/\/schema\/(\d+\.\d+\.\d+)$/);
-
-    if (!fromMatch || !toMatch) {
-      return { compatible: true }; // Can't validate, proceed
-    }
-
-    const fromVer = fromMatch[1];
-    const toVer = toMatch[1];
-
-    if (fromVer === toVer) {
-      return { compatible: true };
-    }
-
-    const fromSemver = semver.parse(fromVer);
-    const toSemver = semver.parse(toVer);
-
-    if (!fromSemver || !toSemver) {
-      return { compatible: true }; // Can't parse, proceed
-    }
-
-    // Major version difference - incompatible
-    if (fromSemver.major !== toSemver.major) {
-      return {
-        compatible: false,
-        error: `Incompatible schema versions: ${fromVer} vs ${toVer}. Please provide files with compatible schema versions.`
-      };
-    }
-
-    // Minor or patch difference - proceed with warning
-    if (fromSemver.minor !== toSemver.minor || fromSemver.patch !== toSemver.patch) {
-      return {
-        compatible: true,
-        warning: `Detected minor schema version difference: ${fromVer} vs ${toVer}. The command will proceed but may produce inaccurate results.`
-      };
-    }
-
-    return { compatible: true };
-  }
-
-  /**
    * Compare two dumps
    */
   async compareDumps(
@@ -203,7 +152,7 @@ export class Differ {
     const changes: Change[] = [];
 
     // Build comparison metadata
-    // Note: schemaVersion here is the legacy dump schema $id — remove at v1.0
+    // schemaVersion records the mcpdesc version of each input document
     const comparison: ComparisonMetadata = {
       from: {
         file: fromFile,
@@ -220,17 +169,6 @@ export class Differ {
         sessionIdHeader: toDump.dumpDetails?.dumpExecution?.sessionIdHeader
       }
     };
-
-    // Validate schema versions
-    if (fromDump.version && toDump.version) {
-      const validation = this.validateSchemaVersions(fromDump.version, toDump.version);
-      if (!validation.compatible) {
-        throw new Error(validation.error);
-      }
-      if (validation.warning) {
-        console.warn(`⚠️  ${validation.warning}`);
-      }
-    }
 
     // Check session support changes (breaking change)
     if (comparison.from.sessionIdSupported !== undefined &&

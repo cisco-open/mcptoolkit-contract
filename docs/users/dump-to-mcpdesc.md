@@ -6,7 +6,9 @@ This guide explains how to convert a legacy ContractDump file to the MCP Descrip
 
 The `mcpcontract dump` command now outputs **mcpdesc format directly**. However, older dumps (created before v0.25.0) use the legacy ContractDump schema. This guide covers converting those legacy files.
 
-**mcpdesc version**: 0.6.0  
+> **Deprecated:** `mcpcontract convert` is deprecated and will be removed in a future release. It remains available only to migrate older capability dumps to mcpdesc and prints a deprecation warning when run.
+
+**mcpdesc version**: 0.7.0  
 **x-cisco-metadata version**: 0.2.0
 
 ---
@@ -377,7 +379,6 @@ mcpcontract convert legacy-dump.json -o temp.mcpdesc.json
 
 ## See Also
 
-- [dump-schema.md](dump-schema.md) — Full mcpdesc schema reference
-- [dump-schema.md](dump-schema.md) — Legacy dump schema field reference
+- [dump-schema.md](dump-schema.md) — mcpdesc schema field reference
 - [mcpdesc specification](../ref/mcp-description/spec/mcp-description.md) — Full mcpdesc 0.6.0 specification
 - [x-cisco-metadata extension](../ref/mcp-description/extensions/x-cisco-metadata/README.md) — Extension carrying provenance data

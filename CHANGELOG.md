@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **MCP server registry/manifest support removed.** Dropped the `manifest` command, the `server` and `manifest-info` schemas, the manifest/registry document templates, and the related `validate --schema` / `document --type` / `document --template` options. mcpcontract now focuses on dump, document, and change tracking (diff/breaking/changelog). Pre-GA removal — no deprecation cycle or migration tooling.
+- **Legacy on-disk capability-dump format removed.** `mcpcontract dump` now emits only the MCP Description (mcpdesc) format. The `dump` schema (`schemas/dump/`, `dump-schema.json`) and its `validate --schema dump` option are gone, and `diff`/`document`/`split` reject legacy dump files as input. Convert older files to mcpdesc first with `mcpcontract convert`.
+
+### Deprecated
+
+- **`mcpcontract convert` is deprecated** and will be removed in a future release. It remains available solely to migrate older capability dumps to the mcpdesc format and now prints a deprecation warning.
 
 ## [1.0.0-rc.3] - 2026-06-29
 

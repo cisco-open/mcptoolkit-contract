@@ -11,7 +11,7 @@ import { readFile } from 'fs/promises';
 import { parse as yamlParse } from 'yaml';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { contractDumpToMcpDescription, isMcpDescDocument, isContractDump } from './mcpdesc-converter.js';
+import { isMcpDescDocument, isContractDump } from './mcpdesc-converter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -556,9 +556,14 @@ export class Renderer {
       }
     }
 
-    // Ensure data is in mcpdesc format (convert legacy ContractDump if needed)
-    if (isContractDump(data) && !isMcpDescDocument(data)) {
-      data = contractDumpToMcpDescription(data);
+    // Require mcpdesc format (legacy capability dumps are no longer supported)
+    if (!isMcpDescDocument(data)) {
+      if (isContractDump(data)) {
+        throw new Error(
+          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
+        );
+      }
+      throw new Error('Input is not an MCP description (mcpdesc) document');
     }
 
     // Add _meta convenience alias for x-cisco-metadata (avoids bracket notation in templates)

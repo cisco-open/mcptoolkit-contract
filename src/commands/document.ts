@@ -100,10 +100,14 @@ async function documentCommand(file: string | undefined, options: DocumentComman
         }
       }
 
-      // Detect based on structure - improved logic
-      if (data.mcpdesc || (data.dumpDetails && data.serverInfo && data.version)) {
+      // Detect based on structure — mcpdesc only
+      if (data.mcpdesc) {
         fileType = 'mcpdesc';
         log(`  Detected: MCP description`);
+      } else if (data.dumpDetails && data.serverInfo && data.version) {
+        throw new Error(
+          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
+        );
       } else {
         throw new Error('Unable to auto-detect file type. Please specify --type');
       }

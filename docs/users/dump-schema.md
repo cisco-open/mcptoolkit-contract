@@ -1,361 +1,178 @@
-# MCP Dump Schema Documentation
+# MCP Description (mcpdesc) Schema Documentation
 
 ## Overview
 
-The **MCP Dump Schema** defines the structure for complete capability snapshots of Model Context Protocol (MCP) servers. A dump is a comprehensive, point-in-time capture of everything an MCP server exposes: tools, resources, prompts, and metadata about how the server was accessed and what it supports.
+`mcpcontract dump` writes a capability snapshot in the **MCP Description (mcpdesc)**
+format — a standalone, MCP-native declaration of everything a server exposes:
+tools, resources, prompts, transports, and protocol metadata. Provenance about how
+the snapshot was captured is carried in the **`x-cisco-metadata`** specification
+extension.
+
+> **Note:** Earlier releases produced a Cisco-specific *capability dump* format
+> (top-level `version` / `dumpDetails` / `serverInfo`). That on-disk format has been
+> removed. Older files can be migrated with the deprecated
+> [`mcpcontract convert`](dump-to-mcpdesc.md) command.
 
 ## Purpose
 
-The dump schema serves several critical purposes:
+The mcpdesc snapshot serves several purposes:
 
-1. **Server Discovery** - Captures the complete API surface of an MCP server for documentation and analysis
-2. **Version Tracking** - Enables comparison between server versions to detect breaking changes
-3. **Change Analysis** - Provides the foundation for diff, breaking-change, and changelog generation
-4. **Testing & Validation** - Serves as a reference for testing client implementations
-5. **Documentation** - Acts as the source of truth for generating human-readable API documentation
+1. **Server Discovery** — captures the complete API surface of an MCP server
+2. **Version Tracking** — enables comparison between server versions to detect breaking changes
+3. **Change Analysis** — foundation for `diff`, `breaking`, and `changelog` generation
+4. **Testing & Validation** — a reference for client implementations
+5. **Documentation** — source of truth for generating human-readable API docs
 
 ## Schema Versions
 
-The dump schema follows semantic versioning and is tracked separately from the CLI tool version:
+The format is versioned independently of the CLI:
 
-- **Current Version**: `0.3.6` (as of 2026-01-22)
-- **Schema Location**: `schemas/dump/0.3.6.json`
-- **Schema ID**: `https://developer.cisco.com/mcp_contract_dump/schema/0.3.6`
+- **mcpdesc**: `0.7.0` — `schemas/mcp-description/0.7.0.json`
+  (`$id: https://developer.cisco.com/mcp-description/schema/0.7.0`)
+- **x-cisco-metadata extension**: `0.2.0` — `schemas/dump-extension/0.2.0.json`
 
-Historical schemas are preserved in `schemas/dump/` to support validation of older dumps.
+`schemas/latest.json` maps each schema type to its current version, and
+`schemas/cli-schema-compatibility.json` records which CLI versions emit which
+schema versions.
 
 ## Basic Structure
 
-A dump file consists of seven main sections:
+An mcpdesc document has the following top-level shape:
 
 ```json
 {
-  "version": "schema-version-url",
-  "dumpDetails": { /* metadata about the dump process */ },
-  "serverInfo": { /* server identification and capabilities */ },
+  "$schema": "https://developer.cisco.com/mcp-description/schema/0.7.0",
+  "mcpdesc": "0.7.0",
+  "info": { /* server identity and protocol metadata */ },
+  "transports": [ /* one or more supported transports */ ],
+  "security": [ /* optional: auth requirements */ ],
+  "capabilities": { /* advertised server capabilities */ },
   "tools": [ /* array of tool definitions */ ],
   "resources": [ /* array of resource definitions */ ],
   "resourceTemplates": [ /* array of URI templates */ ],
   "prompts": [ /* array of prompt definitions */ ],
-  "roots": [ /* optional: root URIs if supported */ ]
+  "tags": [ /* optional: classification tags */ ],
+  "x-cisco-metadata": { /* capture provenance (see below) */ }
 }
 ```
+
+**Required**: `mcpdesc`, `info`, `transports`.
 
 ## Core Sections
 
-### 1. Version
+### 1. mcpdesc
 
 ```json
-{
-  "version": "https://developer.cisco.com/mcp_contract_dump/schema/0.3.6"
-}
+{ "mcpdesc": "0.7.0" }
 ```
 
 - **Required**: Yes
-- **Purpose**: Identifies which dump schema version this file conforms to
-- **Usage**: Enables schema validation and version-specific processing
+- **Purpose**: Identifies the MCP Description specification version this file conforms to.
 
-### 2. Dump Details
+### 2. Info
 
-Metadata about how and when the dump was created:
-
-```json
-{
-  "dumpDetails": {
-    "toolName": "mcpcontract",
-    "toolVersion": "0.17.0",
-    "description": "Optional human-readable description",
-    "createdAt": "2026-01-22T10:30:00Z",
-    "mcpServerConfig": {
-      "name": "My MCP Server",
-      "transport": "streamable-http",
-      "url": "https://example.com/mcp"
-    },
-    "dumpExecution": {
-      "mcpProtocolUsed": "2025-06-18",
-      "sessionIdSupported": true,
-      "sessionIdHeader": "Mcp-Session-Id",
-      "clientCapabilitiesSent": { /* capabilities */ },
-      "corsSupport": { /* browser compatibility */ },
-      "pingSupported": true,
-      "pingLatencyMs": 45.2,
-      "paginationSupport": { /* pagination details */ }
-    }
-  }
-}
-```
-
-**Key Fields**:
-- `toolName` / `toolVersion` - Which tool created this dump
-- `createdAt` - Timestamp for version tracking
-- `mcpServerConfig` - Connection details (transport type, URL, headers, etc.)
-- `dumpExecution` - Runtime discoveries about the server:
-  - MCP protocol version used
-  - Session management (HTTP-based transports)
-  - CORS support for browser compatibility
-  - Ping/keepalive support
-  - Pagination detection
-
-### 3. Server Info
-
-Information from the server's initialization response:
+Server identity and protocol metadata (OpenAPI-aligned `info` object):
 
 ```json
 {
-  "serverInfo": {
+  "info": {
     "name": "example-server",
+    "title": "Example Server",
+    "description": "What the server does",
     "version": "1.2.3",
-    "protocolVersion": "2025-06-18",
-    "capabilities": {
-      "tools": { "listChanged": true },
-      "resources": { "subscribe": true, "listChanged": true },
-      "prompts": { "listChanged": false },
-      "logging": {},
-      "experimental": {}
-    },
-    "instructions": "Optional usage instructions from server"
+    "protocolVersion": "2025-06-18"
   }
 }
 ```
 
 **Key Fields**:
-- `name` / `version` - Server identification
-- `protocolVersion` - Which MCP spec the server implements
-- `capabilities` - What features the server supports
-- `instructions` - Server-provided guidance for clients
+- `name` — programmatic server identifier (required)
+- `version` — server version, semver recommended (required)
+- `title` — human-readable display name (MCP `BaseMetadata`, 2025-06-18+)
+- `protocolVersion` — MCP protocol version implemented by the server
 
-### 4. Tools
+### 3. Transports
 
-Array of executable tools exposed by the server:
+One or more transport configurations the server supports:
 
 ```json
 {
-  "tools": [
-    {
-      "name": "search_files",
-      "description": "Search for files matching a pattern",
-      "tags": ["filesystem", "search"],
-      "deprecated": false,
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "pattern": {
-            "type": "string",
-            "description": "Glob pattern to match"
-          }
-        },
-        "required": ["pattern"]
+  "transports": [
+    { "type": "streamable-http", "url": "https://example.com/mcp" }
+  ]
+}
+```
+
+### 4. Capabilities
+
+Capabilities advertised by the server during initialization:
+
+```json
+{
+  "capabilities": {
+    "tools": { "listChanged": true },
+    "resources": { "subscribe": true, "listChanged": true },
+    "prompts": { "listChanged": false },
+    "logging": {}
+  }
+}
+```
+
+### 5. Tools / Resources / Resource Templates / Prompts
+
+Arrays describing the server's exposed capabilities. Each tool entry carries its
+`name`, optional `description`, and a JSON Schema `inputSchema`; resources and
+prompts follow the corresponding MCP shapes.
+
+### 6. x-cisco-metadata (capture provenance)
+
+The `x-cisco-metadata` extension records how the snapshot was produced:
+
+```json
+{
+  "x-cisco-metadata": {
+    "version": "0.2.0",
+    "dump": {
+      "toolName": "mcpcontract",
+      "toolVersion": "1.0.0",
+      "createdAt": "2026-01-22T10:30:00Z",
+      "serverConfig": {
+        "name": "My MCP Server",
+        "transport": "streamable-http",
+        "url": "https://example.com/mcp"
       },
-      "outputSchema": { /* optional: response structure */ },
-      "responseExamples": [ /* optional: example responses */ ]
-    }
-  ]
-}
-```
-
-**Key Fields**:
-- `name` - Unique identifier for the tool
-- `description` - What the tool does
-- `inputSchema` - JSON Schema defining parameters
-- `outputSchema` - (Optional) Expected response structure
-- `responseExamples` - (Enrichment) Example outputs for documentation
-
-### 5. Resources
-
-Array of static or dynamic data sources:
-
-```json
-{
-  "resources": [
-    {
-      "uri": "file:///project/README.md",
-      "name": "Project README",
-      "description": "Main project documentation",
-      "tags": ["documentation"],
-      "mimeType": "text/markdown",
-      "deprecated": false,
-      "contentExamples": [ /* optional: example content */ ],
-      "annotations": {
-        "audience": ["user"],
-        "priority": 0.9
-      }
-    }
-  ]
-}
-```
-
-**Key Fields**:
-- `uri` - Unique identifier for the resource
-- `name` / `description` - Human-readable metadata
-- `mimeType` - Content type
-- `annotations` - Additional metadata (audience, priority)
-
-### 6. Resource Templates
-
-URI templates (RFC 6570) for dynamic resources:
-
-```json
-{
-  "resourceTemplates": [
-    {
-      "uriTemplate": "file:///{path}",
-      "name": "File Access",
-      "description": "Access any file by path",
-      "tags": ["filesystem"],
-      "mimeType": "application/octet-stream",
-      "annotations": {}
-    }
-  ]
-}
-```
-
-**Key Fields**:
-- `uriTemplate` - RFC 6570 template with variables
-- Same metadata fields as resources
-
-### 7. Prompts
-
-Pre-defined prompt templates:
-
-```json
-{
-  "prompts": [
-    {
-      "name": "code_review",
-      "description": "Review code for best practices",
-      "tags": ["code", "review"],
-      "deprecated": false,
-      "arguments": [
-        {
-          "name": "language",
-          "description": "Programming language",
-          "required": true,
-          "examples": ["python", "javascript", "rust"]
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Key Fields**:
-- `name` - Unique identifier
-- `arguments` - Parameters the prompt accepts
-
-## Advanced Features
-
-### Pagination Detection
-
-The schema tracks which capabilities use cursor-based pagination:
-
-```json
-{
-  "dumpExecution": {
-    "paginationSupport": {
-      "tools": {
-        "paginationDetected": true,
-        "pagesRetrieved": 3,
-        "totalItems": 127
-      }
+      "runtimeObservations": { /* protocol, session, ping, ... */ },
+      "cors": { /* browser compatibility */ },
+      "paginationDetection": { /* pagination findings */ },
+      "clientCapabilities": { /* capabilities sent by the client */ }
     }
   }
 }
 ```
 
-This zero-overhead detection happens automatically during dump creation.
-
-### CORS Support Detection
-
-For HTTP-based transports, the schema captures browser compatibility:
-
-```json
-{
-  "dumpExecution": {
-    "corsSupport": {
-      "browserReady": true,
-      "responseHeaders": {
-        "accessControlAllowOrigin": "*",
-        "accessControlExposeHeaders": ["Mcp-Session-Id"]
-      },
-      "preflight": {
-        "tested": true,
-        "status": 200,
-        "accessControlAllowMethods": ["GET", "POST"],
-        "accessControlAllowHeaders": ["Content-Type", "Mcp-Session-Id"]
-      }
-    }
-  }
-}
-```
-
-### Session Management
-
-For stateful HTTP servers:
-
-```json
-{
-  "dumpExecution": {
-    "sessionIdSupported": true,
-    "sessionIdHeader": "Mcp-Session-Id"
-  }
-}
-```
-
-## Usage in mcpcontract Workflow
-
-```bash
-# 1. Create a dump
-mcpcontract dump --config server-config.json --output server-dump.json
-
-# 2. Validate the dump
-mcpcontract validate --type dump --file server-dump.json
-
-# 3. Generate documentation
-mcpcontract document server-dump.json --output README.md
-
-# 4. Compare versions
-mcpcontract diff --old v1-dump.json --new v2-dump.json --output changes.json
-
-# 6. Detect breaking changes
-mcpcontract breaking --diff changes.json --output analysis.json
-```
-
-## Schema Evolution
-
-The dump schema evolves to support new MCP protocol features:
-
-- **0.3.1** - Initial structure with basic capabilities
-- **0.3.2** - Added pagination detection
-- **0.3.3** - Added CORS support detection
-- **0.3.4** - Enhanced metadata tracking
-- **0.3.5** - Added ping support detection
-- **0.3.6** - Current version with streamable-http transport support
-
-See [cli-schema-compatibility.json](../schemas/cli-schema-compatibility.json) for version compatibility matrix.
+**Key Fields**:
+- `version` — extension payload version (`0.2.0`)
+- `dump.toolName` / `dump.toolVersion` — which tool created the snapshot
+- `dump.createdAt` — capture timestamp
+- `dump.serverConfig` — connection details (transport, URL, headers, …)
+- `dump.runtimeObservations`, `dump.cors`, `dump.paginationDetection`,
+  `dump.clientCapabilities` — runtime discoveries about the server
 
 ## Best Practices
 
-1. **Always validate dumps** - Use `mcpcontract validate` to ensure schema conformance
-2. **Include descriptions** - Add `dumpDetails.description` to document dump context
-3. **Preserve history** - Keep dumps from major versions for comparison
-4. **Check compatibility** - Verify schema version compatibility before processing
-5. **Document changes** - When updating schemas, document rationale in changelog
+1. **Always validate** — run `mcpcontract validate <file> --schema mcpdesc` to ensure conformance.
+2. **Include a description** — set `info.description` to document the server's purpose.
+3. **Preserve history** — keep snapshots from major versions for comparison.
+4. **Document changes** — record schema/contract changes in the changelog.
 
 ## Related Documentation
 
-- [dump-to-mcpdesc.md](dump-to-mcpdesc.md) - Converting legacy dump files to mcpdesc format
-- [../quick-start.md](../quick-start.md) - Quick start guide
-- [AGENTS.md](../AGENTS.md) - Developer guide for extending dump functionality
-- [Tutorials](tutorials/) - Step-by-step guides for common workflows
+- [dump-to-mcpdesc.md](dump-to-mcpdesc.md) — converting legacy dump files to mcpdesc format
+- [schemas.md](schemas.md) — schema overview
+- [../quick-start.md](../quick-start.md) — quick start guide
+- [Tutorials](tutorials/) — step-by-step guides for common workflows
 
 ## Schema Location
 
-- **Current Schema**: [schemas/dump/0.3.6.json](../schemas/dump/0.3.6.json)
-- **Legacy Symlink**: [schemas/dump-schema.json](../schemas/dump-schema.json)
-- **Version Mapping**: [schemas/latest.json](../schemas/latest.json)
-
----
-
-**Last Updated**: January 22, 2026  
-**Schema Version**: 0.3.6  
-**CLI Version**: 0.17.0
+- **mcpdesc schema**: [schemas/mcp-description/0.7.0.json](../../schemas/mcp-description/0.7.0.json)
+- **x-cisco-metadata extension**: [schemas/dump-extension/0.2.0.json](../../schemas/dump-extension/0.2.0.json)

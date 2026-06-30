@@ -13,7 +13,7 @@ JSON Schema definitions used by `mcpcontract` for validation and documentation g
 | `split-config/` | split-config | 1.0.0 | Split configuration for `mcpcontract split` |
 | `adl-mcp-server-profile/` | ADL profile | 1.0.0 | ADL MCP Server Profile (reserved — see below) |
 
-Legacy single-file aliases in this directory (e.g. `dump-schema.json`) are symlink-style copies of the latest versioned schema for backward compatibility.
+Legacy single-file aliases in this directory (e.g. `diff-schema.json`, `split-config-schema.json`) are symlink-style copies of the latest versioned schema for backward compatibility.
 
 ## Version management
 

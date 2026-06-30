@@ -198,7 +198,7 @@ All detection fields above are **optional in the schema**. Older CLIs reading ne
 
 **Approach:** Immutable historical schemas, no migration tooling.
 
-- Each schema type has a directory of versioned files: `schemas/dump/0.3.0.json`, `0.3.1.json`, … `0.3.8.json`.
+- Each schema type has a directory of versioned files (e.g. `schemas/mcp-description/0.7.0.json`, `schemas/diff/1.0.0.json`).
 - `schemas/latest.json` is a small JSON map from schema type → current version, read at build time and by `--show-compatibility`.
 - `schemas/cli-schema-compatibility.json` tracks CLI ↔ schema version pairs back to v0.14.0. Earlier CLIs are unsupported.
 - **No migration tool.** Users upgrade the CLI and re-dump. Dumps are cheap to regenerate; migration logic would be expensive to maintain across many schema-version pairs and would create a second source of truth.
