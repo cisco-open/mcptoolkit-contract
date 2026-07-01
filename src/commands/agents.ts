@@ -204,10 +204,10 @@ mcpcontract diff --from old-dump.json --to new-dump.json | \\
 
 ## Output Formats
 
-Most commands support multiple output formats:
-- \`--format json\` - Machine-readable JSON (default for most)
-- \`--format yaml\` - Human-friendly YAML
-- \`--format markdown\` - Documentation format
+Commands vary in supported formats:
+- \`dump\`, \`validate\`, \`document\`: \`--format json|yaml|markdown\`
+- \`changelog\`: \`--format release|compact\` (Markdown templates)
+- \`diff\`, \`breaking\`: fixed JSON output (no \`--format\` flag)
 
 ## Next Steps
 
@@ -652,16 +652,6 @@ mcpcontract diff --from v1.json --to v2.json --output diff.json
 mcpcontract diff --from old-dump.json --to new-dump.json --output diff.json
 \`\`\`
 
-### Pretty-Print Diff
-\`\`\`bash
-mcpcontract diff --from old.json --to new.json --pretty
-\`\`\`
-
-### YAML Output
-\`\`\`bash
-mcpcontract diff --from old.json --to new.json --format yaml
-\`\`\`
-
 ### Pipe to Breaking Analysis
 \`\`\`bash
 mcpcontract diff --from old.json --to new.json | \\
@@ -676,8 +666,6 @@ mcpcontract diff --from old.json --to new.json | \\
 
 ### Optional
 - \`--output <file>\` - Output file (default: stdout)
-- \`--format <type>\` - Output format: json, yaml (default: json)
-- \`--pretty\` - Pretty-print JSON output
 
 ## What You Get
 
@@ -769,11 +757,6 @@ mcpcontract breaking \\
   --output diff-breaking.json
 \`\`\`
 
-### Pretty-Print Analysis
-\`\`\`bash
-mcpcontract breaking --diff diff.json --pretty
-\`\`\`
-
 ### Exit Code Check (CI/CD)
 \`\`\`bash
 if mcpcontract breaking --diff diff.json; then
@@ -793,8 +776,6 @@ fi
 - \`--output <file>\` - Output file (default: stdout)
 - \`--rules <file>\` - Custom rules file (default: built-in rules)
 - \`--suggest-version\` - Add semantic version recommendation
-- \`--format <type>\` - Output format: json, yaml (default: json)
-- \`--pretty\` - Pretty-print JSON output
 
 ## Exit Codes
 

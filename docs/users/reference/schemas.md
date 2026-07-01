@@ -52,111 +52,24 @@ schema versions.
 > [`spec/`](../../../spec/). The `schemas/mcp-description/` directory holds the
 > versioned JSON Schemas (0.1.0–0.7.0) referenced by that specification.
 
-## Document structure
+## Full field reference
 
-An mcpdesc document has the following top-level shape:
+The authoritative field-by-field reference is the MCP Description specification
+maintained in this repository:
 
-```json
-{
-  "$schema": "https://developer.cisco.com/mcp-description/schema/0.7.0",
-  "mcpdesc": "0.7.0",
-  "info": { /* server identity and protocol metadata */ },
-  "transports": [ /* one or more supported transports */ ],
-  "security": [ /* optional: auth requirements */ ],
-  "capabilities": { /* advertised server capabilities */ },
-  "tools": [ /* array of tool definitions */ ],
-  "resources": [ /* array of resource definitions */ ],
-  "resourceTemplates": [ /* array of URI templates */ ],
-  "prompts": [ /* array of prompt definitions */ ],
-  "tags": [ /* optional: classification tags */ ],
-  "x-cisco-metadata": { /* capture provenance (see below) */ }
-}
-```
+- **[Assembled specification](../../../spec/mcp-description.md)** — full
+  normative text (all sections in one document)
+- **Section-by-section reference:**
+  - [Document structure](../../../spec/sections/03-document-structure.md)
+  - [info](../../../spec/sections/05-info-object.md)
+  - [transports](../../../spec/sections/06-transports.md)
+  - [capabilities](../../../spec/sections/08-capabilities.md)
+  - [tools](../../../spec/sections/09-tools.md) · [resources](../../../spec/sections/10-resources.md) · [prompts](../../../spec/sections/11-prompts.md) · [tags](../../../spec/sections/12-tags.md)
+- **[x-cisco-metadata extension](../../../spec/extensions/x-cisco-metadata/README.md)** —
+  capture-provenance extension fields (`dump`, `runtimeObservations`, `cors`, …)
 
-**Required**: `mcpdesc`, `info`, `transports`.
-
-### info
-
-Server identity and protocol metadata (OpenAPI-aligned `info` object):
-
-```json
-{
-  "info": {
-    "name": "example-server",
-    "title": "Example Server",
-    "description": "What the server does",
-    "version": "1.2.3",
-    "protocolVersion": "2025-06-18"
-  }
-}
-```
-
-- `name` — programmatic server identifier (required)
-- `version` — server version, semver recommended (required)
-- `title` — human-readable display name (MCP `BaseMetadata`, 2025-06-18+)
-- `protocolVersion` — MCP protocol version implemented by the server
-
-### transports
-
-One or more transport configurations the server supports:
-
-```json
-{ "transports": [ { "type": "streamable-http", "url": "https://example.com/mcp" } ] }
-```
-
-### capabilities
-
-Capabilities advertised by the server during initialization:
-
-```json
-{
-  "capabilities": {
-    "tools": { "listChanged": true },
-    "resources": { "subscribe": true, "listChanged": true },
-    "prompts": { "listChanged": false },
-    "logging": {}
-  }
-}
-```
-
-### tools / resources / resourceTemplates / prompts
-
-Arrays describing the server's exposed capabilities. Each tool entry carries its
-`name`, optional `description`, and a JSON Schema `inputSchema`; resources and
-prompts follow the corresponding MCP shapes.
-
-### x-cisco-metadata (capture provenance)
-
-The `x-cisco-metadata` extension records how the snapshot was produced:
-
-```json
-{
-  "x-cisco-metadata": {
-    "version": "0.2.0",
-    "dump": {
-      "toolName": "mcpcontract",
-      "toolVersion": "1.0.0",
-      "createdAt": "2026-01-22T10:30:00Z",
-      "serverConfig": {
-        "name": "My MCP Server",
-        "transport": "streamable-http",
-        "url": "https://example.com/mcp"
-      },
-      "runtimeObservations": { /* protocol, session, ping, ... */ },
-      "cors": { /* browser compatibility */ },
-      "paginationDetection": { /* pagination findings */ },
-      "clientCapabilities": { /* capabilities sent by the client */ }
-    }
-  }
-}
-```
-
-- `version` — extension payload version (`0.2.0`)
-- `dump.toolName` / `dump.toolVersion` — which tool created the snapshot
-- `dump.createdAt` — capture timestamp
-- `dump.serverConfig` — connection details (transport, URL, headers, …)
-- `dump.runtimeObservations`, `dump.cors`, `dump.paginationDetection`,
-  `dump.clientCapabilities` — runtime discoveries about the server
+For a hands-on authoring walkthrough, see the
+[getting-started guide](../../../spec/guides/getting-started.md).
 
 ## Best practices
 
@@ -168,4 +81,5 @@ The `x-cisco-metadata` extension records how the snapshot was produced:
 
 - [convert-legacy.md](convert-legacy.md) — migrating legacy dump files to mcpdesc
 - [complete-workflow.md](../tutorials/complete-workflow.md) — end-to-end example
+- [MCP Description Specification](../../../spec/mcp-description.md) — normative format specification
 - Schema files: [mcp-description/0.7.0.json](../../../schemas/mcp-description/0.7.0.json) · [dump-extension/0.2.0.json](../../../schemas/dump-extension/0.2.0.json)

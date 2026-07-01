@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0] - 2026-07-01](#100---2026-07-01)
 - [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
 - [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
 - [[1.0.0-rc.3] - 2026-06-29](#100-rc3---2026-06-29)
@@ -17,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-07-01
+
+First stable release. Promotes `1.0.0-rc.5` with two polish items that arrived
+during final review.
+
+### Changed
+
+- **Slimmed `docs/users/reference/schemas.md` to a gateway/orientation page.**
+  The field-by-field document-structure reference (≈100 lines covering `info`,
+  `transports`, `capabilities`, `tools`/`resources`/`prompts`, and
+  `x-cisco-metadata`) was a parallel copy of the normative spec that would drift
+  on every format release. It is replaced by a `## Full field reference` section
+  that links directly to the relevant `spec/sections/` pages and to
+  `spec/extensions/x-cisco-metadata/README.md`. The CLI-specific material
+  (schema version table, `latest.json`, `cli-schema-compatibility.json`, best
+  practices) is retained.
+- **Corrected the `agents` command guides for `diff` and `breaking`.** The
+  `DIFF_GUIDE` and `BREAKING_GUIDE` documented `--format <type>` (json, yaml) and
+  `--pretty` flags that do not exist on those commands; both flags and the example
+  invocations using them are removed. The `--workflows` Output Formats section is
+  rewritten to accurately describe per-command format support (`diff`/`breaking`:
+  fixed JSON; `changelog`: `release`/`compact`; others: `json`/`yaml`/`markdown`).
+
+### Added
+
+- **`docs/maintainers/design/compare-command.md`** — design document for the
+  proposed `compare` command (v1.1 milestone): rationale, full flag table,
+  exit-code contract, output-channel model, CI/CD guide plan, and implementation
+  checklist. Not implemented in this release.
 
 ## [1.0.0-rc.5] - 2026-07-01
 
