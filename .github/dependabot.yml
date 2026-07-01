@@ -1,17 +1,69 @@
 version: 2
+
+# Version-update strategy (this file) is deliberately low-noise:
+#   - Non-critical updates are BATCHED and proposed MONTHLY.
+#   - Low-risk minor/patch bumps are grouped into a couple of PRs.
+#   - Major bumps stay as individual PRs (they may be breaking → review each).
+#   - A cooldown lets brand-new releases settle before we react to them.
+#
+# The FAST LANE for critical fixes is *Dependabot security updates*, which are
+# NOT configured here — enable them in repo Settings → Code security →
+# "Dependabot alerts" + "Dependabot security updates". Those open PRs
+# immediately when an advisory affects a dependency, ignore the schedule and
+# cooldown below, and are the mechanism for "critical issues, quick fix".
+
 updates:
+  # ---------------------------------------------------------------------------
+  # npm — runtime + tooling dependencies
+  # ---------------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    # Wait for a release to settle before opening a PR for it. Gives maintainers
+    # of a bad release time to yank/patch it, and avoids churn on rapid releases.
+    # Does NOT apply to security updates.
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    # Batch low-risk updates so a month of patch/minor bumps arrives as at most
+    # two PRs. Major updates are intentionally left OUT of these groups so each
+    # gets its own PR for careful review.
+    groups:
+      production-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
+  # ---------------------------------------------------------------------------
+  # GitHub Actions — pin/upgrade workflow actions
+  # ---------------------------------------------------------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+    cooldown:
+      default-days: 7
+    # All action bumps in a single PR.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
