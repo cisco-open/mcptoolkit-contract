@@ -14,7 +14,7 @@ Thanks for using **mcpcontract**!
 ## Documentation
 
 - [README](README.md) — project overview and quick start
-- [Quick Start](docs/quick-start.md) — short walkthrough
+- [101 Tutorial](docs/101-tutorial.md) — short walkthrough
 - [docs/users/](docs/users/) — user-facing guides, tutorials, and examples
 - [docs/maintainers/](docs/maintainers/) — design notes and implementation history
 - [CHANGELOG](CHANGELOG.md) — version history

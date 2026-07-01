@@ -4,7 +4,7 @@ This folder contains user-facing documentation for **mcpcontract**.
 
 ## Start here
 
-- [../quick-start.md](../quick-start.md) — 5-minute walkthrough
+- [../101-tutorial.md](../101-tutorial.md) — 5-minute getting-started walkthrough
 - [../../README.md](../../README.md) — project overview and command reference
 
 ## Reference
