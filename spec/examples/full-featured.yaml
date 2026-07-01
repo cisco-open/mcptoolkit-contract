@@ -1,0 +1,411 @@
+mcpdesc: 0.7.0
+info:
+  name: chess-coach
+  title: Chess Coach MCP Server
+  version: 2.1.0
+  description: Comprehensive chess platform — game analysis, Elo ratings, game history,
+    opening repertoire, and coaching prompts
+  protocolVersion: '2025-06-18'
+  id: urn:mcp:chess-coach
+  icons:
+    - src: https://chess-coach.example.com/icons/icon-48.png
+      mimeType: image/png
+      sizes:
+        - 48x48
+    - src: https://chess-coach.example.com/icons/icon.svg
+      mimeType: image/svg+xml
+      sizes:
+        - any
+      theme: light
+  websiteUrl: https://chess-coach.example.com
+  contact:
+    name: Chess Coach Team
+    url: https://chess-coach.example.com/about
+    email: support@chess-coach.example.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+transports:
+- type: streamable-http
+  url: https://chess-coach.example.com/mcp
+- type: stdio
+  command: chess-coach
+  args:
+  - mcp
+  - "--db"
+  - "/data/games.db"
+  env:
+    CHESS_ENGINE_PATH: "/usr/local/bin/stockfish"
+    CHESS_DB_PATH: "/data/games.db"
+security:
+- type: oauth2
+  description: OAuth2 for cloud access — not required for stdio transport
+  flows:
+    authorizationCode:
+      authorizationUrl: https://auth.chess-coach.example.com/authorize
+      tokenUrl: https://auth.chess-coach.example.com/token
+      refreshUrl: https://auth.chess-coach.example.com/refresh
+      scopes:
+        games:read: Read game history and details
+        games:write: Record new games
+        ratings:read: View player ratings
+        ratings:write: Update player ratings
+        analysis:run: Run game analysis
+capabilities:
+  tools:
+    listChanged: true
+  resources:
+    subscribe: true
+    listChanged: true
+  prompts:
+    listChanged: false
+  completions: {}
+  logging: {}
+tools:
+- name: analyze_game
+  title: Analyze Chess Game
+  description: Analyze a chess game from PGN notation. Returns centipawn evaluation,
+    best move suggestions, and blunder detection with evaluation loss.
+  inputSchema:
+    type: object
+    properties:
+      pgn:
+        type: string
+        description: Game in Portable Game Notation (PGN) format
+      depth:
+        type: integer
+        description: 'Analysis depth in half-moves (default: 20)'
+        minimum: 1
+        maximum: 40
+      annotate:
+        type: boolean
+        description: 'Include move-by-move annotations (default: false)'
+    required:
+    - pgn
+  outputSchema:
+    type: object
+    properties:
+      evaluation:
+        type: number
+        description: Final position evaluation in centipawns
+      best_move:
+        type: string
+        description: Best move in algebraic notation
+      accuracy:
+        type: object
+        properties:
+          white:
+            type: number
+            description: White accuracy percentage
+          black:
+            type: number
+            description: Black accuracy percentage
+      blunders:
+        type: array
+        items:
+          type: object
+          properties:
+            move_number:
+              type: integer
+            color:
+              type: string
+              enum:
+              - white
+              - black
+            move:
+              type: string
+            best_move:
+              type: string
+            evaluation_loss:
+              type: number
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: false
+  tags:
+  - analysis
+- name: get_player_rating
+  title: Get Player Rating
+  description: Get the current Elo rating, rank, and statistics for a chess player
+    across all time controls
+  inputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+        description: Unique player identifier
+      rating_type:
+        type: string
+        enum:
+        - classical
+        - rapid
+        - blitz
+        - bullet
+        description: Specific time control rating (omit for all)
+    required:
+    - player_id
+  outputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+      player_name:
+        type: string
+      ratings:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            rating:
+              type: integer
+            rank:
+              type: integer
+            games_played:
+              type: integer
+            win_rate:
+              type: number
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+  tags:
+  - analysis
+- name: record_game_result
+  title: Record Game Result
+  description: Record the result of a chess game and update both players' Elo ratings
+    using the standard K-factor calculation
+  inputSchema:
+    type: object
+    properties:
+      white_player_id:
+        type: string
+        description: White player identifier
+      black_player_id:
+        type: string
+        description: Black player identifier
+      result:
+        type: string
+        enum:
+        - 1-0
+        - 0-1
+        - 1/2-1/2
+        description: Game result in standard notation
+      pgn:
+        type: string
+        description: Full game PGN
+      time_control:
+        type: string
+        description: Time control (e.g., '10+0', '3+2')
+      rated:
+        type: boolean
+        description: 'Whether the game is rated (default: true)'
+    required:
+    - white_player_id
+    - black_player_id
+    - result
+  annotations:
+    readOnlyHint: false
+    destructiveHint: false
+    idempotentHint: false
+  tags:
+  - games
+- name: search_games
+  title: Search Games
+  description: Search the game database with filters for players, openings, results,
+    and date ranges
+  inputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+        description: Filter by player
+      opening_eco:
+        type: string
+        description: ECO code (e.g., 'B20' for Sicilian)
+      result:
+        type: string
+        enum:
+        - 1-0
+        - 0-1
+        - 1/2-1/2
+      from_date:
+        type: string
+        description: Start date (ISO 8601)
+      to_date:
+        type: string
+        description: End date (ISO 8601)
+      min_rating:
+        type: integer
+        description: Minimum average player rating
+      limit:
+        type: integer
+        description: 'Max results (default: 20)'
+        maximum: 100
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+  tags:
+  - games
+resources:
+- uri: chess://leaderboard/classical
+  name: classical_leaderboard
+  title: Classical Leaderboard
+  description: Current top-100 classical chess ratings leaderboard with player names,
+    ratings, and recent form
+  mimeType: application/json
+  tags:
+  - games
+- uri: chess://leaderboard/rapid
+  name: rapid_leaderboard
+  title: Rapid Leaderboard
+  description: Current top-100 rapid chess ratings leaderboard
+  mimeType: application/json
+  tags:
+  - games
+- uri: chess://leaderboard/blitz
+  name: blitz_leaderboard
+  title: Blitz Leaderboard
+  description: Current top-100 blitz chess ratings leaderboard
+  mimeType: application/json
+  tags:
+  - games
+- uri: chess://openings/catalog
+  name: openings_catalog
+  title: Openings Catalog
+  description: Complete catalog of chess openings with ECO codes, names, and main
+    lines
+  mimeType: application/json
+  tags:
+  - reference
+- uri: chess://rules/fide-2024
+  name: fide_rules
+  title: FIDE Rules 2024
+  description: Official FIDE Laws of Chess (2024 edition)
+  mimeType: text/markdown
+  tags:
+  - reference
+resourceTemplates:
+- uriTemplate: chess://games/{game_id}
+  name: game_detail
+  title: Game Detail
+  description: Full details of a specific chess game — PGN, moves, clock times, and
+    engine analysis
+  mimeType: application/json
+  tags:
+  - games
+- uriTemplate: chess://players/{player_id}/games
+  name: player_game_history
+  title: Player Game History
+  description: Complete game history for a player, ordered by date descending
+  mimeType: application/json
+  tags:
+  - games
+- uriTemplate: chess://players/{player_id}/rating-history
+  name: player_rating_history
+  title: Player Rating History
+  description: Historical Elo rating progression with data points per rated game
+  mimeType: application/json
+  tags:
+  - analysis
+- uriTemplate: chess://openings/{eco_code}
+  name: opening_detail
+  title: Opening Detail
+  description: Detailed information about a specific opening by ECO code — theory,
+    variations, and statistics
+  mimeType: application/json
+  tags:
+  - reference
+prompts:
+- name: analyze_position
+  title: Analyze Position
+  description: Generate a detailed natural-language positional analysis for a chess
+    position
+  arguments:
+  - name: fen
+    title: FEN String
+    description: Position in Forsyth-Edwards Notation
+    required: true
+  - name: perspective
+    title: Perspective
+    description: Analyze from 'white' or 'black' perspective
+    required: false
+  tags:
+  - analysis
+- name: game_summary
+  title: Game Summary
+  description: Generate a narrative summary of a completed chess game highlighting
+    key moments
+  arguments:
+  - name: game_id
+    title: Game ID
+    description: Identifier of the game to summarize
+    required: true
+  - name: detail_level
+    title: Detail Level
+    description: "'brief', 'standard', or 'comprehensive'"
+    required: false
+  tags:
+  - games
+- name: opening_guide
+  title: Opening Repertoire Guide
+  description: Generate a study guide for a specific chess opening tailored to player
+    strength
+  arguments:
+  - name: opening_name
+    title: Opening Name
+    description: e.g., 'Sicilian Defense', 'Queen's Gambit'
+    required: true
+  - name: player_rating
+    title: Player Rating
+    description: Approximate rating to tailor complexity
+    required: false
+  - name: color
+    title: Color
+    description: Study as 'white' or 'black'
+    required: false
+  tags:
+  - reference
+tags:
+- name: analysis
+  description: Game analysis, evaluation, and ratings
+- name: games
+  description: Game records, history, leaderboards, and search
+- name: reference
+  description: Reference material, openings, and study guides
+x-cisco-metadata:
+  version: 0.2.0
+  dump:
+    toolName: mcpcontract
+    toolVersion: 0.8.0
+    createdAt: '2026-03-15T14:30:00Z'
+    serverConfig:
+      name: chess-coach
+      transport: streamable-http
+      url: https://chess-coach.example.com/mcp
+    runtimeObservations:
+      mcpProtocolUsed: '2025-06-18'
+      sessionIdSupported: true
+      sessionIdHeader: Mcp-Session-Id
+      pingSupported: true
+      pingLatencyMs: 42
+      instructions: Chess Coach MCP Server - analyze games, track ratings, explore game
+        history. Use analyze_game for PGN analysis, get_player_rating for Elo lookups.
+    cors:
+      browserReady: true
+      responseHeaders:
+        accessControlAllowOrigin: "*"
+        accessControlExposeHeaders:
+        - Mcp-Session-Id
+      preflight:
+        tested: true
+        status: 204
+        accessControlAllowOrigin: "*"
+        accessControlAllowMethods:
+        - GET
+        - POST
+        - DELETE
+        accessControlAllowHeaders:
+        - Content-Type
+        - Authorization
+        - Mcp-Session-Id

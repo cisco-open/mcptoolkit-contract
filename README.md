@@ -3,12 +3,13 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.4-orange.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.5-orange.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Quick start:** [docs/quick-start.md](docs/quick-start.md)
 - **Full walkthrough:** [docs/users/tutorials/complete-workflow.md](docs/users/tutorials/complete-workflow.md)
 - **All user docs:** [docs/users/](docs/users/)
+- **MCP Description specification:** [spec/](spec/) — this repository is the canonical home of the `mcpdesc` format
 
 ## 🚀 Quick Start
 
@@ -28,7 +29,33 @@ mcpcontract document dump.yaml --template reference-documentation --output doc.m
 
 **For a complete walkthrough**, check the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial.
 
-## 🔍 Backward Compatibility Analysis
+## � The MCP Description (`mcpdesc`) Specification
+
+`mcpcontract` reads and writes documents in the **MCP Description** format
+(`mcpdesc`) — a portable, machine-readable contract that declares everything an
+MCP server offers (tools, resources, prompts, transports, security), much like
+OpenAPI does for REST APIs. Every `dump`, `diff`, `document`, and `breaking`
+operation is built on this format.
+
+**This repository is the canonical home of the specification.** The normative
+text, guides, examples, governance, and version history live under
+[`spec/`](spec/); the versioned JSON Schemas live under
+[`schemas/mcp-description/`](schemas/mcp-description/).
+
+- **Start here:** [spec/README.md](spec/README.md) — overview and quick example
+- **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
+- **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
+- **Current schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+
+The format is versioned **independently of this CLI**. `mcpcontract` targets a
+specific `mcpdesc` version and is kept in sync as the specification advances,
+preserving backward compatibility with documents authored against older
+versions wherever possible (the full schema history is retained, and `validate`
+auto-detects each document's version). Companion tools — `mcpeditor`, `mcpmock`,
+and `mcptest` — consume the same format by vendoring a single schema version
+from here.
+
+## �🔍 Backward Compatibility Analysis
 
 Create dumps for various releases of an MCP server, then compare releases and generate a changelog. The workflow is designed for **CI**: the `breaking` command's exit code (`0` compatible, `1` breaking, `2` error) is your build gate, while `changelog` always renders from the annotated diff.
 

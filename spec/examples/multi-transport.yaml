@@ -1,0 +1,75 @@
+mcpdesc: 0.7.0
+info:
+  name: chess-coach
+  title: Chess Coach (Multi-Transport)
+  version: 2.1.0
+  description: Chess analysis and rating server available via both cloud and local
+    transports
+  protocolVersion: '2025-06-18'
+transports:
+- type: streamable-http
+  url: https://chess-coach.example.com/mcp
+  security:
+  - type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: Required for cloud transports
+- type: stdio
+  command: chess-coach
+  args:
+  - mcp
+  security: []
+- type: sse
+  url: https://chess-coach.example.com/sse
+  security:
+  - type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: Required for cloud transports
+tools:
+- name: analyze_game
+  title: Analyze Chess Game
+  description: Analyze a chess game from PGN notation
+  inputSchema:
+    type: object
+    properties:
+      pgn:
+        type: string
+        description: Game in PGN format
+    required:
+    - pgn
+  annotations:
+    readOnlyHint: true
+  tags:
+  - analysis
+- name: get_player_rating
+  title: Get Player Rating
+  description: Get the Elo rating for a chess player
+  inputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+    required:
+    - player_id
+  annotations:
+    readOnlyHint: true
+  tags:
+  - rating
+resources:
+- uri: chess://leaderboard/classical
+  name: classical_leaderboard
+  title: Classical Leaderboard
+  description: Top-100 classical ratings
+  mimeType: application/json
+resourceTemplates:
+- uriTemplate: chess://games/{game_id}
+  name: game_detail
+  title: Game Detail
+  description: Details of a specific chess game
+  mimeType: application/json
+tags:
+- name: analysis
+  description: Game analysis and evaluation
+- name: rating
+  description: Elo ratings and statistics

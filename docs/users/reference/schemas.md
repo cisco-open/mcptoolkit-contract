@@ -47,6 +47,11 @@ The format is versioned independently of the CLI:
 `schemas/cli-schema-compatibility.json` records which CLI versions emit which
 schema versions.
 
+> The normative specification for the `mcpdesc` format — including its full
+> version history — is maintained in this repository under
+> [`spec/`](../../../spec/). The `schemas/mcp-description/` directory holds the
+> versioned JSON Schemas (0.1.0–0.7.0) referenced by that specification.
+
 ## Document structure
 
 An mcpdesc document has the following top-level shape:

@@ -1,0 +1,190 @@
+mcpdesc: 0.7.0
+info:
+  name: chess-coach
+  title: Chess Coach Local
+  version: 2.1.0
+  description: Analyze chess games, track player ratings, and review game history
+    via stdio
+  protocolVersion: '2025-06-18'
+transports:
+- type: stdio
+  command: chess-coach
+  args:
+  - mcp
+  - "--db"
+  - games.db
+  env:
+    CHESS_ENGINE_PATH: "/usr/local/bin/stockfish"
+capabilities:
+  tools:
+    listChanged: false
+  resources:
+    subscribe: false
+    listChanged: false
+tools:
+- name: analyze_game
+  title: Analyze Chess Game
+  description: Analyze a chess game from PGN notation and return evaluation, best
+    moves, and blunder detection
+  inputSchema:
+    type: object
+    properties:
+      pgn:
+        type: string
+        description: Game in Portable Game Notation (PGN) format
+      depth:
+        type: integer
+        description: 'Analysis depth in half-moves (default: 20)'
+        minimum: 1
+        maximum: 40
+    required:
+    - pgn
+  outputSchema:
+    type: object
+    properties:
+      evaluation:
+        type: number
+      best_move:
+        type: string
+      blunders:
+        type: array
+        items:
+          type: object
+          properties:
+            move_number:
+              type: integer
+            move:
+              type: string
+            evaluation_loss:
+              type: number
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+  tags:
+  - analysis
+- name: get_player_rating
+  title: Get Player Rating
+  description: Get the current Elo rating and statistics for a chess player
+  inputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+        description: Unique player identifier
+      rating_type:
+        type: string
+        enum:
+        - classical
+        - rapid
+        - blitz
+        - bullet
+        description: 'Type of rating to retrieve (default: classical)'
+    required:
+    - player_id
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+  tags:
+  - ratings
+- name: record_game_result
+  title: Record Game Result
+  description: Record the result of a chess game and update player ratings using Elo
+    calculation
+  inputSchema:
+    type: object
+    properties:
+      white_player_id:
+        type: string
+      black_player_id:
+        type: string
+      result:
+        type: string
+        enum:
+        - 1-0
+        - 0-1
+        - 1/2-1/2
+        description: 'Game result: white wins (1-0), black wins (0-1), or draw (1/2-1/2)'
+      pgn:
+        type: string
+        description: Full game in PGN format (optional)
+      time_control:
+        type: string
+        description: Time control e.g. '10+0', '3+2'
+    required:
+    - white_player_id
+    - black_player_id
+    - result
+  annotations:
+    readOnlyHint: false
+    destructiveHint: false
+    idempotentHint: false
+  tags:
+  - games
+  - ratings
+resources:
+- uri: chess://leaderboard/classical
+  name: classical_leaderboard
+  title: Classical Leaderboard
+  description: Current top-100 classical chess ratings leaderboard
+  mimeType: application/json
+  tags:
+  - ratings
+- uri: chess://leaderboard/rapid
+  name: rapid_leaderboard
+  title: Rapid Leaderboard
+  description: Current top-100 rapid chess ratings leaderboard
+  mimeType: application/json
+  tags:
+  - ratings
+resourceTemplates:
+- uriTemplate: chess://games/{game_id}
+  name: game_detail
+  title: Game Detail
+  description: Full details of a specific chess game including PGN, moves, and analysis
+  mimeType: application/json
+  tags:
+  - games
+- uriTemplate: chess://players/{player_id}/games
+  name: player_game_history
+  title: Player Game History
+  description: Complete game history for a specific player
+  mimeType: application/json
+  tags:
+  - games
+- uriTemplate: chess://players/{player_id}/rating-history
+  name: player_rating_history
+  title: Player Rating History
+  description: Historical Elo rating progression for a player
+  mimeType: application/json
+  tags:
+  - ratings
+prompts:
+- name: analyze_position
+  title: Analyze Position
+  description: Generate a detailed positional analysis for a chess position
+  arguments:
+  - name: fen
+    description: Position in Forsyth-Edwards Notation (FEN)
+    required: true
+  - name: perspective
+    description: Analyze from 'white' or 'black' perspective
+    required: false
+  tags:
+  - analysis
+- name: game_summary
+  title: Game Summary
+  description: Generate a narrative summary of a completed chess game
+  arguments:
+  - name: game_id
+    description: Identifier of the game to summarize
+    required: true
+  tags:
+  - games
+tags:
+- name: analysis
+  description: Game analysis and position evaluation
+- name: games
+  description: Game records, history, and summaries
+- name: ratings
+  description: Elo ratings, leaderboards, and statistics

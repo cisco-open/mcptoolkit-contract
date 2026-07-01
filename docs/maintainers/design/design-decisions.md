@@ -248,7 +248,7 @@ The split between `--help` (Commander-generated, terse) and `agents` (curated, w
 Captured here so we don't re-litigate them.
 
 - **mcpmock** (mock server tool). Three-command design (`run`/`record`/`build`) for replaying dumps as fake MCP servers. **Deferred** — not blocking core contract toolkit work. Useful as a separate companion tool.
-- **Standalone MCP Description spec.** Rejected in favor of the ADL-profile-based mcpdesc, because building on the IETF ADL draft gains envelope reuse and future interop. See `dust/.../36-MCP-DESCRIPTION-STANDALONE.md` for the alternative.
+- **Standalone MCP Description spec repository.** An early plan published the `mcpdesc` format as a separate, formally governed spec repo. Rejected as too heavyweight for the current stage: the specification now lives in this repository under [`spec/`](../../../spec/), making `mcptoolkit-contract` the single source of truth for both the format and its reference tooling. Consuming tools vendor one schema version from [`schemas/mcp-description/`](../../../schemas/mcp-description/) and upgrade as the format advances.
 - **OAuth Phase 2** (full token-refresh + secure storage for streamable-http auth). Deferred until requirements solidify. Today: pass Bearer tokens via `--headers`.
 - **Active feature probing.** Considered for CORS, ping, pagination. Rejected in favor of passive detection — keeps dumps cheap and avoids hammering production servers during routine scans.
 - **JSON Patch output for `diff`.** Considered. Rejected because MCP-aware change names are needed for the rules engine and human-readable changelogs.

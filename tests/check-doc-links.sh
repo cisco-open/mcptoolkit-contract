@@ -61,6 +61,18 @@ check "docs/maintainers/design/architecture.md"
 check "docs/maintainers/design/design-decisions.md"
 check "docs/maintainers/design/workflow-examples.md"
 
+# MCP Description specification (canonical source of truth, referenced from README/AGENTS)
+echo "Checking specification..."
+check "spec/README.md"
+check "spec/mcp-description.md"
+check "spec/CHANGELOG.md"
+check "spec/GOVERNANCE.md"
+check "spec/implementations.md"
+check "spec/guides/getting-started.md"
+check "spec/extensions/x-cisco-metadata/README.md"
+check "spec/examples/full-featured.yaml"
+check "schemas/mcp-description/0.7.0.json"
+
 # Root-level docs
 echo "Checking project root docs..."
 check "README.md"

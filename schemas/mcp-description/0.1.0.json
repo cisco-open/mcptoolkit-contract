@@ -1,0 +1,520 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://developer.cisco.com/mcp-description/schema/1.0.0",
+  "title": "MCP Server Description",
+  "description": "Standalone MCP Server Description format — a static, curated declaration of what an MCP server offers. Uses MCP-native terminology, OpenAPI-aligned info/security structure, and one-description-per-transport semantics.",
+  "type": "object",
+  "required": ["mcpDescription", "info", "transport"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for IDE validation"
+    },
+    "mcpDescription": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "MCP Description specification version"
+    },
+    "info": {
+      "type": "object",
+      "description": "Server metadata — OpenAPI-aligned info object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable server name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of what the server does"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Server version (semver recommended)"
+        },
+        "protocolVersion": {
+          "type": "string",
+          "description": "MCP protocol version (e.g., '2025-06-18')"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique server identifier (URI, DID, or URN)"
+        },
+        "contact": {
+          "type": "object",
+          "description": "Contact information (OpenAPI-style)",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Organization or maintainer name"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL for the contact"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Contact email address"
+            }
+          },
+          "additionalProperties": false
+        },
+        "license": {
+          "type": "object",
+          "description": "License information (OpenAPI-style)",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "License name (e.g., 'Apache-2.0', 'MIT')"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to the license text"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "transport": {
+      "description": "Transport configuration — one per description document",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Streamable HTTP transport",
+          "required": ["type", "url"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "streamable-http"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "MCP endpoint URL"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "stdio transport",
+          "required": ["type", "command"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "stdio"
+            },
+            "command": {
+              "type": "string",
+              "description": "Command to launch the server"
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Command arguments"
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": { "type": "string" },
+              "description": "Environment variables"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "SSE transport (legacy)",
+          "required": ["type", "url"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "sse"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "SSE endpoint URL"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "security": {
+      "type": "array",
+      "description": "Security schemes — array of OpenAPI Security Scheme Objects. Empty array or omitted means no authentication required.",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["http", "apiKey", "oauth2", "openIdConnect"],
+            "description": "Security scheme type (OpenAPI 3.1)"
+          },
+          "scheme": {
+            "type": "string",
+            "description": "HTTP auth scheme (e.g., 'bearer', 'basic'). Required when type is 'http'."
+          },
+          "bearerFormat": {
+            "type": "string",
+            "description": "Bearer token format hint (e.g., 'JWT')"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the API key (header, query, or cookie name). Required when type is 'apiKey'."
+          },
+          "in": {
+            "type": "string",
+            "enum": ["header", "query", "cookie"],
+            "description": "Location of the API key. Required when type is 'apiKey'."
+          },
+          "flows": {
+            "type": "object",
+            "description": "OAuth2 flows. Required when type is 'oauth2'.",
+            "properties": {
+              "implicit": { "$ref": "#/definitions/oauthFlow" },
+              "password": { "$ref": "#/definitions/oauthFlow" },
+              "clientCredentials": { "$ref": "#/definitions/oauthFlow" },
+              "authorizationCode": { "$ref": "#/definitions/oauthFlow" }
+            },
+            "additionalProperties": false
+          },
+          "openIdConnectUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "OpenID Connect discovery URL. Required when type is 'openIdConnect'."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the security scheme"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Server capabilities from MCP InitializeResult",
+      "properties": {
+        "tools": {
+          "type": "object",
+          "properties": {
+            "listChanged": { "type": "boolean" }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "subscribe": { "type": "boolean" },
+            "listChanged": { "type": "boolean" }
+          }
+        },
+        "prompts": {
+          "type": "object",
+          "properties": {
+            "listChanged": { "type": "boolean" }
+          }
+        },
+        "logging": {
+          "type": "object"
+        },
+        "experimental": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "lifecycle": {
+      "type": "object",
+      "description": "Server lifecycle state",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["draft", "active", "deprecated", "retired"],
+          "description": "Current lifecycle status"
+        },
+        "effectiveDate": {
+          "type": "string",
+          "description": "Date the status became effective (ISO 8601)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools exposed by the server — MCP-native format",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable tool description"
+          },
+          "inputSchema": {
+            "type": "object",
+            "description": "JSON Schema for tool input parameters",
+            "properties": {
+              "type": { "type": "string" },
+              "properties": { "type": "object" },
+              "required": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": true
+          },
+          "outputSchema": {
+            "type": "object",
+            "description": "JSON Schema for tool output (MCP 2025-06-18+)",
+            "additionalProperties": true
+          },
+          "annotations": {
+            "type": "object",
+            "description": "MCP tool annotations (readOnlyHint, idempotentHint, destructiveHint, etc.)",
+            "properties": {
+              "readOnlyHint": { "type": "boolean" },
+              "idempotentHint": { "type": "boolean" },
+              "destructiveHint": { "type": "boolean" },
+              "openWorldHint": { "type": "boolean" },
+              "title": { "type": "string" }
+            },
+            "additionalProperties": true
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the tool is deprecated"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "resources": {
+      "type": "array",
+      "description": "Resources exposed by the server — MCP-native format",
+      "items": {
+        "type": "object",
+        "required": ["uri", "name"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "description": "Resource URI"
+          },
+          "name": {
+            "type": "string",
+            "description": "Resource name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable resource description"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the resource content"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Resource annotations",
+            "additionalProperties": true
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the resource is deprecated"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "resourceTemplates": {
+      "type": "array",
+      "description": "Resource templates — MCP-native format with URI templates",
+      "items": {
+        "type": "object",
+        "required": ["uriTemplate", "name"],
+        "properties": {
+          "uriTemplate": {
+            "type": "string",
+            "description": "URI template (RFC 6570)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable template description"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the resource content"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Resource template annotations",
+            "additionalProperties": true
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the template is deprecated"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Prompts exposed by the server — MCP-native format (single arguments array)",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Prompt name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable prompt description"
+          },
+          "arguments": {
+            "type": "array",
+            "description": "Prompt arguments — MCP-native array format",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Argument name"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Argument description"
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether the argument is required"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the prompt is deprecated"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "url": { "type": "string", "format": "uri" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "documentation": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to server documentation"
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to source code repository"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Global categorization tags"
+        }
+      },
+      "additionalProperties": true
+    },
+    "_generated": {
+      "type": "object",
+      "description": "Provenance metadata (auto-generated, not for manual editing)",
+      "properties": {
+        "tool": { "type": "string" },
+        "version": { "type": "string" },
+        "sourceDump": { "type": "string" },
+        "generatedAt": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    { "required": ["tools"] },
+    { "required": ["resources"] },
+    { "required": ["resourceTemplates"] },
+    { "required": ["prompts"] }
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "oauthFlow": {
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tokenUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "refreshUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

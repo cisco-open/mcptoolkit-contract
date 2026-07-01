@@ -8,14 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
 - [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
 - [[1.0.0-rc.3] - 2026-06-29](#100-rc3---2026-06-29)
-- [[1.0.0-rc2] - 2026-06-25](#100-rc2---2026-06-25)
-- [[1.0.0-rc1] - 2026-06-04](#100-rc1---2026-06-04)
+- [[1.0.0-rc.2] - 2026-06-25](#100-rc2---2026-06-25)
+- [[1.0.0-rc.1] - 2026-06-04](#100-rc1---2026-06-04)
 
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.0.0-rc.5] - 2026-07-01
 
 ### Changed
 
@@ -30,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Embedded the MCP Description (`mcpdesc`) specification** under [`spec/`](spec/),
+  making this repository the canonical source of truth for the format: normative
+  text, section-by-section spec, guides, examples, governance, and the format's
+  own CHANGELOG. The full versioned schema history (0.1.0–0.7.0) now lives in
+  `schemas/mcp-description/`. Consuming tools vendor a single schema version and
+  upgrade as the format advances. Licensed under Apache-2.0, consistent with the
+  rest of the project.
 - **`scripts/changelog.sh`** — a non-gating human shortcut that runs
   `diff` → `breaking` → `changelog` in one invocation
   (`scripts/changelog.sh <from> <to> [output]`).
@@ -80,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Renamed npm scope from `@cisco-open` to `@cisco_open` to match the cisco_open npm organisation; all install instructions updated
 
-## [1.0.0-rc2] - 2026-06-25
+## [1.0.0-rc.2] - 2026-06-25
 
 ### Changed
 
@@ -104,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Node 18.x from the test matrix; now testing on 20.x / 22.x / 24.x
 - Bumped GitHub Actions: `actions/checkout` 4 → 7, `actions/setup-node` 4 → 6
 
-## [1.0.0-rc1] - 2026-06-04
+## [1.0.0-rc.1] - 2026-06-04
 
 First open-source release of `@cisco-open/mcptoolkit-contract`.
 
