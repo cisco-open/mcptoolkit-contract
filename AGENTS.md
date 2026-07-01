@@ -104,7 +104,7 @@ mcpcontract/
 │   └── integration/          # ✅ Integration tests (Jest)
 │       └── full-workflow.test.ts      # 10 end-to-end tests
 └── docs/
-    ├── quick-start.md        # 5-minute walkthrough (Microsoft Learn server)
+    ├── 101-tutorial.md       # 5-minute getting-started walkthrough (Microsoft Learn server)
     ├── users/                # User-facing guides, tutorials, examples
     │   ├── tutorials/        # Walkthroughs (complete-workflow, rules-catalog, splitting)
     │   ├── reference/        # schemas.md, compatibility.md, convert-legacy.md

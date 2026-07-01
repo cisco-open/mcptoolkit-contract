@@ -6,10 +6,11 @@ The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you cre
 [![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.5-orange.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
-- **Quick start:** [docs/quick-start.md](docs/quick-start.md)
-- **Full walkthrough:** [docs/users/tutorials/complete-workflow.md](docs/users/tutorials/complete-workflow.md)
-- **All user docs:** [docs/users/](docs/users/)
-- **MCP Description specification:** [spec/](spec/) — this repository is the canonical home of the `mcpdesc` format
+- **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
+- **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
+- **MCP Description specification:** [spec](spec/) — this repository is the canonical home of the `mcpdesc` format
+- **CLI Commands:** mcpcontract [dump, diff, changelog, document...](#-commands)
+
 
 ## 🚀 Quick Start
 
@@ -27,35 +28,10 @@ mcpcontract dump --transport streamable-http --url "https://learn.microsoft.com/
 mcpcontract document dump.yaml --template reference-documentation --output doc.md
 ```
 
-**For a complete walkthrough**, check the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial.
+**Next:** the [101 Tutorial](docs/101-tutorial.md) — a five-minute guided walkthrough that then leads into the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial for the full pipeline.
 
-## � The MCP Description (`mcpdesc`) Specification
 
-`mcpcontract` reads and writes documents in the **MCP Description** format
-(`mcpdesc`) — a portable, machine-readable contract that declares everything an
-MCP server offers (tools, resources, prompts, transports, security), much like
-OpenAPI does for REST APIs. Every `dump`, `diff`, `document`, and `breaking`
-operation is built on this format.
-
-**This repository is the canonical home of the specification.** The normative
-text, guides, examples, governance, and version history live under
-[`spec/`](spec/); the versioned JSON Schemas live under
-[`schemas/mcp-description/`](schemas/mcp-description/).
-
-- **Start here:** [spec/README.md](spec/README.md) — overview and quick example
-- **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
-- **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
-- **Current schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
-
-The format is versioned **independently of this CLI**. `mcpcontract` targets a
-specific `mcpdesc` version and is kept in sync as the specification advances,
-preserving backward compatibility with documents authored against older
-versions wherever possible (the full schema history is retained, and `validate`
-auto-detects each document's version). Companion tools — `mcpeditor`, `mcpmock`,
-and `mcptest` — consume the same format by vendoring a single schema version
-from here.
-
-## �🔍 Backward Compatibility Analysis
+## 🔍 Backward Compatibility Analysis
 
 Create dumps for various releases of an MCP server, then compare releases and generate a changelog. The workflow is designed for **CI**: the `breaking` command's exit code (`0` compatible, `1` breaking, `2` error) is your build gate, while `changelog` always renders from the annotated diff.
 
@@ -101,6 +77,34 @@ esac
 **Documentation**:
 - [MCP Compatibility Guidelines](docs/users/reference/compatibility.md) — Philosophy and best practices
 - [Example Artifacts](docs/users/examples/)
+
+
+## 📄 The MCP Description (`mcpdesc`) Specification
+
+`mcpcontract` reads and writes documents in the **MCP Description** format
+(`mcpdesc`) — a portable, machine-readable contract that declares everything an
+MCP server offers (tools, resources, prompts, transports, security), much like
+OpenAPI does for REST APIs. Every `dump`, `diff`, `document`, and `breaking`
+operation is built on this format.
+
+**This repository is the canonical home of the specification.** The normative
+text, guides, examples, governance, and version history live under
+[`spec/`](spec/); the versioned JSON Schemas live under
+[`schemas/mcp-description/`](schemas/mcp-description/).
+
+- **Start here:** [spec/README.md](spec/README.md) — overview and quick example
+- **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
+- **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
+- **Current schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+
+The format is versioned **independently of this CLI**. `mcpcontract` targets a
+specific `mcpdesc` version and is kept in sync as the specification advances,
+preserving backward compatibility with documents authored against older
+versions wherever possible (the full schema history is retained, and `validate`
+auto-detects each document's version). Companion tools — `mcpeditor`, `mcpmock`,
+and `mcptest` — consume the same format by vendoring a single schema version
+from here.
+
 
 ## 📖 Commands
 
@@ -262,9 +266,11 @@ mcpcontract/
 │   ├── commands/        # Commander subcommands (thin argument-parsing layer)
 │   ├── lib/             # Core logic (dumper, differ, rules-engine, splitter, …)
 │   └── index.ts         # CLI entry point
+├── spec/                # MCP Description (mcpdesc) specification — canonical source of truth
 ├── schemas/             # JSON schemas (versioned: mcp-description/, diff/, …)
 ├── rules/               # Compatibility rules (YAML) + documentation catalog
 ├── templates/           # Handlebars templates (dumps, changelogs)
+├── scripts/             # Helper scripts (changelog.sh, badge sync)
 ├── tests/               # Jest unit + integration tests, shell smoke tests
 └── docs/
     ├── users/           # User guides, tutorials, examples
@@ -302,7 +308,7 @@ npm run test:coverage
 
 ## 📚 Documentation
 
-- **[Quick Start](docs/quick-start.md)** — Install & generate your first dump in five minutes
+- **[101 Tutorial](docs/101-tutorial.md)** — Install & generate your first dump in five minutes
 - **[Full Tour Tutorial](docs/users/tutorials/complete-workflow.md)** — End-to-end tutorial
 - **[User docs](docs/users/)** — Schemas, compatibility guidelines, examples
 - **[Maintainer docs](docs/maintainers/README.md)** — Architecture and design decisions

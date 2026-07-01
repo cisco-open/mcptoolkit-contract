@@ -1,7 +1,7 @@
 # Microsoft Learn MCP Server — example data
 
 Sample artifacts captured from the public **[Microsoft Learn MCP Server](https://learn.microsoft.com/api/mcp)**
-(`streamable-http`). They power the [quick start](../../../quick-start.md) and the
+(`streamable-http`). They power the [101 tutorial](../../../101-tutorial.md) and the
 [complete workflow tutorial](../../tutorials/complete-workflow.md) so you can try
 the full pipeline without standing up your own server.
 

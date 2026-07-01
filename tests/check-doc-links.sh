@@ -28,9 +28,9 @@ check() {
   fi
 }
 
-# User-facing entry points (referenced from README.md / quick-start.md / SUPPORT.md)
+# User-facing entry points (referenced from README.md / 101-tutorial.md / SUPPORT.md)
 echo "Checking user-facing docs..."
-check "docs/quick-start.md"
+check "docs/101-tutorial.md"
 check "docs/users/README.md"
 check "docs/users/reference/schemas.md"
 check "docs/users/reference/compatibility.md"

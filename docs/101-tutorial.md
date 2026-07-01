@@ -1,4 +1,4 @@
-# Quick Start
+# 101 Tutorial
 
 Get going with `mcpcontract` in five minutes using the public
 [Microsoft Learn MCP Server](https://learn.microsoft.com/api/mcp).
