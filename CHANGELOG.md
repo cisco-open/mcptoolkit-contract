@@ -8,14 +8,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
 - [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
 - [[1.0.0-rc.3] - 2026-06-29](#100-rc3---2026-06-29)
-- [[1.0.0-rc2] - 2026-06-25](#100-rc2---2026-06-25)
-- [[1.0.0-rc1] - 2026-06-04](#100-rc1---2026-06-04)
+- [[1.0.0-rc.2] - 2026-06-25](#100-rc2---2026-06-25)
+- [[1.0.0-rc.1] - 2026-06-04](#100-rc1---2026-06-04)
 
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.0.0-rc.5] - 2026-07-01
+
+### Changed
+
+- **Unified the `changelog` input on a single `--diff` flag.** `changelog` now
+  takes the structural diff from `diff`, or the annotated diff from `breaking`
+  (e.g. `diff-breaking.json`); breaking changes are highlighted when the diff has
+  been annotated. Documentation standardizes the annotated-diff artifact name on
+  `diff-breaking.json`.
+- **Reworked the README quickstart around CI.** The Backward Compatibility
+  Analysis section now shows an exit-code-gated pipeline (`breaking` exits `0`
+  compatible / `1` breaking / `2` error) and references a new wrapper script.
+- **Pre-release versions now publish under the npm `next` dist-tag.** The
+  publish workflow selects `next` for any version containing `-` (e.g.
+  `1.0.0-rc.5`) and `latest` for stable releases, so `npm install` keeps
+  serving the latest stable version while release candidates are available via
+  `@next`. The workflow also verifies the pushed tag matches `package.json`.
+
+### Added
+
+- **Embedded the MCP Description (`mcpdesc`) specification** under [`spec/`](spec/),
+  making this repository the canonical source of truth for the format: normative
+  text, section-by-section spec, guides, examples, governance, and the format's
+  own CHANGELOG. The full versioned schema history (0.1.0–0.7.0) now lives in
+  `schemas/mcp-description/`. Consuming tools vendor a single schema version and
+  upgrade as the format advances. Licensed under Apache-2.0, consistent with the
+  rest of the project.
+- **`scripts/changelog.sh`** — a non-gating human shortcut that runs
+  `diff` → `breaking` → `changelog` in one invocation
+  (`scripts/changelog.sh <from> <to> [output]`).
+
+### Removed
+
+- **Removed the `changelog --breaking <file>` and `changelog --analysis <file>`
+  input aliases.** Use `--diff <file>` instead. Pre-GA removal — no deprecation
+  cycle.
+
+### Fixed
+
+- **`changelog` now always exits `0` on a successful render.** Previously it
+  propagated the breaking-change exit code (`1`), which aborted `set -e` CI
+  scripts at the changelog step even though the file was written. Gating is the
+  job of `breaking`, whose exit code remains the CI contract.
+- **Brought the bash, zsh, and fish shell completions back in sync with every
+  command's current options.** Added the missing `dump --auth`/`--oauth-*`,
+  `breaking --suggest-version`, and `changelog --omit-zeros`/`--sort`/
+  `--show-diff-reasoning` flags; corrected `changelog --format` suggestions to
+  `release`/`compact`; removed short flags (`-o`/`-f`/`-t`/`-q`) that
+  `diff`/`breaking`/`changelog` do not define; dropped a stale `--pretty` from
+  `dump` and `convert` from the `agents --command` list; and fixed the fish
+  `dump --header` flag (was `--headers`).
 
 ## [1.0.0-rc.4] - 2026-06-30
 
@@ -42,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Renamed npm scope from `@cisco-open` to `@cisco_open` to match the cisco_open npm organisation; all install instructions updated
 
-## [1.0.0-rc2] - 2026-06-25
+## [1.0.0-rc.2] - 2026-06-25
 
 ### Changed
 
@@ -66,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Node 18.x from the test matrix; now testing on 20.x / 22.x / 24.x
 - Bumped GitHub Actions: `actions/checkout` 4 → 7, `actions/setup-node` 4 → 6
 
-## [1.0.0-rc1] - 2026-06-04
+## [1.0.0-rc.1] - 2026-06-04
 
 First open-source release of `@cisco-open/mcptoolkit-contract`.
 

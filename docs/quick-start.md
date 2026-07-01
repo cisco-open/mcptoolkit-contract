@@ -64,10 +64,10 @@ mcpcontract diff \
   --output changes.json
 
 # Classify changes and suggest a SemVer bump
-mcpcontract breaking --diff changes.json --suggest-version --output analysis.json
+mcpcontract breaking --diff changes.json --suggest-version --output changes-breaking.json
 
 # Render a human-readable changelog
-mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+mcpcontract changelog --diff changes-breaking.json --format release --output CHANGELOG.md
 ```
 
 You'll see **8 changes (4 breaking)** and a recommended **MAJOR** bump

@@ -37,7 +37,26 @@ jobs:
       - name: Check documentation links
         run: npm run test:links
 
+      - name: Verify tag matches package.json and select dist-tag
+        id: release
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' does not match package.json version '${PKG_VERSION}'"
+            exit 1
+          fi
+          # Pre-release versions (e.g. 1.0.0-rc.5) publish under the 'next'
+          # dist-tag so `npm install` keeps serving the latest stable release.
+          if printf '%s' "$PKG_VERSION" | grep -q '-'; then
+            DIST_TAG=next
+          else
+            DIST_TAG=latest
+          fi
+          echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Publishing ${PKG_VERSION} under dist-tag '${DIST_TAG}'"
+
       - name: Publish
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --tag "${{ steps.release.outputs.dist_tag }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

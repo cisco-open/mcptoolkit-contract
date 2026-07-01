@@ -23,8 +23,8 @@ mcpcontract document $D/ms-learn-dump.yaml --template reference-documentation --
 # Compare the two historical snapshots and analyze breaking changes
 mcpcontract diff --from $D/ms-learn-dump-v1.0.0-2025-11-20.yaml \
                  --to   $D/ms-learn-dump-v1.0.0-2026-06-30.yaml --output diff.json
-mcpcontract breaking --diff diff.json --suggest-version --output analysis.json
-mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+mcpcontract breaking --diff diff.json --suggest-version --output diff-breaking.json
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 ```
 
 Comparing the two snapshots yields **8 changes (4 breaking)** and a recommended

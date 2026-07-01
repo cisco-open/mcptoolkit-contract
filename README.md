@@ -3,12 +3,13 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.4-orange.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-1.0.0--rc.5-orange.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Quick start:** [docs/quick-start.md](docs/quick-start.md)
 - **Full walkthrough:** [docs/users/tutorials/complete-workflow.md](docs/users/tutorials/complete-workflow.md)
 - **All user docs:** [docs/users/](docs/users/)
+- **MCP Description specification:** [spec/](spec/) — this repository is the canonical home of the `mcpdesc` format
 
 ## 🚀 Quick Start
 
@@ -28,18 +29,60 @@ mcpcontract document dump.yaml --template reference-documentation --output doc.m
 
 **For a complete walkthrough**, check the [complete workflow](docs/users/tutorials/complete-workflow.md) tutorial.
 
-## 🔍 Backward Compatibility Analysis
+## � The MCP Description (`mcpdesc`) Specification
 
-Create dumps for various releases of an MCP server, then compare releases and generate a changelog 
+`mcpcontract` reads and writes documents in the **MCP Description** format
+(`mcpdesc`) — a portable, machine-readable contract that declares everything an
+MCP server offers (tools, resources, prompts, transports, security), much like
+OpenAPI does for REST APIs. Every `dump`, `diff`, `document`, and `breaking`
+operation is built on this format.
+
+**This repository is the canonical home of the specification.** The normative
+text, guides, examples, governance, and version history live under
+[`spec/`](spec/); the versioned JSON Schemas live under
+[`schemas/mcp-description/`](schemas/mcp-description/).
+
+- **Start here:** [spec/README.md](spec/README.md) — overview and quick example
+- **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
+- **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
+- **Current schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+
+The format is versioned **independently of this CLI**. `mcpcontract` targets a
+specific `mcpdesc` version and is kept in sync as the specification advances,
+preserving backward compatibility with documents authored against older
+versions wherever possible (the full schema history is retained, and `validate`
+auto-detects each document's version). Companion tools — `mcpeditor`, `mcpmock`,
+and `mcptest` — consume the same format by vendoring a single schema version
+from here.
+
+## �🔍 Backward Compatibility Analysis
+
+Create dumps for various releases of an MCP server, then compare releases and generate a changelog. The workflow is designed for **CI**: the `breaking` command's exit code (`0` compatible, `1` breaking, `2` error) is your build gate, while `changelog` always renders from the annotated diff.
 
 ```bash
-# Compare two dumps => creates a diff document
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1. Structural diff between two MCP descriptions
 mcpcontract diff --from v1.json --to v2.json --output diff.json
-# Add breaking changes => creates an enriched diff document
-mcpcontract breaking --diff diff.json --output analysis.json
-# Generate a changelog that includes breaking changes if any
-mcpcontract changelog --breaking analysis.json --output CHANGELOG.md
+
+# 2. Annotate the diff with breaking-change analysis.
+#    Exit code is the contract:  0 = compatible | 1 = breaking | 2 = error
+breaking_status=0
+mcpcontract breaking --diff diff.json --output diff-breaking.json || breaking_status=$?
+
+# 3. Always render the changelog from the annotated diff
+mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md
+
+# 4. Gate the pipeline on the breaking-change status
+case "$breaking_status" in
+  0) echo "✅ Backward compatible — release as MINOR or PATCH" ;;
+  1) echo "⛔ Breaking changes — requires a MAJOR version bump"; exit 1 ;;
+  *) echo "❌ Analysis error"; exit 2 ;;
+esac
 ```
+
+> 💡 For ad-hoc human use, [`scripts/changelog.sh`](scripts/changelog.sh) wraps these steps into `scripts/changelog.sh v1.json v2.json` (non-gating).
 
 **Key Features**:
 - **20+ Change Types**: Tool/prompt/resource additions, removals, renames, parameter changes
@@ -118,19 +161,17 @@ mcpcontract breaking --diff diff.json --rules rules/breaking-changes.yaml --outp
 
 ### ✅ changelog - Generate Human-Readable Changelogs
 
-Render markdown changelogs from structural diff or breaking change analysis.
+Render markdown changelogs from a structural diff or an annotated diff. Run `breaking` first to highlight breaking changes.
 
 ```bash
 # Comprehensive release notes (default)
-mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --format release
+mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md --format release
 
 # Brief one-line-per-change summary
-mcpcontract changelog --breaking diff-breaking.json --output CHANGELOG.md --format compact
+mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md --format compact
 ```
 
-**Input Options**:
-- `--breaking <file>` (recommended): analysis file with diff + severity annotations
-- `--diff <file>`: raw structural diff (no severity ratings)
+**Input**: `--diff <file>` — the structural diff from `diff`, or the annotated diff from `breaking` (e.g. `diff-breaking.json`). Run `breaking` first to highlight breaking changes. The command is a pure renderer and always exits `0` on success.
 
 ### ✅ rules - Browse Compatibility Rules Catalog
 
@@ -173,7 +214,7 @@ mcpcontract rules export --format markdown --output RULES.md
 mcpcontract rules export --catalog rules/strict-compatibility-catalog --format markdown
 ```
 
-**Catalog**: 33 documented rules across tools (12), prompts (8), resources (6), resourceTemplates (3), serverInfo (5) — each with rationale, migration guidance, and pass/fail examples. Custom team catalogs are supported via `--catalog`, which also shows how severities differ from the defaults. See the [rules catalog tutorial](docs/users/tutorials/rules-catalog.md).
+**Catalog**: 34 documented rules across tools (12), prompts (8), resources (6), resourceTemplates (3), serverInfo (5) — each with rationale, migration guidance, and pass/fail examples. Custom team catalogs are supported via `--catalog`, which also shows how severities differ from the defaults. See the [rules catalog tutorial](docs/users/tutorials/rules-catalog.md).
 
 ### ✅ split - Split Large Dumps into Focused Subsets
 

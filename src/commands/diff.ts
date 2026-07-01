@@ -43,7 +43,7 @@ EXAMPLES:
   Example 2: To generate a changelog with mention of breaking changes
   $ mcpcontract diff --from v1.json --to v2.json --output diff.json
   $ mcpcontract breaking --diff diff.json --output diff-breaking.json
-  $ mcpcontract changelog --diff diff.json --breaking diff-breaking.json --output CHANGELOG.md
+  $ mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md
 `;
     }
   })

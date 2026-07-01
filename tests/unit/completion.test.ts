@@ -43,10 +43,10 @@ describe('Bash Completion', () => {
     expect(script).toContain('# No dash prefix - provide file completion or other context-specific completions');
     
     // Check that key commands have options defined in the no-dash section
-    expect(script).toMatch(/dump\)\s+local opts="--config --mcp-server/);
+    expect(script).toMatch(/dump\)\s+local opts="--wizard --config --mcp-server/);
     expect(script).toMatch(/diff\)\s+local opts="--from --to/);
     expect(script).toMatch(/breaking\)\s+local opts="--diff --rules/);
-    expect(script).toMatch(/changelog\)\s+local opts="--diff --breaking/);
+    expect(script).toMatch(/changelog\)\s+local opts="--diff --output/);
   });
 
   it('should include dump command options', () => {

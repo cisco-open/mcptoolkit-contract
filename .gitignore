@@ -51,9 +51,3 @@ test-*.js
 # Playground (ignore all contents except README)
 tests/playground/*
 !tests/playground/README.md
-
-# Reference materials used for AI assistance
-ref
-
-# MCP Description specification repo (separate project, referenced only)
-specs/

@@ -8,7 +8,7 @@
 
 This tutorial provides a complete end-to-end guide to using the `mcpcontract rules` command to browse, explore, and customize MCP backward compatibility rules. You'll learn how to:
 
-1. **Browse the default catalog** - Explore the 33 built-in compatibility rules
+1. **Browse the default catalog** - Explore the 34 built-in compatibility rules
 2. **Filter and search rules** - Find specific rules by category, severity, or type
 3. **View detailed documentation** - Understand rule rationale and migration guidance
 4. **Explore test examples** - See pass/fail test cases for each rule
@@ -45,7 +45,7 @@ mcpcontract --version
 
 ### Step 1: List All Rules
 
-The default catalog contains 33 backward compatibility rules across 5 categories.
+The default catalog contains 34 backward compatibility rules across 5 categories.
 
 ```bash
 mcpcontract rules list

@@ -1,0 +1,145 @@
+mcpdesc: 0.7.0
+info:
+  name: chess-coach
+  title: Chess Coach Cloud
+  version: 2.1.0
+  description: Cloud-hosted chess analysis, ratings, and game history service
+  protocolVersion: '2025-06-18'
+  contact:
+    name: Chess Coach Team
+    url: https://chess-coach.example.com
+    email: support@chess-coach.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+transports:
+- type: streamable-http
+  url: https://chess-coach.example.com/mcp
+security:
+- type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: JWT token from chess-coach.example.com/auth
+capabilities:
+  tools:
+    listChanged: false
+  resources:
+    subscribe: true
+    listChanged: false
+  prompts:
+    listChanged: false
+  completions: {}
+  logging: {}
+tools:
+- name: analyze_game
+  title: Analyze Chess Game
+  description: Analyze a chess game from PGN notation using cloud-based engine
+  inputSchema:
+    type: object
+    properties:
+      pgn:
+        type: string
+        description: Game in PGN format
+      depth:
+        type: integer
+        minimum: 1
+        maximum: 40
+    required:
+    - pgn
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+  tags:
+  - analysis
+- name: get_player_rating
+  title: Get Player Rating
+  description: Get the current Elo rating for a player
+  inputSchema:
+    type: object
+    properties:
+      player_id:
+        type: string
+      rating_type:
+        type: string
+        enum:
+        - classical
+        - rapid
+        - blitz
+        - bullet
+    required:
+    - player_id
+  annotations:
+    readOnlyHint: true
+  tags:
+  - ratings
+- name: record_game_result
+  title: Record Game Result
+  description: Record a game result and update Elo ratings
+  inputSchema:
+    type: object
+    properties:
+      white_player_id:
+        type: string
+      black_player_id:
+        type: string
+      result:
+        type: string
+        enum:
+        - 1-0
+        - 0-1
+        - 1/2-1/2
+      pgn:
+        type: string
+      time_control:
+        type: string
+    required:
+    - white_player_id
+    - black_player_id
+    - result
+  annotations:
+    readOnlyHint: false
+    destructiveHint: false
+  tags:
+  - games
+  - ratings
+resources:
+- uri: chess://leaderboard/classical
+  name: classical_leaderboard
+  title: Classical Leaderboard
+  description: Top-100 classical ratings
+  mimeType: application/json
+  tags:
+  - ratings
+resourceTemplates:
+- uriTemplate: chess://games/{game_id}
+  name: game_detail
+  title: Game Detail
+  description: Full game details including PGN and analysis
+  mimeType: application/json
+  tags:
+  - games
+- uriTemplate: chess://players/{player_id}/rating-history
+  name: player_rating_history
+  title: Player Rating History
+  description: Historical Elo progression
+  mimeType: application/json
+  tags:
+  - ratings
+prompts:
+- name: game_summary
+  title: Game Summary
+  description: Generate a narrative summary of a chess game
+  arguments:
+  - name: game_id
+    description: Game identifier
+    required: true
+  tags:
+  - games
+tags:
+- name: analysis
+  description: Game analysis and evaluation
+- name: games
+  description: Game records, history, and summaries
+- name: ratings
+  description: Elo ratings, leaderboards, and statistics

@@ -217,7 +217,7 @@ rules:
 mcpcontract breaking \
   --diff diff.json \
   --rules rules/strict-compatibility.yaml \
-  --output analysis.json
+  --output diff-breaking.json
 ```
 
 ---
@@ -233,7 +233,7 @@ mcpcontract dump --config server-v2.yaml --output dump-v2.json
 
 # 2. Compare and analyze
 mcpcontract diff --from dump-v1.json --to dump-v2.json --output diff.json
-mcpcontract breaking --diff diff.json --output analysis.json
+mcpcontract breaking --diff diff.json --output diff-breaking.json
 
 # 3. Check exit code
 # Exit code 0 = backward compatible (safe for MINOR/PATCH)
@@ -255,10 +255,11 @@ jobs:
       - name: Check for breaking changes
         run: |
           mcpcontract diff --from main-dump.json --to pr-dump.json --output diff.json
-          mcpcontract breaking --diff diff.json --output analysis.json
-          
+          status=0
+          mcpcontract breaking --diff diff.json --output diff-breaking.json || status=$?
+
           # Fail PR if breaking changes detected without version bump
-          if [ $? -eq 1 ]; then
+          if [ "$status" -eq 1 ]; then
             echo "⚠️ Breaking changes detected - MAJOR version bump required"
             exit 1
           fi

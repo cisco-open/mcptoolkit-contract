@@ -82,10 +82,10 @@ mcpcontract dump --url https://mcp.example.com --transport streamable-http \
 mcpcontract diff --from v1.mcpdesc.json --to v2.mcpdesc.json --output diff.json
 
 # 3. Classify breaking changes (and suggest a SemVer bump)
-mcpcontract breaking --diff diff.json --suggest-version --output analysis.json
+mcpcontract breaking --diff diff.json --suggest-version --output diff-breaking.json
 
 # 4. Generate a human-readable changelog
-mcpcontract changelog --breaking analysis.json --format release --output CHANGELOG.md
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 ```
 
 `breaking` exits `0` (compatible), `1` (breaking changes found), or `2` (error) — gate your CI on the exit code.

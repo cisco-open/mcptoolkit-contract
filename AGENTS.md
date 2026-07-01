@@ -59,7 +59,7 @@ mcpcontract/
 ├── schemas/                  # JSON schemas (see schemas/README.md)
 │   ├── latest.json          # Version mapping (which schema versions are current)
 │   ├── cli-schema-compatibility.json  # CLI-schema compatibility matrix
-│   ├── mcp-description/     # mcpdesc dump schema — latest: 0.7.0
+│   ├── mcp-description/     # mcpdesc schema — full history 0.1.0–0.7.0 (spec source of truth)
 │   ├── dump-extension/      # x-cisco-metadata extension — latest: 0.2.0
 │   ├── diff/                # Structural diff — 1.0.0
 │   ├── diff-breaking/       # Breaking-change analysis — 2.0.0
@@ -71,7 +71,7 @@ mcpcontract/
 ├── rules/                    # Compatibility rules (YAML)
 │   ├── breaking-changes.yaml      # Default MCP compatibility rules (35 rules)
 │   ├── strict-compatibility.yaml  # Example strict rules
-│   ├── catalog/                   # ✅ Rules documentation (33 entries)
+│   ├── catalog/                   # ✅ Rules documentation (34 entries)
 │   │   ├── catalog-schema.json    # JSON Schema for catalog entries
 │   │   ├── tools/                 # 12 tool-related rules
 │   │   ├── prompts/               # 8 prompt-related rules
@@ -113,6 +113,51 @@ mcpcontract/
     └── maintainers/          # Design notes and developer reference
         └── design/           # architecture.md, design-decisions.md, workflow-examples.md
 ```
+
+## MCP Description Specification (Source of Truth)
+
+This repository is the **canonical home of the MCP Description (`mcpdesc`)
+format**, not just the `mcpcontract` CLI. Treat the specification as a
+first-class artifact of this repo:
+
+- **Normative spec + docs:** [`spec/`](spec/) — section-by-section spec
+  (`spec/sections/`), the assembled document (`spec/mcp-description.md`), guides
+  (`spec/guides/`), examples (`spec/examples/`), governance
+  (`spec/GOVERNANCE.md`), and the format's own changelog (`spec/CHANGELOG.md`).
+- **Versioned JSON Schemas:** [`schemas/mcp-description/`](schemas/mcp-description/)
+  — the full history (0.1.0–0.7.0). These are the schemas the CLI validates
+  against and that downstream tools vendor.
+
+### Why it matters
+
+The `mcpdesc` format is consumed beyond this repo. Companion tools
+(`mcptoolkit-editor`, `mcptoolkit-mock`, `mcptoolkit-test`) each vendor a single
+schema version copied from here and upgrade when the format advances. Because
+this repo is the source of truth, schema changes are **specification changes**:
+they must be deliberate, documented, and governed by
+[`spec/GOVERNANCE.md`](spec/GOVERNANCE.md) — never an incidental side effect of a
+CLI fix.
+
+### Keeping mcpcontract in sync with the spec
+
+`mcpcontract` targets a specific `mcpdesc` version (see `schemas/latest.json` and
+the `mcpdesc` field emitted by `dump`). When the specification advances:
+
+- **Track new spec releases.** Update the CLI to emit and validate the new
+  version, and refresh templates and docs that reference format fields.
+- **Preserve backward compatibility whenever possible.** Keep older schema
+  versions in `schemas/mcp-description/` so `validate` and `diff` still accept
+  documents authored against them. The validator auto-detects a document's
+  `mcpdesc` version and loads the matching schema (see
+  `src/lib/validator.ts` → `extractSchemaVersion`/`loadSchema`). Only drop a
+  version when continued support is genuinely infeasible, and call it out in the
+  CHANGELOG.
+- **Do not silently diverge.** The file in `schemas/mcp-description/` *is* the
+  spec's schema. Do not hand-edit it to work around a CLI bug without a
+  corresponding spec change, version bump, and `spec/CHANGELOG.md` entry.
+
+The mechanical steps for cutting a new schema version are in the
+[Release Process](#release-process) section (step 3, Schema Version Management).
 
 ## Adding a New Command
 
@@ -310,7 +355,17 @@ When implementing features or fixes:
    - `### Security` - Security fixes
 
 3. **Schema Version Management** (when schema changes):
-   
+
+   A schema change is a **specification change** first (see
+   [MCP Description Specification (Source of Truth)](#mcp-description-specification-source-of-truth)).
+   Update the normative spec alongside the schema:
+   - Bump the version in `spec/sections/00-front-matter.md` and
+     `spec/mcp-description.md` (title, `version`, date).
+   - Apply the change to the relevant `spec/sections/*.md` and update
+     `spec/examples/` if field shapes changed.
+   - Add a `spec/CHANGELOG.md` entry describing the format change and its
+     backward-compatibility impact.
+
    **Check if schema changed:**
    ```bash
    # Compare current schema with latest versioned schema
@@ -350,21 +405,56 @@ When implementing features or fixes:
    - Historical schemas stored in `schemas/<type>/<version>.json` (e.g., `schemas/mcp-description/0.7.0.json`)
    - `schemas/latest.json` maps schema types to latest versions
    - `schemas/cli-schema-compatibility.json` tracks which CLI versions work with which schemas
-   - Only preserve schemas from v0.14.0+ (earlier versions not needed)
-   - Users regenerate dumps with appropriate CLI version (no migration tools)
+   - **Retain the full `mcp-description` version history** — do not delete older versions. The validator auto-detects a document's `mcpdesc` version and validates it against the matching schema, so older documents keep working (backward compatibility).
+   - Only drop support for a schema version when it is genuinely infeasible to maintain, and document the removal in `CHANGELOG.md` (CLI) and `spec/CHANGELOG.md` (format).
 
 4. **Test thoroughly** before committing:
    ```bash
    npm run prerelease  # Runs link checker, build, and all tests
    ```
 
-5. **Commit and tag**:
+5. **Release via a branch and pull request** — never commit releases directly to
+   `main`. This lets CI run on the branch, gives reviewers a chance to weigh in,
+   and keeps `main` protected. The npm publish is fully automated: pushing a
+   `v*` tag triggers [`.github/workflows/publish.yml`](.github/workflows/publish.yml),
+   which builds, tests, verifies the tag matches `package.json`, and publishes
+   with provenance. Pre-release versions (any version containing `-`, e.g.
+   `1.0.0-rc.5`) publish under the `next` dist-tag; stable versions publish under
+   `latest`.
+
+   All commits must be signed off under the DCO (`git commit -s`); see
+   [CONTRIBUTING.md](CONTRIBUTING.md).
+
    ```bash
+   # 1. Branch off up-to-date main
+   git switch main && git pull
+   git switch -c release/X.Y.Z
+
+   # 2. Make the release-prep changes (steps 1–4 above), then commit (signed off)
    git add .
-   git commit -m "Release v0.X.Y"
-   git tag v0.X.Y
-   git push && git push --tags
+   git commit -s -m "Release vX.Y.Z"
+
+   # 3. Push the branch and open a PR
+   git push -u origin release/X.Y.Z
+   # open a PR against main; wait for CI (ci.yml) to pass and for review
+
+   # 4. Merge the PR (use a merge commit so the reviewed SHA lands in main),
+   #    then tag that commit on main — the tag drives the npm publish.
+   git switch main && git pull
+   git tag vX.Y.Z
+   git push origin vX.Y.Z   # triggers publish.yml → npm
+
+   # 5. Confirm the publish workflow succeeded (Actions tab / npm registry).
+   #    If it fails, fix forward with a new patch/RC version and tag — do not
+   #    force-push or delete a published tag.
    ```
+
+   > **Tag/version must match.** `publish.yml` fails the release if the pushed
+   > tag (minus the leading `v`) differs from `package.json`'s `version`. Always
+   > bump `package.json` in the release PR so the tag lines up.
+
+   For a step-by-step checklist, use the release skill in
+   [`.github/skills/release/SKILL.md`](.github/skills/release/SKILL.md).
 
 
 ## Testing Requirements
@@ -476,6 +566,7 @@ tools:
 
 ## References
 
+- **MCP Description Specification**: [`spec/`](spec/) - Canonical source of truth for the `mcpdesc` format (normative text, examples, governance, and format CHANGELOG). Versioned JSON Schemas live in `schemas/mcp-description/`.
 - **Design Documentation**: `docs/maintainers/design/` - Initial architecture and design decisions
 - **Enhancement Specifications**: `docs/maintainers/implementation/` - Specs for new features and commands
 - **Testing Guide**: `tests/README.md`
