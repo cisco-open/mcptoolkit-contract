@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Reworked the README quickstart around CI.** The Backward Compatibility
   Analysis section now shows an exit-code-gated pipeline (`breaking` exits `0`
   compatible / `1` breaking / `2` error) and references a new wrapper script.
+- **Pre-release versions now publish under the npm `next` dist-tag.** The
+  publish workflow selects `next` for any version containing `-` (e.g.
+  `1.0.0-rc.5`) and `latest` for stable releases, so `npm install` keeps
+  serving the latest stable version while release candidates are available via
+  `@next`. The workflow also verifies the pushed tag matches `package.json`.
 
 ### Added
 

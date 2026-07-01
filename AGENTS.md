@@ -413,13 +413,48 @@ When implementing features or fixes:
    npm run prerelease  # Runs link checker, build, and all tests
    ```
 
-5. **Commit and tag**:
+5. **Release via a branch and pull request** — never commit releases directly to
+   `main`. This lets CI run on the branch, gives reviewers a chance to weigh in,
+   and keeps `main` protected. The npm publish is fully automated: pushing a
+   `v*` tag triggers [`.github/workflows/publish.yml`](.github/workflows/publish.yml),
+   which builds, tests, verifies the tag matches `package.json`, and publishes
+   with provenance. Pre-release versions (any version containing `-`, e.g.
+   `1.0.0-rc.5`) publish under the `next` dist-tag; stable versions publish under
+   `latest`.
+
+   All commits must be signed off under the DCO (`git commit -s`); see
+   [CONTRIBUTING.md](CONTRIBUTING.md).
+
    ```bash
+   # 1. Branch off up-to-date main
+   git switch main && git pull
+   git switch -c release/X.Y.Z
+
+   # 2. Make the release-prep changes (steps 1–4 above), then commit (signed off)
    git add .
-   git commit -m "Release v0.X.Y"
-   git tag v0.X.Y
-   git push && git push --tags
+   git commit -s -m "Release vX.Y.Z"
+
+   # 3. Push the branch and open a PR
+   git push -u origin release/X.Y.Z
+   # open a PR against main; wait for CI (ci.yml) to pass and for review
+
+   # 4. Merge the PR (use a merge commit so the reviewed SHA lands in main),
+   #    then tag that commit on main — the tag drives the npm publish.
+   git switch main && git pull
+   git tag vX.Y.Z
+   git push origin vX.Y.Z   # triggers publish.yml → npm
+
+   # 5. Confirm the publish workflow succeeded (Actions tab / npm registry).
+   #    If it fails, fix forward with a new patch/RC version and tag — do not
+   #    force-push or delete a published tag.
    ```
+
+   > **Tag/version must match.** `publish.yml` fails the release if the pushed
+   > tag (minus the leading `v`) differs from `package.json`'s `version`. Always
+   > bump `package.json` in the release PR so the tag lines up.
+
+   For a step-by-step checklist, use the release skill in
+   [`.github/skills/release/SKILL.md`](.github/skills/release/SKILL.md).
 
 
 ## Testing Requirements
