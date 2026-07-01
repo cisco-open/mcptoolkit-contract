@@ -1,6 +1,6 @@
 {
   "name": "@cisco_open/mcptoolkit-contract",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0",
   "description": "CLI toolkit for MCP server contract management: dumps capabilities, generates changelogs and renders documentation",
   "type": "module",
   "main": "./build/index.js",
