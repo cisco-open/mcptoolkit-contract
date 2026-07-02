@@ -38,6 +38,10 @@
         {
           "dest": ".github/ISSUE_TEMPLATE/feature_request.yml",
           "src": "shared/.github/ISSUE_TEMPLATE/feature_request.yml"
+        },
+        {
+          "dest": ".github/agents/oss-scaffold.agent.md",
+          "src": "shared/.github/agents/oss-scaffold.agent.md"
         }
       ],
       "templated": [
@@ -91,6 +95,10 @@
         {
           "dest": ".github/PULL_REQUEST_TEMPLATE.md",
           "src": "shared/.github/PULL_REQUEST_TEMPLATE.md"
+        },
+        {
+          "dest": ".github/agents/oss-scaffold.agent.md",
+          "src": "shared/.github/agents/oss-scaffold.agent.md"
         },
         {
           "dest": ".github/ISSUE_TEMPLATE/config.yml",
