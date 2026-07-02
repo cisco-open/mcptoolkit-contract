@@ -1,6 +1,6 @@
 # Tutorial: Complete `mcpcontract` Workflow
 
-This tutorial walks through the full pipeline — **dump → validate → document → diff → breaking → changelog** — for any MCP server.
+This tutorial walks through the full pipeline — **dump → validate → document → compare** — for any MCP server.
 
 For demonstration the examples use placeholder names (`my-server`, `http://localhost:3000/mcp`). Substitute your own server name, URL, and transport.
 
@@ -89,30 +89,19 @@ List all available templates: `mcpcontract document --list dump.yaml`
 
 ## Step 4: Compare Two Versions
 
-When a new release of the server ships, dump it again and compare the two dumps to produce a structural diff:
+When a new release of the server ships, dump it again and compare with `compare` — the single-step command that runs diff, breaking analysis, and changelog in one invocation:
 
 ```bash
-mcpcontract diff --from dump-v1.yaml --to dump-v2.yaml --output diff.json
-```
-
----
-
-## Step 5: Detect Breaking Changes
-
-Apply compatibility rules to the diff. The output combines the diff data with severity annotations:
-
-```bash
-mcpcontract breaking \
-  --diff diff.json \
-  --rules rules/breaking-changes.yaml \
+mcpcontract compare \
+  --from dump-v1.yaml \
+  --to   dump-v2.yaml \
   --suggest-version \
-  --output diff-breaking.json
+  --output CHANGELOG.md
 ```
 
-`--suggest-version` adds a recommended SemVer bump (e.g. `1.0.0 → 2.0.0 (MAJOR)`).
-Exit codes: `0` (compatible), `1` (breaking changes found), `2` (error) — useful
-for gating CI. Apply stricter organizational rules with
-`--rules rules/strict-compatibility.yaml`.
+`--suggest-version` adds a recommended SemVer bump in the report (e.g. `1.0.0 → 2.0.0 (MAJOR)`).
+Exit codes: `0` (compatible), `1` (breaking changes found), `2` (error) — useful for gating CI.
+Use `--format compact` for a brief one-line-per-change summary.
 
 **Change types at a glance:**
 
@@ -124,17 +113,7 @@ for gating CI. Apply stricter organizational rules with
 
 See the [rules catalog tutorial](rules-catalog.md) for the full catalog and how to customize severities.
 
----
-
-## Step 6: Generate a Changelog
-
-```bash
-mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
-```
-
-Use `--format compact` for a brief one-line-per-change summary.
-
----
+> **Need per-step artifacts?** Use the escape hatches `--emit-diff diff.json --emit-breaking diff-breaking.json`, or switch to the staged `diff → breaking → changelog` pipeline documented in the [CI/CD guide](../cicd/README.md).
 
 ## Complete Workflow Script
 
@@ -155,9 +134,16 @@ mcpcontract document dump.yaml \
   --output REFERENCE.md
 
 # Compare against a previous dump and produce a changelog
-mcpcontract diff --from dump-v1.yaml --to dump.yaml --output diff.json
-mcpcontract breaking --diff diff.json --output diff-breaking.json || true   # don't abort on breaking exit code
-mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
+mcpcontract compare \
+  --from dump-v1.yaml \
+  --to   dump.yaml \
+  --suggest-version \
+  --output CHANGELOG.md
+
+echo "Done: dump → REFERENCE.md + CHANGELOG.md"
+```
+
+For CI pipelines that need per-step artifacts (separate diff and breaking-analysis files), see the [CI/CD guide](../cicd/README.md).
 
 echo "Done: dump → REFERENCE.md + CHANGELOG.md"
 ```

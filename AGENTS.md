@@ -341,10 +341,22 @@ node build/index.js <command> --help
 
 When implementing features or fixes:
 
-1. **Update version** in `package.json` following semantic versioning:
+1. **Bump the version** using `npm version` — this updates both `package.json`
+   and `package-lock.json` atomically. Use `--no-git-tag-version` so npm doesn't
+   create a commit or tag (those happen later, after the PR merges to `main`).
+   Follow semantic versioning:
    - MAJOR (X.0.0): Breaking changes to CLI or schema
    - MINOR (0.X.0): New commands/features (backward-compatible)
    - PATCH (0.0.X): Bug fixes, docs (non-breaking)
+
+   ```bash
+   # Stable release (let npm calculate the bump type)
+   npm version minor --no-git-tag-version
+
+   # Release candidate (explicit version or auto-increment)
+   npm version 1.1.0-rc.1 --no-git-tag-version
+   npm version prerelease --preid=rc --no-git-tag-version
+   ```
 
 2. **Update CHANGELOG.md** with changes under appropriate section:
    - `### Added` - New features
