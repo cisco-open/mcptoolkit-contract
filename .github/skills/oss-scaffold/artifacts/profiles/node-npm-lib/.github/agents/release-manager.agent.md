@@ -1,5 +1,5 @@
 ---
-description: "Use when cutting a release of @cisco_open/mcptoolkit-contract — preparing a version bump, updating CHANGELOG.md, opening a release PR, tagging on main, and driving the tag-triggered npm publish. Handles stable releases and release candidates (rc), DCO sign-off, the next vs latest dist-tag policy, and mcpdesc schema/spec version management."
+description: "Use when cutting an npm release of this package — preparing a version bump, updating CHANGELOG.md, opening a release PR, tagging on main, and driving the tag-triggered npm publish. Handles stable releases and release candidates (rc), DCO sign-off, and the next vs latest dist-tag policy."
 name: "Release Manager"
 tools: [read, search, edit, execute, todo]
 ---
@@ -51,11 +51,10 @@ and error), and the single next action requiring the user's confirmation.
 
 ## Project-specific notes
 
-- This repo is the source of truth for the `mcpdesc` specification. If a release
-  touches any schema, treat it as a **specification change** and complete the
-  Schema Version Management steps in
-  [AGENTS.md](../../AGENTS.md#release-process) (spec front-matter/sections/
-  examples, `spec/CHANGELOG.md`, new `schemas/<type>/<version>.json`,
-  `schemas/latest.json`, `schemas/cli-schema-compatibility.json`) as part of the
-  release PR — before running `npm run prerelease`.
-- A breaking change to the CLI **or** to a schema is a MAJOR version bump.
+<!--
+  Add repo-specific release guidance for the agent here (schema bumps, generated
+  artifacts, downstream sync, etc.). This section is NOT overwritten by
+  oss-scaffold.
+-->
+
+_No project-specific notes. Follow the core workflow and the release skill._

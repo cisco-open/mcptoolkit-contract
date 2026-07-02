@@ -1,6 +1,6 @@
 ---
 name: release
-description: 'Cut a new release of @cisco_open/mcptoolkit-contract. Use when preparing, tagging, or publishing a release (stable or release candidate) — bumping the version, updating CHANGELOG.md and schemas, opening a release PR, and driving the tag-triggered npm publish. Covers semantic versioning, DCO sign-off, branch/PR flow, and the next vs latest dist-tag policy for pre-releases.'
+description: 'Cut a new npm release of this package. Use when preparing, tagging, or publishing a release (stable or release candidate) — bumping the version, updating CHANGELOG.md, opening a release PR, and driving the tag-triggered npm publish. Covers semantic versioning, DCO sign-off, branch/PR flow, and the next vs latest dist-tag policy for pre-releases.'
 argument-hint: 'Target version, e.g. 1.0.0 or 1.0.0-rc.6'
 ---
 
@@ -120,21 +120,10 @@ version and repeat the flow.
 
 ## Project-specific release steps
 
-`@cisco_open/mcptoolkit-contract` is the source of truth for the `mcpdesc`
-specification, so releases that touch schemas are **specification changes**.
+<!--
+  Add steps unique to this repo here (schema/version bumps, generated artifacts,
+  docs sites, downstream sync, etc.). This section is NOT overwritten by
+  oss-scaffold. If there are none, leave the note below.
+-->
 
-- **Semantic versioning is CLI *and* schema aware.** A breaking change to the
-  CLI **or** to a schema is a MAJOR bump; new commands/features are MINOR.
-- **If any schema changed**, follow the Schema Version Management steps in
-  [AGENTS.md](../../../AGENTS.md#release-process) before opening the PR:
-  1. Bump the `spec/` front-matter, sections, and examples.
-  2. Add a `spec/CHANGELOG.md` entry describing the format change and its
-     backward-compatibility impact.
-  3. Add the new `schemas/<type>/<version>.json`; update `schemas/latest.json`
-     and `schemas/cli-schema-compatibility.json`.
-- **`npm run prerelease`** here runs `sync-badge` (refreshes the README status
-  badge from `package.json`) + link check + build + full test suite. Do not skip
-  it.
-
-Add "Schema/spec updated together if any schema changed" to the checklist when
-the release includes a schema change.
+_No project-specific release steps. Follow the core workflow above._
