@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-1.0.0-brightgreen.svg)](CHANGELOG.md)
+[![Status: release](https://img.shields.io/badge/status-1.1.0-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
@@ -58,7 +58,7 @@ case "$breaking_status" in
 esac
 ```
 
-> 💡 For ad-hoc human use, [`scripts/changelog.sh`](scripts/changelog.sh) wraps these steps into `scripts/changelog.sh v1.json v2.json` (non-gating).
+> 💡 For ad-hoc human use, `mcpcontract compare --from v1.json --to v2.json` runs the full pipeline in one step with a readable report (`--exit-zero` to suppress the breaking-change gate).
 
 **Key Features**:
 - **20+ Change Types**: Tool/prompt/resource additions, removals, renames, parameter changes
@@ -270,7 +270,7 @@ mcpcontract/
 ├── schemas/             # JSON schemas (versioned: mcp-description/, diff/, …)
 ├── rules/               # Compatibility rules (YAML) + documentation catalog
 ├── templates/           # Handlebars templates (dumps, changelogs)
-├── scripts/             # Helper scripts (changelog.sh, badge sync)
+├── scripts/             # Helper scripts (badge sync)
 ├── tests/               # Jest unit + integration tests, shell smoke tests
 └── docs/
     ├── users/           # User guides, tutorials, examples

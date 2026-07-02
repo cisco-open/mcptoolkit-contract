@@ -12,6 +12,7 @@ import { createDocumentCommand } from './commands/document.js';
 import { diffCommand } from './commands/diff.js';
 import { breakingCommand } from './commands/breaking.js';
 import { changelogCommand } from './commands/changelog.js';
+import { compareCommand } from './commands/compare.js';
 import { completionCommand } from './commands/completion.js';
 import { rulesCommand } from './commands/rules.js';
 import { agentsCommand } from './commands/agents.js';
@@ -42,8 +43,9 @@ const renderAlias = createDocumentCommand();
 renderAlias.name('render');
 program.addCommand(renderAlias, { hidden: true });
 program.addCommand(diffCommand);
-program.addCommand(changelogCommand);
 program.addCommand(breakingCommand);
+program.addCommand(changelogCommand);
+program.addCommand(compareCommand);
 program.addCommand(rulesCommand());
 program.addCommand(validateCommand());
 program.addCommand(completionCommand());
@@ -52,7 +54,7 @@ program.addCommand(agentsCommand());
 // Check if dump should be the default command
 // If first argument is an option (starts with -) and not a known command, inject 'dump'
 // Exception: --help and --version should show main program help/version
-const commands = ['dump', 'split', 'convert', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
+const commands = ['dump', 'split', 'convert', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'compare', 'completion', 'rules', 'agents'];
 const firstArg = process.argv[2];
 const hasCommand = firstArg && commands.includes(firstArg);
 const hasOption = firstArg && firstArg.startsWith('-');

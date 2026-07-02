@@ -87,7 +87,7 @@ _mcpcontract_completion() {
     fi
 
     # Commands
-    local commands="dump split convert validate document diff breaking changelog completion rules agents"
+    local commands="dump split convert validate document diff breaking changelog compare completion rules agents"
     
     # If no command yet, complete commands
     if [[ \${cword} -eq 1 ]]; then
@@ -116,6 +116,9 @@ _mcpcontract_completion() {
                     COMPREPLY=( $(compgen -W "text json" -- "\${cur}") )
                     ;;
                 changelog)
+                    COMPREPLY=( $(compgen -W "release compact" -- "\${cur}") )
+                    ;;
+                compare)
                     COMPREPLY=( $(compgen -W "release compact" -- "\${cur}") )
                     ;;
                 *)
@@ -241,7 +244,7 @@ _mcpcontract_completion() {
         agents)
             # Special handling for agents command
             if [[ "\${prev}" == "--command" ]]; then
-                local subcommands="dump split validate diff breaking changelog document rules completion"
+                local subcommands="dump split validate diff breaking changelog compare document rules completion"
                 COMPREPLY=( $(compgen -W "\${subcommands}" -- "\${cur}") )
             elif [[ "\${cur}" == -* ]]; then
                 local opts="--command --workflows --all"
@@ -289,6 +292,10 @@ _mcpcontract_completion() {
                         local opts="--diff --output --format --template --omit-zeros --sort --show-diff-reasoning --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
+                    compare)
+                        local opts="--from --to --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
+                        COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
+                        ;;
                     completion)
                         # Completion command takes shell type as argument
                         local shells="bash zsh fish"
@@ -330,6 +337,10 @@ _mcpcontract_completion() {
                         local opts="-h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
+                    compare)
+                        local opts="-h"
+                        COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
+                        ;;
                     completion)
                         local opts="-h"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
@@ -367,6 +378,10 @@ _mcpcontract_completion() {
                                 local opts="--diff --output --format --template --omit-zeros --sort --show-diff-reasoning --quiet --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
+                            compare)
+                                local opts="--from --to --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
+                                COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
+                                ;;
                             *)
                                 # Use standard completion (files/directories)
                                 compopt -o default
@@ -397,6 +412,7 @@ _mcp_contract() {
         'diff:Compare MCP descriptions and detect changes'
         'breaking:Analyze breaking changes'
         'changelog:Generate changelog between versions'
+        'compare:Human-readable comparison report in one step'
         'completion:Generate shell completion script'
         'rules:Browse and explore rules catalog'
         'agents:Agent-optimized help (for Copilot, Claude, etc.)'
@@ -528,6 +544,21 @@ _mcp_contract() {
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
                     ;;
+                compare)
+                    _arguments \\
+                        '--from[Source MCP description]:file:_files' \\
+                        '--to[Target MCP description]:file:_files' \\
+                        '--output[Changelog output file]:file:_files' \\
+                        '--rules[Custom rules file]:file:_files' \\
+                        '--format[Changelog format]:format:(release compact)' \\
+                        '--suggest-version[Include semver recommendation]' \\
+                        '--exit-zero[Always exit 0 on success]' \\
+                        '--quiet[Suppress stderr report]' \\
+                        '--emit-diff[Persist raw structural diff]:file:_files' \\
+                        '--emit-breaking[Persist annotated diff]:file:_files' \\
+                        '(-h --help)'{-h,--help}'[Show help]' \\
+                        '*:file:_files'
+                    ;;
                 completion)
                     _arguments \\
                         '1:shell:(bash zsh fish)' \\
@@ -602,7 +633,7 @@ _mcp_contract() {
                     ;;
                 agents)
                     _arguments \
-                        '--command[Get help for specific command]:command:(dump split validate diff breaking changelog document rules completion)' \
+                        '--command[Get help for specific command]:command:(dump split validate diff breaking changelog compare document rules completion)' \
                         '--workflows[Show all end-to-end workflows]' \
                         '--all[Output all commands in single document]'
                     ;;
@@ -628,6 +659,7 @@ complete -c mcpcontract -n "__fish_use_subcommand" -a "document" -d "Generate hu
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "diff" -d "Compare MCP descriptions and detect changes"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "breaking" -d "Analyze breaking changes"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "changelog" -d "Generate changelog between versions"
+complete -c mcpcontract -f -n "__fish_use_subcommand" -a "compare" -d "Human-readable comparison report in one step"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "rules" -d "Browse and explore rules catalog"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "agents" -d "Agent-optimized help (for Copilot, Claude, etc.)"
@@ -727,6 +759,19 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l show-diff-
 complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -l quiet -d "Suppress output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s h -l help -d "Show help"
 
+# compare command options
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l from -d "Source MCP description" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l to -d "Target MCP description" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l output -d "Changelog output file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l rules -d "Custom rules file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l format -d "Changelog format" -a "release compact"
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l suggest-version -d "Include semver recommendation"
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l exit-zero -d "Always exit 0 on success"
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l quiet -d "Suppress stderr report"
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l emit-diff -d "Persist raw structural diff" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l emit-breaking -d "Persist annotated diff" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -s h -l help -d "Show help"
+
 # completion command
 complete -c mcpcontract -n "__fish_seen_subcommand_from completion" -a "bash zsh fish" -d "Shell type"
 complete -c mcpcontract -n "__fish_seen_subcommand_from completion" -s h -l help -d "Show help"
@@ -775,7 +820,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_s
 complete -c mcpcontract -n "__fish_seen_subcommand_from rules; and __fish_seen_subcommand_from export" -l summary -d "Export summary without examples"
 
 # agents command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split validate diff breaking changelog document rules completion"
+complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l command -d "Get help for specific command" -a "dump split validate diff breaking changelog compare document rules completion"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l workflows -d "Show all end-to-end workflows"
 complete -c mcpcontract -n "__fish_seen_subcommand_from agents" -l all -d "Output all commands in single document"
 `;
