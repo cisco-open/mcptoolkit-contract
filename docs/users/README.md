@@ -7,6 +7,13 @@ This folder contains user-facing documentation for **mcpcontract**.
 - [../101-tutorial.md](../101-tutorial.md) — 5-minute getting-started walkthrough
 - [../../README.md](../../README.md) — project overview and command reference
 
+## CI/CD
+
+See [cicd/](cicd/):
+
+- [README.md](cicd/README.md) — overview: the two paths (compare vs staged pipeline), exit-code contract, seeding the baseline
+- [github-actions.md](cicd/github-actions.md) — copy-pasteable GitHub Actions workflow templates (one-step and staged variants)
+
 ## Reference
 
 See [reference/](reference/):

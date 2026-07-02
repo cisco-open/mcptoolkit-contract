@@ -1,6 +1,6 @@
 # Design: `compare` command + CI/CD guide (v1.1)
 
-**Status:** Proposed — targeting **v1.1** (additive to 1.0, non-breaking).
+**Status:** Implemented in **v1.1.0** (2026-07-02).
 **Author:** design note for maintainers.
 **Related:** [design-decisions.md](design-decisions.md) §3 (the pipeline),
 [implementation/35-changelog-input-unification.md](../implementation/35-changelog-input-unification.md),

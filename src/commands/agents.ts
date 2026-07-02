@@ -84,7 +84,7 @@ mcpcontract agents --command breaking
 ## Key Parameters
 
 - \`--command <name>\` - Get help for specific command
-  - Available: dump, split, validate, diff, breaking, changelog, document, rules, completion
+  - Available: dump, split, validate, diff, breaking, changelog, compare, document, rules, completion
 - \`--workflows\` - Show all end-to-end workflows
 - \`--all\` - Output complete reference in single document
 
@@ -100,13 +100,16 @@ mcpcontract agents --command breaking
 → Use when: You want to verify schema compliance before publication
 
 **diff** - Compare two versions and generate structural diff
-→ Use when: Tracking changes between server versions
+→ Use when: Tracking changes between server versions (CI pipeline / need intermediate artifacts)
 
 **breaking** - Analyze diff for backward compatibility issues
-→ Use when: Determining if changes require major version bump
+→ Use when: Determining if changes require major version bump (staged CI gate)
 
 **changelog** - Generate human-readable release notes from analysis
-→ Use when: Creating version changelogs for users
+→ Use when: Creating version changelogs for users (staged pipeline, after breaking)
+
+**compare** - Human-readable comparison report in one step (diff + breaking + changelog)
+→ Use when: Local review, PR summaries, or simple single-step CI gate
 
 **document** - Render documentation from MCP descriptions
 → Use when: Generating human-readable API documentation
@@ -146,23 +149,38 @@ mcpcontract agents --command breaking
 
 const WORKFLOWS = `# Common Workflows
 
-## Workflow 1: Version Upgrade Check
+## Workflow 1: Version Upgrade Check (staged — CI/CD)
 
-**Goal**: Determine if changes between versions are breaking.
+**Goal**: Determine if changes between versions are breaking, with per-step artifacts.
 
 \`\`\`bash
 # 1. Create dumps for both versions
 mcpcontract dump --config old-mcp.json --output old-dump.json
 mcpcontract dump --config new-mcp.json --output new-dump.json
 
-# 2. Compare versions
+# 2. Structural diff
 mcpcontract diff --from old-dump.json --to new-dump.json --output diff.json
 
-# 3. Check for breaking changes with version recommendation
+# 3. Breaking-change gate (exit 0/1/2)
 mcpcontract breaking --diff diff.json --suggest-version --output diff-breaking.json
 
 # 4. Generate release notes
 mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
+\`\`\`
+
+## Workflow 2: One-step comparison (human / simple CI)
+
+**Goal**: Changelog + report in a single command.
+
+\`\`\`bash
+# Gates on breaking (exit 1 if breaking); changelog → stdout, report → stderr
+mcpcontract compare --from old-dump.json --to new-dump.json
+
+# Write changelog to file; still gates
+mcpcontract compare --from old-dump.json --to new-dump.json --output CHANGELOG.md
+
+# Interactive / non-gating
+mcpcontract compare --from old-dump.json --to new-dump.json --exit-zero
 \`\`\`
 
 ## Workflow 2: Quick Validation Pipeline
@@ -192,9 +210,14 @@ mcpcontract diff --from old-dump.json --to new-dump.json | \\
 - See what changed between versions → Use \`diff\`
 - Know if changes are breaking → Use \`breaking\` (after \`diff\`)
 - Create release notes → Use \`changelog\` (after \`breaking\`)
+- Human-readable comparison report in one step → Use \`compare\`
 - Generate API documentation → Use \`document\`
 - Understand compatibility rules → Use \`rules\`
 - Set up shell autocompletion → Use \`completion\`
+
+**compare vs diff/breaking/changelog:**
+- \`compare\` — one command, changelog on stdout, report on stderr, same exit-code contract as \`breaking\`
+- staged pipeline — per-step JSON artifacts, precise gating on \`breaking\`'s exit code, separate report/publish steps
 
 ## File Types Reference
 
@@ -939,6 +962,121 @@ Markdown changelog with sections:
 - Use built-in templates as reference
 `;
 
+const COMPARE_GUIDE = `# compare - Human-Readable Comparison Report
+
+## Purpose
+Runs the full comparison pipeline (diff → breaking analysis → changelog) in a single command
+and emits a human-oriented report. Changelog goes to stdout (or --output); verbose report
+goes to stderr.
+
+## When to Use
+- Local review of changes before a release
+- PR summaries — one command, readable output
+- Simple single-step CI gate (use --output for the changelog file)
+- Any time you don't need per-step intermediate JSON artifacts
+
+For advanced CI/CD (per-step artifacts, separate gate and report steps), use the staged
+pipeline: \`diff\` → \`breaking\` → \`changelog\`.
+
+## Basic Usage
+\`\`\`bash
+# Changelog to stdout, report to stderr; exits 1 if breaking
+mcpcontract compare --from prev.json --to next.json
+
+# Write changelog to file (most common)
+mcpcontract compare --from prev.json --to next.json --output CHANGELOG.md
+\`\`\`
+
+## Common Patterns
+
+### Interactive / non-gating use
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json --exit-zero
+\`\`\`
+
+### With version recommendation
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json \\
+  --suggest-version --output CHANGELOG.md
+\`\`\`
+
+### Compact format
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json \\
+  --format compact --output RELEASE_NOTES.md
+\`\`\`
+
+### Also save intermediate artifacts (for auditing)
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json \\
+  --output CHANGELOG.md \\
+  --emit-diff diff.json \\
+  --emit-breaking diff-breaking.json
+\`\`\`
+
+### Simple CI step (gate on breaking, changelog to file)
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json --output CHANGELOG.pr.md
+\`\`\`
+
+### Custom compatibility rules
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json \\
+  --rules my-rules.yaml --output CHANGELOG.md
+\`\`\`
+
+## Key Parameters
+
+### Required
+- \`--from <file>\` - Source version (MCP description, JSON/YAML)
+- \`--to <file>\` - Target version (MCP description, JSON/YAML)
+
+### Optional
+- \`--output <file>\` - Write changelog to a file (default: stdout)
+- \`--format <type>\` - Changelog format: \`release\` (default) or \`compact\`
+- \`--rules <file>\` - Custom compatibility rules YAML (default: built-in)
+- \`--suggest-version\` - Include semver bump recommendation in report
+- \`--exit-zero\` - Always exit 0 on success (suppress exit-1 gate on breaking)
+- \`--quiet\` - Suppress the stderr report
+- \`--emit-diff <file>\` - Also persist the raw structural diff JSON
+- \`--emit-breaking <file>\` - Also persist the annotated diff JSON
+
+## Exit Codes
+
+- \`0\` - Success, no breaking changes (or \`--exit-zero\` was set)
+- \`1\` - Success, breaking changes detected (suppressed by \`--exit-zero\`)
+- \`2\` - Error — never suppressed by \`--exit-zero\`
+
+## Output
+
+- **Changelog** → stdout (or \`--output\` file): the rendered markdown changelog
+- **Report** → stderr: verdict, summary counts, output pointer
+
+## compare vs staged pipeline
+
+| | compare | diff → breaking → changelog |
+|---|---|---|
+| Steps | 1 | 3 |
+| Changelog | stdout / \`--output\` | file (required \`--output\`) |
+| Intermediate JSON | opt-in (\`--emit-*\`) | always produced |
+| Gate | exit 0/1/2 (\`--exit-zero\` opt-out) | \`breaking\`'s exit code |
+| Best for | local review, simple CI | advanced CD pipelines |
+
+## Troubleshooting
+
+### I want the changelog but don't want CI to fail on breaking changes
+Use \`--exit-zero\`. The changelog is still produced; only the exit code changes.
+
+### How do I get the intermediate diff.json for debugging?
+Add \`--emit-diff diff.json --emit-breaking diff-breaking.json\` to your \`compare\` invocation.
+
+### compare says "not an MCP description document"
+Input files must be mcpdesc format. Convert legacy dumps first:
+\`\`\`bash
+mcpcontract convert old-dump.json --to-format mcpdesc --output converted.json
+\`\`\`
+`;
+
 const DOCUMENT_GUIDE = `# document - Generate Documentation [EXPERIMENTAL]
 
 ⚠️ **EXPERIMENTAL**: This command is under active development and may change.
@@ -1297,6 +1435,7 @@ export function agentsCommand(): Command {
           DIFF_GUIDE,
           BREAKING_GUIDE,
           CHANGELOG_GUIDE,
+          COMPARE_GUIDE,
           DOCUMENT_GUIDE,
           RULES_GUIDE,
           COMPLETION_GUIDE
@@ -1333,6 +1472,7 @@ export function agentsCommand(): Command {
           diff: DIFF_GUIDE,
           breaking: BREAKING_GUIDE,
           changelog: CHANGELOG_GUIDE,
+          compare: COMPARE_GUIDE,
           document: DOCUMENT_GUIDE,
           rules: RULES_GUIDE,
           completion: COMPLETION_GUIDE
@@ -1346,7 +1486,7 @@ export function agentsCommand(): Command {
           console.error('');
           console.error('Available commands:');
           console.error('  dump, split, validate, diff, breaking,');
-          console.error('  changelog, document, rules, completion');
+          console.error('  changelog, compare, document, rules, completion');
           console.error('');
           console.error('Usage: mcpcontract agents --command <name>');
           console.error('       mcpcontract agents --workflows');

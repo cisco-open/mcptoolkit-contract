@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.1.0] - 2026-07-02](#110---2026-07-02)
 - [[1.0.0] - 2026-07-01](#100---2026-07-01)
 - [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
 - [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
@@ -18,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-07-02
+
+### Added
+
+- **`compare` command** — runs the full comparison pipeline (diff → breaking
+  analysis → changelog rendering) in a single invocation. Changelog goes to
+  stdout (or `--output`); verbose report (verdict, counts, version recommendation)
+  goes to stderr. Shares `breaking`'s exit-code contract (`0` compatible, `1`
+  breaking, `2` error) with an `--exit-zero` opt-out that never masks `2`.
+  Options: `--from`, `--to`, `--output`, `--rules`, `--format` (release/compact),
+  `--suggest-version`, `--exit-zero`, `--quiet`, `--emit-diff`, `--emit-breaking`.
+
+### Removed
+
+- **`scripts/changelog.sh`** — replaced by `mcpcontract compare`. Equivalent
+  one-liner: `mcpcontract compare --from prev.json --to next.json --exit-zero`.
 
 ## [1.0.0] - 2026-07-01
 
