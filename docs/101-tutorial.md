@@ -57,24 +57,22 @@ run a real comparison without dumping twice:
 ```bash
 D=docs/users/examples/microsoft-learn
 
-# Structural diff (old → new)
-mcpcontract diff \
+mcpcontract compare \
   --from $D/ms-learn-dump-v1.0.0-2025-11-20.yaml \
   --to   $D/ms-learn-dump-v1.0.0-2026-06-30.yaml \
-  --output changes.json
-
-# Classify changes and suggest a SemVer bump
-mcpcontract breaking --diff changes.json --suggest-version --output changes-breaking.json
-
-# Render a human-readable changelog
-mcpcontract changelog --diff changes-breaking.json --format release --output CHANGELOG.md
+  --suggest-version \
+  --output CHANGELOG.md
 ```
 
 You'll see **8 changes (4 breaking)** and a recommended **MAJOR** bump
 (`1.0.0 → 2.0.0`) — new tool output schemas and capability changes, with the
-deprecated `question` parameter removed. `breaking` exits `1` when breaking
-changes are found, which is handy for gating CI. Use `--format compact` for a
-brief one-line-per-change summary.
+deprecated `question` parameter removed. `compare` exits `1` when breaking
+changes are found, which gates CI automatically. The full changelog lands in
+`CHANGELOG.md`; use `--format compact` for a brief one-line-per-change summary.
+
+> Under the hood, `compare` runs `diff → breaking → changelog` in one step.
+> For CI pipelines that need per-step artifacts or separate gate/report jobs,
+> see the [CI/CD guide](users/cicd/README.md).
 
 ## What you just did
 

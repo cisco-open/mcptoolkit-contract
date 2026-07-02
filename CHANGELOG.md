@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
-- [[1.1.0] - 2026-07-02](#110---2026-07-02)
+- [[1.1.0-rc.2] - 2026-07-02](#110-rc2---2026-07-02)
 - [[1.0.0] - 2026-07-01](#100---2026-07-01)
 - [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
 - [[1.0.0-rc.4] - 2026-06-30](#100-rc4---2026-06-30)
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-07-02
+## [1.1.0-rc.2] - 2026-07-02
 
 ### Added
 
@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   breaking, `2` error) with an `--exit-zero` opt-out that never masks `2`.
   Options: `--from`, `--to`, `--output`, `--rules`, `--format` (release/compact),
   `--suggest-version`, `--exit-zero`, `--quiet`, `--emit-diff`, `--emit-breaking`.
+
+### Changed
+
+- **Docs updated to use `compare` as the default comparison workflow.**
+  `docs/101-tutorial.md` and `docs/users/tutorials/complete-workflow.md` now
+  present `compare` as the standard one-step command for comparing two dumps.
+  The lower-level `diff`, `breaking`, and `changelog` commands are retained and
+  documented as advanced scenarios — primarily for CI/CD pipelines that need
+  fine-grained control over individual pipeline stages or artifact caching.
 
 ### Removed
 

@@ -3,13 +3,13 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-1.1.0-brightgreen.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-1.1.0--rc.2-orange.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
 - **MCP Description specification:** [spec](spec/) — this repository is the canonical home of the `mcpdesc` format
-- **CLI Commands:** mcpcontract [dump, diff, changelog, document...](#-commands)
+- **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
 
 ## 🚀 Quick Start
@@ -33,32 +33,19 @@ mcpcontract document dump.yaml --template reference-documentation --output doc.m
 
 ## 🔍 Backward Compatibility Analysis
 
-Create dumps for various releases of an MCP server, then compare releases and generate a changelog. The workflow is designed for **CI**: the `breaking` command's exit code (`0` compatible, `1` breaking, `2` error) is your build gate, while `changelog` always renders from the annotated diff.
+Create dumps for two releases of an MCP server, then compare them in one step:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# 1. Structural diff between two MCP descriptions
-mcpcontract diff --from v1.json --to v2.json --output diff.json
-
-# 2. Annotate the diff with breaking-change analysis.
-#    Exit code is the contract:  0 = compatible | 1 = breaking | 2 = error
-breaking_status=0
-mcpcontract breaking --diff diff.json --output diff-breaking.json || breaking_status=$?
-
-# 3. Always render the changelog from the annotated diff
-mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md
-
-# 4. Gate the pipeline on the breaking-change status
-case "$breaking_status" in
-  0) echo "✅ Backward compatible — release as MINOR or PATCH" ;;
-  1) echo "⛔ Breaking changes — requires a MAJOR version bump"; exit 1 ;;
-  *) echo "❌ Analysis error"; exit 2 ;;
-esac
+mcpcontract compare \
+  --from v1.json \
+  --to v2.json \
+  --suggest-version \
+  --output CHANGELOG.md
 ```
 
-> 💡 For ad-hoc human use, `mcpcontract compare --from v1.json --to v2.json` runs the full pipeline in one step with a readable report (`--exit-zero` to suppress the breaking-change gate).
+The `compare` command runs the full pipeline (diff → breaking analysis → changelog) in-process. The changelog goes to `--output` (or stdout), a human-readable verdict goes to stderr, and exit codes follow the same contract as `breaking`: `0` (compatible), `1` (breaking changes found), `2` (error). Use `--exit-zero` to suppress the exit-1 gate (e.g. when you always want the changelog regardless of result).
+
+> For **CI pipelines** that need per-step artifacts, configurable gating, or separate report/changelog steps, see the [CI/CD guide](docs/users/cicd/README.md) — it covers both the one-step `compare` path and the staged `diff → breaking → changelog` pipeline.
 
 **Key Features**:
 - **20+ Change Types**: Tool/prompt/resource additions, removals, renames, parameter changes
@@ -176,6 +163,31 @@ mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md --format c
 ```
 
 **Input**: `--diff <file>` — the structural diff from `diff`, or the annotated diff from `breaking` (e.g. `diff-breaking.json`). Run `breaking` first to highlight breaking changes. The command is a pure renderer and always exits `0` on success.
+
+### ✅ compare - Run the Full Comparison Pipeline in One Step
+
+Runs `diff → breaking analysis → changelog` in a single command. Useful for ad-hoc comparisons and simple CI steps where per-step artifacts are not needed.
+
+```bash
+# Compare two versions, render a changelog, and gate on breaking changes
+mcpcontract compare --from v1.json --to v2.json --output CHANGELOG.md
+
+# Include a SemVer recommendation in the report
+mcpcontract compare --from v1.json --to v2.json --suggest-version --output CHANGELOG.md
+
+# Compact format; exit 0 regardless of breaking changes (changelog always written)
+mcpcontract compare --from v1.json --to v2.json --format compact --exit-zero --output CHANGELOG.md
+
+# Escape hatches: also write the intermediate diff and breaking-analysis files
+mcpcontract compare --from v1.json --to v2.json \
+  --emit-diff diff.json \
+  --emit-breaking diff-breaking.json \
+  --output CHANGELOG.md
+```
+
+**Exit Codes**: `0` (compatible), `1` (breaking changes found), `2` (error) — same contract as `breaking`. `--exit-zero` suppresses the `1→0` promotion but never masks `2`.
+
+> For fine-grained CI control (per-step artifacts, separate gate and report jobs), see the [CI/CD guide](docs/users/cicd/README.md).
 
 ### ✅ rules - Browse Compatibility Rules Catalog
 
