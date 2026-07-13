@@ -45,6 +45,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@cisco_open/mcptoolkit-contract": "^1.1.0-rc.2",
     "@inquirer/prompts": "^8.5.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "ajv": "^8.20.0",
