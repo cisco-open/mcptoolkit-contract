@@ -3,8 +3,9 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-1.1.0--rc.2-orange.svg)](CHANGELOG.md)
+[![Status: release](https://img.shields.io/badge/status-1.1.0-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
+[![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes

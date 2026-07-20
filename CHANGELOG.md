@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.1.0] - 2026-07-20](#110---2026-07-20)
 - [[1.1.0-rc.2] - 2026-07-02](#110-rc2---2026-07-02)
 - [[1.0.0] - 2026-07-01](#100---2026-07-01)
 - [[1.0.0-rc.5] - 2026-07-01](#100-rc5---2026-07-01)
@@ -19,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-07-20
+
+First stable release of the `1.1.x` line. Promotes `1.1.0-rc.2` — headlined by the new one-step [`compare`](#110-rc2---2026-07-02) command — and folds in the OSS-automation and specification work that landed after the release candidate.
 
 ## [1.1.0-rc.2] - 2026-07-02
 
