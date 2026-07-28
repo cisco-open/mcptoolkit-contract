@@ -1,8 +1,7 @@
 # Rules Catalog Tutorial - Complete Guide
 
 **Level**: Beginner to Advanced  
-**Time**: 30 minutes  
-**Version**: 0.9.0+
+**Time**: 30 minutes
 
 ## Overview
 
@@ -18,7 +17,7 @@ This tutorial provides a complete end-to-end guide to using the `mcpcontract rul
 
 ## Prerequisites
 
-- mcpcontract CLI installed (version 0.9.0 or later)
+- mcpcontract CLI installed
 - Basic understanding of MCP (Model Context Protocol)
 - Terminal/command line access
 
@@ -38,7 +37,6 @@ npm install -g .
 **Verify installation**:
 ```bash
 mcpcontract --version
-# Should output: 0.9.0 or later
 ```
 
 ## Part 1: Exploring the Default Catalog
@@ -430,6 +428,32 @@ rules/breaking-changes.yaml → rules/catalog/
 rules/strict-compatibility.yaml → rules/strict-compatibility-catalog/
 rules/my-team-rules.yaml → rules/my-team-rules-catalog/
 ```
+
+To see every rules file and its associated catalog at a glance, run `list-catalogs`:
+
+```bash
+mcpcontract rules list-catalogs
+```
+
+**Output**:
+```
+📚 Available Catalogs:
+
+✅ rules/breaking-changes.yaml [DEFAULT]
+   Catalog: rules/catalog (34 entries)
+
+✅ rules/strict-compatibility.yaml
+   Catalog: rules/strict-compatibility-catalog (1 entries)
+
+💡 To use a catalog:
+   mcpcontract rules list --rules <file> --catalog <dir>
+   mcpcontract rules list --catalog <dir>  (auto-discovers rules file)
+```
+
+`list-catalogs` scans the `rules/` directory in your current working directory,
+so run it from a location that contains a `rules/` folder. Each entry shows
+whether the catalog directory exists and how many documented rule entries it
+contains.
 
 ## Part 5: Creating a Custom Catalog (Advanced)
 
