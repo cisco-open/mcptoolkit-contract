@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-1.1.0-brightgreen.svg)](CHANGELOG.md)
+[![Status: release](https://img.shields.io/badge/status-1.1.1-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 [![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
 
@@ -197,6 +197,9 @@ Browse and explore the backward compatibility rules catalog with comprehensive d
 ```bash
 # List all rules (default catalog)
 mcpcontract rules list
+
+# Discover available catalogs in the rules/ directory
+mcpcontract rules list-catalogs
 
 # List rules from custom catalog (shows severity comparison)
 mcpcontract rules list --catalog rules/strict-compatibility-catalog

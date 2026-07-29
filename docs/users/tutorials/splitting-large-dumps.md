@@ -27,7 +27,7 @@ First, understand what you're working with:
 
 ```bash
 # View tool count
-mcpcontract document --input federation-dump.json | head -20
+mcpcontract document federation-dump.json | head -20
 
 # Or use jq to see tool name patterns
 jq '.tools[].name' federation-dump.json | head -20
@@ -324,32 +324,10 @@ mcpcontract split federation-dump.json \
   --output-dir ./split-dumps
 
 # 2. Document each service
-mcpcontract document \
-  --input split-dumps/dump-platform-identity.json \
+mcpcontract document split-dumps/dump-platform-identity.json \
   --output docs/platform-identity.md
 
-mcpcontract document \
-  --input split-dumps/dump-secure-access-networks.json \
-  --output docs/secure-access-networks.md
-```
-
-## Workflow: Split → Document
-
-Create service-specific documentation from a federation dump:
-
-```bash
-# 1. Split by service
-mcpcontract split federation-dump.json \
-  --config split-by-service.yaml \
-  --output-dir ./by-service
-
-# 2. Generate documentation per service
-mcpcontract document \
-  --input by-service/dump-platform-identity.json \
-  --output docs/platform-identity.md
-
-mcpcontract document \
-  --input by-service/dump-secure-access-networks.json \
+mcpcontract document split-dumps/dump-secure-access-networks.json \
   --output docs/secure-access-networks.md
 ```
 
@@ -381,7 +359,7 @@ mcpcontract breaking \
 # Generate changelog
 mcpcontract changelog \
   --diff breaking-platform-identity.json \
-  --template release \
+  --format release \
   --output CHANGELOG-platform-identity.md
 ```
 

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.1.1] - 2026-07-28](#111---2026-07-28)
 - [[1.1.0] - 2026-07-20](#110---2026-07-20)
 - [[1.1.0-rc.2] - 2026-07-02](#110-rc2---2026-07-02)
 - [[1.0.0] - 2026-07-01](#100---2026-07-01)
@@ -20,6 +21,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.1.1] - 2026-07-28
+
+Documentation-only patch release. No CLI or schema changes.
+
+### Fixed
+
+- **Corrected invalid CLI flags in `docs/users`.** Several examples used flags
+  that do not exist on the current CLI and would fail if copied verbatim:
+  - `mcpcontract document --input <file>` → `document` takes a positional file
+    argument (fixed in `tutorials/splitting-large-dumps.md` and
+    `examples/split-example.md`).
+  - `mcpcontract diff --old/--new` → `diff` uses `--from`/`--to`
+    (`examples/split-example.md`).
+  - `mcpcontract changelog --template release` → `release` is a `--format`
+    value, not a template file (`tutorials/splitting-large-dumps.md`).
+- **Removed a duplicated “Split → Document” workflow section** and a broken
+  code fence / duplicated script line in
+  `tutorials/complete-workflow.md` and `tutorials/splitting-large-dumps.md`.
+
+### Changed
+
+- **Dropped hard-coded version numbers from the rules catalog tutorial** so it
+  no longer goes stale (`tutorials/rules-catalog.md`).
+
+### Added
+
+- **Documented the `rules list-catalogs` subcommand** in the README rules
+  section and the rules catalog tutorial.
 
 ## [1.1.0] - 2026-07-20
 

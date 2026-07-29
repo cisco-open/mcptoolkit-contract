@@ -145,9 +145,6 @@ echo "Done: dump → REFERENCE.md + CHANGELOG.md"
 
 For CI pipelines that need per-step artifacts (separate diff and breaking-analysis files), see the [CI/CD guide](../cicd/README.md).
 
-echo "Done: dump → REFERENCE.md + CHANGELOG.md"
-```
-
 ---
 
 ## CI/CD Integration

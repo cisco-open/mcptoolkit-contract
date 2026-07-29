@@ -193,8 +193,7 @@ All split dumps are fully compatible with existing mcpcontract commands:
 
 ### Generate Documentation
 ```bash
-mcpcontract document \
-  --input dump-platform-identity.json \
+mcpcontract document dump-platform-identity.json \
   --output platform-identity-docs.md
 ```
 
@@ -206,8 +205,8 @@ mcpcontract split dump-v2.json --config split-config.yaml --output-dir v2
 
 # Compare platform-identity changes
 mcpcontract diff \
-  --old v1/dump-platform-identity.json \
-  --new v2/dump-platform-identity.json \
+  --from v1/dump-platform-identity.json \
+  --to v2/dump-platform-identity.json \
   --output diff-platform-identity.json
 ```
 
