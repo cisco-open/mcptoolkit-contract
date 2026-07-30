@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.1.2] - 2026-07-30](#112---2026-07-30)
 - [[1.1.1] - 2026-07-28](#111---2026-07-28)
 - [[1.1.0] - 2026-07-20](#110---2026-07-20)
 - [[1.1.0-rc.2] - 2026-07-02](#110-rc2---2026-07-02)
@@ -21,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.1.2] - 2026-07-30
+
+### Security
+
+- **Remediated npm audit vulnerabilities to zero.**
+  - Applied `npm audit fix` for direct/transitive updates, including the MCP SDK
+    transitive dependency path.
+  - Added `overrides.brace-expansion: "^5.0.9"` to force a patched
+    `brace-expansion` version across dependency paths and eliminate remaining
+    high-severity findings reported through the Jest tree.
+  - Kept `overrides.js-yaml: "^4.2.0"` to enforce the patched `js-yaml` line.
+
+### Changed
+
+- **Publish workflow now supports RC tag testing without editing `package.json`
+  again.** A stable base version in `package.json` (for example `1.1.2`) can be
+  published as `next` using a pre-release tag (for example `v1.1.2-rc.1`);
+  later, tagging `v1.1.2` publishes the same base release as `latest`.
 
 ## [1.1.1] - 2026-07-28
 
