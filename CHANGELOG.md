@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.1.3] - 2026-07-30](#113---2026-07-30)
 - [[1.1.2] - 2026-07-30](#112---2026-07-30)
 - [[1.1.1] - 2026-07-28](#111---2026-07-28)
 - [[1.1.0] - 2026-07-20](#110---2026-07-20)
@@ -22,6 +23,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.1.3] - 2026-07-30
+
+Housekeeping patch. No CLI or schema changes.
+
+### Fixed
+
+- **README status badge was not synced before tagging v1.1.2.** The badge now
+  correctly reflects the released version. `npm run prerelease` (which calls
+  `sync-badge`) must be run before every release commit going forward.
+
+### Changed
+
+- **Release skill updated** (`.github/skills/release/SKILL.md`): removed
+  spec/schema-management steps (the `mcpdesc` specification is no longer
+  maintained in this repository), added the AI-agent automated release workflow
+  section (ported from `mcptoolkit-mock`), and added an explicit call-out that
+  badge sync must not be skipped.
 
 ## [1.1.2] - 2026-07-30
 
