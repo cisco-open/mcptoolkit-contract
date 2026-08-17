@@ -1172,3 +1172,142 @@ const TOKEN_AUTH_METHOD = 'none';  // Public client
 ---
 
 **Status**: Ready for implementation review and team feedback.
+
+---
+
+## 1️⃣3️⃣ v1.2.0: Redirect URI Consistency and Server Compatibility Fixes
+
+This section documents the concrete implementation changes in **v1.2.0** that
+resolved OAuth failures with strict providers (Miro confirmed) and improved
+general server compatibility.
+
+### Three Redirect URI Bugs (Pre-v1.2.0)
+
+Before v1.2.0 three interrelated bugs caused the redirect URI to differ between
+dynamic client registration, the authorization request, and the token exchange.
+Providers enforcing exact-match URI validation (correct per RFC 6749) rejected
+the flow at the authorization step.
+
+**Bug 1 — Registration before listener.** Dynamic client registration ran inside
+`ensureClientIdentity`, which is called before `performAuthorizationCodeFlow`.
+The loopback listener (and therefore the actual callback URI) was only created
+_later_ inside `performAuthorizationCodeFlow` — after a token-cache miss. The
+registration used the hardcoded `http://localhost` constant while the
+authorization URL carried `http://127.0.0.1:<random-port>/callback`.
+
+**Bug 2 — Random port.** The listener was started with port `0` (OS-assigned)
+making the URI unpredictable across invocations. Users had no stable URI to
+pre-register with their OAuth provider.
+
+**Bug 3 — `localhost` vs `127.0.0.1`.** `CLIENT_METADATA.redirectUris` held
+`http://localhost`; the listener bound to `127.0.0.1`. Most providers treat
+these as distinct origins.
+
+### Fix: Resolve URI Before Registration
+
+`resolveRedirectUri()` is now called immediately after discovery, before
+`ensureClientIdentity`. The URI flows as a parameter through registration,
+authorization URL construction, and the token exchange:
+
+```typescript
+// ordering in getAuthorizationHeader() after v1.2.0
+const redirectUri = this.resolveRedirectUri();            // ← resolves before registration
+const client = await this.ensureClientIdentity(discovery, requestInit, redirectUri);
+// redirectUri is also threaded into obtainToken → performAuthorizationCodeFlow
+```
+
+`CLIENT_METADATA.redirectUris` (the `http://localhost` constant) has been
+removed. All redirect URIs are now computed from CLI options at runtime.
+
+### Fix: Fixed Default Port (6274)
+
+`LoopbackListener` takes a fixed `port: number` at construction time instead of
+`0`. The default is `6274` (`DEFAULT_OAUTH_CALLBACK_PORT`), consistent with the
+approach used by MCP Inspector (`6276`). Override with `--oauth-callback-port`.
+
+If port 6274 is in use, the `EADDRINUSE` handler surfaces a clear message
+instructing the user to specify a different port.
+
+### Fix: Redirect URI in Registration Storage Key
+
+The dynamic client registration cache key is now:
+
+```
+{issuer}|{registration_endpoint}|{softwareId}|{redirectUri}
+```
+
+Previously the key omitted the redirect URI, so a cached registration created
+for one callback URL would be served when the URI changed — producing a
+mismatch that causes authorization failures on the next run.
+
+### New: `--oauth-callback-url` Flag
+
+Overrides the full OAuth redirect URI for tunnel, ngrok, or hosted-proxy
+scenarios:
+
+```bash
+# ngrok forwards https://abc.ngrok.io/oauth/callback → http://127.0.0.1:6274/oauth/callback
+mcpcontract dump --auth oauth \
+  --oauth-callback-url https://abc.ngrok.io/oauth/callback \
+  --url https://mcp.example.com/sse
+```
+
+Validation rules:
+- Non-loopback URLs must use HTTPS.
+- For loopback URLs with an explicit port, the listener binds to that port
+  automatically.
+- Pair with `--oauth-callback-port` to control the local binding port when the
+  external URL does not expose a non-standard port (e.g. standard HTTPS 443).
+
+### New: Custom Callback Path
+
+The path segment is extracted from `--oauth-callback-url` (defaulting to
+`/callback`) and applied to both the `LoopbackListener` and the redirect URI
+sent to the authorization server. This supports paths like `/oauth/callback` or
+`/auth/done` that some providers require.
+
+```typescript
+private resolveListenerPath(): string {
+  if (this.options.oauthCallbackUrl) {
+    return new URL(this.options.oauthCallbackUrl).pathname || '/callback';
+  }
+  return '/callback';
+}
+```
+
+### Fix: Raw Token Exchange (Bypasses JWT Algorithm Validation)
+
+The authorization code → token exchange now uses a direct `fetch` to
+`token_endpoint` instead of openid-client's `authorizationCodeGrant`.
+
+**Root cause.** Miro (and potentially other servers) return an `id_token` signed
+with **HS256** in the token response. `oauth4webapi` defaults to expecting RS256
+and throws `OAUTH_INVALID_RESPONSE` (specifically
+`unexpected JWT "alg" header parameter, expected RS256`) before
+`access_token` can be extracted. For a public client with no `client_secret`
+there is no key to verify HS256, so library-level configuration workarounds
+also fail.
+
+**Why raw fetch is correct here.** mcpcontract only needs `access_token` for
+MCP requests; it never validates user identity from `id_token`. PKCE remains
+enforced server-side. State is validated locally before the request.
+
+**What is extracted:**
+
+```typescript
+const tokenResponse = {
+  access_token:  rawTokenJson.access_token,   // string — required
+  refresh_token: rawTokenJson.refresh_token,  // string | undefined
+  expires_at:    rawTokenJson.expires_at,     // number | undefined
+  expires_in:    rawTokenJson.expires_in,     // number | undefined
+  scope:         rawTokenJson.scope,          // string | undefined
+};
+// id_token is never read
+```
+
+**Diagnostics.** In `--verbose` mode, a `[OAUTH DEBUG]` block logs all
+own properties (including non-enumerable ones) of any token-exchange error and
+its `cause`. This surfaces the JWT header (`alg`, `typ`) and the
+`expected`/`reason` fields that `oauth4webapi` embeds in `OperationProcessingError`,
+making future JWT-related failures diagnosable without adding temporary
+instrumentation.

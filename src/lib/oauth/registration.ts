@@ -47,6 +47,7 @@ export class ClientRegistrar {
 
         async resolve(options: {
                 discovery: OAuthDiscoveryResult;
+                redirectUri: string;
                 requestInit?: RequestInit;
                 log?: (message: string) => void;
                 customClientId?: string;
@@ -56,16 +57,16 @@ export class ClientRegistrar {
 
                 if (!endpoint) {
                         options.log?.('[INFO] Authorization server does not advertise dynamic client registration; using static client identity');
-                        return this.staticIdentity(options.customClientId, options.customClientSecret);
+                        return this.staticIdentity(options.redirectUri, options.customClientId, options.customClientSecret);
                 }
 
                 // If custom client credentials are provided, skip dynamic registration
                 if (options.customClientId) {
                         options.log?.('[INFO] Custom OAuth client credentials provided; skipping dynamic registration');
-                        return this.staticIdentity(options.customClientId, options.customClientSecret);
+                        return this.staticIdentity(options.redirectUri, options.customClientId, options.customClientSecret);
                 }
 
-                const storageKey = this.storageKey(options.discovery.authorizationServer.issuer, endpoint);
+                const storageKey = this.storageKey(options.discovery.authorizationServer.issuer, endpoint, options.redirectUri);
                 const existing = await this.storage.load(storageKey);
                 if (existing && !this.isExpired(existing)) {
                         return this.identityFromStored(existing);
@@ -78,6 +79,7 @@ export class ClientRegistrar {
                 try {
                         const registration = await this.performRegistration(
                             endpoint,
+                            options.redirectUri,
                             options.discovery,
                             options.requestInit,
                             options.log
@@ -90,18 +92,18 @@ export class ClientRegistrar {
                         // Fall back to static client identity if registration fails
                         options.log?.(`[WARN] Dynamic client registration failed: ${(error as Error).message}`);
                         options.log?.('[INFO] Falling back to static client identity (pre-registered credentials may be required)');
-                        return this.staticIdentity(options.customClientId, options.customClientSecret);
+                        return this.staticIdentity(options.redirectUri, options.customClientId, options.customClientSecret);
                 }
         }
 
-    private staticIdentity(customClientId?: string, customClientSecret?: string): ClientIdentity {
+    private staticIdentity(redirectUri: string, customClientId?: string, customClientSecret?: string): ClientIdentity {
         const clientId = customClientId || CLIENT_METADATA.clientId;
         const tokenEndpointAuthMethod = customClientSecret 
             ? 'client_secret_post' 
             : CLIENT_METADATA.tokenEndpointAuthMethod;
 
         const metadata: Partial<ClientMetadata> = {
-            redirect_uris: [...CLIENT_METADATA.redirectUris],
+            redirect_uris: [redirectUri],
             token_endpoint_auth_method: tokenEndpointAuthMethod,
             application_type: CLIENT_METADATA.applicationType,
             client_name: CLIENT_METADATA.clientName,
@@ -119,8 +121,8 @@ export class ClientRegistrar {
         };
     }
 
-    private storageKey(issuer: string, registrationEndpoint: string): string {
-        return `${issuer}|${registrationEndpoint}|${CLIENT_METADATA.softwareId}`;
+    private storageKey(issuer: string, registrationEndpoint: string, redirectUri: string): string {
+        return `${issuer}|${registrationEndpoint}|${CLIENT_METADATA.softwareId}|${redirectUri}`;
     }
 
     private isExpired(record: StoredClientRegistration): boolean {
@@ -134,7 +136,7 @@ export class ClientRegistrar {
     private identityFromStored(record: StoredClientRegistration): ClientIdentity {
         const redirect_uris = Array.isArray(record.metadata.redirect_uris)
             ? record.metadata.redirect_uris as string[]
-            : Array.from(CLIENT_METADATA.redirectUris);
+            : [];
         const grant_types = Array.isArray(record.metadata.grant_types)
             ? record.metadata.grant_types as string[]
             : Array.from(CLIENT_METADATA.grantTypes);
@@ -178,6 +180,7 @@ export class ClientRegistrar {
 
     private async performRegistration(
         endpoint: string,
+        redirectUri: string,
         discovery: OAuthDiscoveryResult,
         requestInit?: RequestInit,
         log?: (message: string) => void
@@ -188,7 +191,7 @@ export class ClientRegistrar {
             application_type: CLIENT_METADATA.applicationType,
             grant_types: [...CLIENT_METADATA.grantTypes],
             response_types: [...CLIENT_METADATA.responseTypes],
-            redirect_uris: [...CLIENT_METADATA.redirectUris],
+            redirect_uris: [redirectUri],
             token_endpoint_auth_method: CLIENT_METADATA.tokenEndpointAuthMethod
         };
 
@@ -298,7 +301,7 @@ export class ClientRegistrar {
     ): StoredClientRegistration {
         const redirectUris = Array.isArray(response.redirect_uris) && response.redirect_uris.length > 0
             ? response.redirect_uris
-            : [...CLIENT_METADATA.redirectUris];
+            : [];
         const grantTypes = Array.isArray(response.grant_types) && response.grant_types.length > 0
             ? response.grant_types
             : [...CLIENT_METADATA.grantTypes];

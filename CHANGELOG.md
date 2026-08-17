@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.2.1] - 2026-08-17](#121---2026-08-17)
+- [[1.2.0] - 2026-08-17](#120---2026-08-17)
 - [[1.1.3] - 2026-07-30](#113---2026-07-30)
 - [[1.1.2] - 2026-07-30](#112---2026-07-30)
 - [[1.1.1] - 2026-07-28](#111---2026-07-28)
@@ -23,6 +25,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.2.1] - 2026-08-17
+
+### Fixed
+
+- `dump --auth oauth` now defaults to the loopback callback URI `http://127.0.0.1:6274/oauth/callback` instead of `/callback`, and the CLI help, agent guide, completions, and user docs now describe that default consistently.
+- When the implicit default OAuth callback port `6274` is already in use, `dump` now logs the conflict and retries with a random local loopback port up to 3 times. If no free port is found, the command exits with a configuration error that tells users to set an explicit callback URI with `--oauth-callback-url`.
+- Explicit `--oauth-callback-url` behavior remains authoritative: its path is still applied to the local listener, and its configured callback port behavior is preserved.
+
+## [1.2.0] - 2026-08-17
+
+OAuth interoperability release. Fixes all known OAuth flow failures against strict
+providers (Miro confirmed working end-to-end), adds the `--oauth-callback-url` flag
+for tunnel/hosted scenarios, and cleans up process lifecycle and documentation.
+
+### Fixed
+
+- **OAuth redirect URI consistency — root cause of `invalid_request` errors from
+  strict providers such as Miro.** Three interrelated bugs caused the redirect
+  URI used for dynamic client registration, the authorization request, and the
+  token exchange to differ, so any IdP that enforces exact-match URI validation
+  (correct per RFC 6749) would reject the flow:
+
+  1. **Redirect URI resolved after registration.** The loopback listener was
+     started inside `performAuthorizationCodeFlow` (only reached after a
+     token-cache miss), while dynamic client registration had already run with the
+     stale `http://localhost` constant. The URI is now resolved from CLI options
+     before `ensureClientIdentity`, so registration and authorization always use
+     the exact same string.
+  2. **Storage key did not include the redirect URI.** A cached registration for
+     one callback URL was silently served when the URI changed. The key is now
+     `issuer|endpoint|softwareId|redirectUri`.
+  3. **`http://localhost` vs `http://127.0.0.1` mismatch.** `CLIENT_METADATA`
+     held `http://localhost`; the listener bound to `127.0.0.1`. Most IdPs treat
+     these as distinct origins. The constant has been removed; all redirect URIs
+     are now computed at runtime from CLI options.
+
+- **Fixed port replaces random port.** The local OAuth callback listener now
+  binds to a stable default port (`6274`, `DEFAULT_OAUTH_CALLBACK_PORT`) instead
+  of an OS-assigned random port. Users can pre-register
+  `http://127.0.0.1:6274/callback` in their OAuth app settings once. If port
+  6274 is in use the error message instructs users to specify an alternative with
+  `--oauth-callback-port`.
+
+- **Custom callback path support.** The path component of `--oauth-callback-url`
+  (e.g. `/oauth/callback`) is extracted and applied to both the local listener and
+  the redirect URI sent to the authorization server, so providers that require a
+  specific path work without extra flags.
+
+- **OAuth token exchange no longer fails with HS256 `id_token` (Miro fix).**
+  Some servers (Miro confirmed) return an `id_token` signed with HS256 alongside
+  the `access_token`. `oauth4webapi` defaults to expecting RS256 and threw
+  `OAUTH_INVALID_RESPONSE` before `access_token` could be extracted. The token
+  exchange is now performed as a direct `fetch` to `token_endpoint` — extracting
+  `access_token`, `refresh_token`, `expires_in`, and `scope` without touching
+  `id_token`. PKCE remains enforced server-side; state is validated locally.
+
+- **`dump` process now exits after success.** The HTTP transport
+  (`StreamableHTTPClientTransport`) kept the Node.js event loop alive after the
+  dump completed because open sockets were not fully released by `close()`.
+  `process.exit(0)` is now called on success, consistent with `diff` and
+  `compare`.
+
+- **Removed unsafe retry on `OAUTH_INVALID_RESPONSE`.** The previous patch
+  retried the token exchange without the `resource` parameter when the first
+  attempt failed. Most servers consume the authorization code even on a failed
+  exchange, so the retry produced `invalid_grant` on the second attempt. The
+  retry has been removed; the first-attempt error is now fully logged in verbose
+  mode instead.
+
+- **Full OAuth error diagnostics in `--verbose` mode.** The token-exchange catch
+  block now serialises all own properties of the `ClientError` (including
+  non-enumerable `code`, `cause`, and JWT header details from
+  `OperationProcessingError`) into `[OAUTH DEBUG]` lines, making JWT algorithm
+  mismatches and unexpected server responses diagnosable without adding temporary
+  instrumentation.
+
+### Added
+
+- **`--oauth-callback-url <url>` flag** on `dump`. Overrides the full OAuth
+  redirect URI for tunnel and hosted-proxy flows (e.g. ngrok, corporate proxies):
+
+  ```bash
+  # ngrok forwards https://abc.ngrok.io/oauth/callback → http://127.0.0.1:6274/oauth/callback
+  mcpcontract dump --auth oauth \
+    --oauth-callback-url https://abc.ngrok.io/oauth/callback \
+    --url https://mcp.example.com/sse
+  ```
+
+  Rules: non-loopback URLs must use HTTPS; loopback URLs with an explicit port
+  cause the listener to bind to that port automatically; the path is used for
+  both the local listener and the redirect URI; pair with `--oauth-callback-port`
+  to control the local binding port when the external URL uses a standard port.
+
+- **Exit code reference** — `docs/users/reference/exit-codes.md` documents the
+  normative exit code for every command, with per-command tables and CI/CD usage
+  examples.
+
+### Changed
+
+- **OAuth documentation updated.** `docs/maintainers/implementation/mcp-auth-explained.md`
+  gains a *How mcpcontract Implements This Flow* section covering: the field-by-field
+  usage of Authorization Server Metadata, why the token exchange uses a raw fetch
+  instead of openid-client, and the callback URL/port/path model.
+  `docs/maintainers/implementation/33-oauth-best-practices.md` gains a *v1.2.0*
+  section documenting all six implementation changes with code excerpts and rationale.
 
 ## [1.1.3] - 2026-07-30
 
