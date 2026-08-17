@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.2.2] - 2026-08-17](#122---2026-08-17)
 - [[1.2.1] - 2026-08-17](#121---2026-08-17)
 - [[1.2.0] - 2026-08-17](#120---2026-08-17)
 - [[1.1.3] - 2026-07-30](#113---2026-07-30)
@@ -25,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.2.2] - 2026-08-17
+
+### Fixed
+
+- `dump` authentication behavior is now explicit when `--auth` is omitted for HTTP and SSE transports. The CLI help and runtime logging now state that the omitted mode defaults to unauthenticated access and that users must choose `--auth auto` to probe for OAuth or `--auth oauth` to require it.
+- The interactive dump wizard now prompts for authentication mode on HTTP and SSE transports and includes `--auth` in the generated command, avoiding silent fallback to unauthenticated access.
 
 ## [1.2.1] - 2026-08-17
 

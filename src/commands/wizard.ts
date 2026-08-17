@@ -22,6 +22,7 @@ interface WizardAnswers {
   serverName: string;
   format: 'json' | 'yaml';
   output: string;
+  auth?: 'none' | 'auto' | 'oauth';
   
   // Stdio-specific
   command?: string;
@@ -136,6 +137,18 @@ export async function runWizardInteractive(): Promise<void> {
         answers.headers = headers.join('|||'); // Use special separator
       }
     }
+
+    console.log();
+
+    answers.auth = await select({
+      message: 'Select authentication mode:',
+      choices: [
+        { name: 'None - do not attempt authentication', value: 'none' },
+        { name: 'Auto - probe for OAuth and authenticate only if advertised', value: 'auto' },
+        { name: 'OAuth - require OAuth authentication', value: 'oauth' }
+      ],
+      default: 'none'
+    });
   }
   
   console.log();
@@ -217,6 +230,7 @@ function buildCommandArgs(answers: WizardAnswers): string[] {
     }
   } else {
     args.push('--url', `"${answers.url}"`);
+    args.push('--auth', answers.auth || 'none');
     
     if (answers.headers) {
       const headerList = answers.headers.split('|||');

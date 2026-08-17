@@ -95,6 +95,18 @@ function parseNumber(value: string): number {
   return parsed;
 }
 
+function logImplicitAuthDefault(options: CLIOptions): void {
+  if (options.quiet || options.authSpecified) {
+    return;
+  }
+
+  if ((options.transport === 'streamable-http' || options.transport === 'http' || options.transport === 'sse') && options.auth === 'none') {
+    log('Authentication mode not specified; defaulting to no authentication.', options);
+    log('Use --auth auto to probe for OAuth, or --auth oauth to require OAuth.', options);
+    log('', options);
+  }
+}
+
 /** * Main dump execution
  */
 async function runDump(options: CLIOptions): Promise<void> {
@@ -117,6 +129,7 @@ async function runDump(options: CLIOptions): Promise<void> {
   } else {
     log('Creating configuration from CLI options', options);
     verboseLog(`Transport type: ${options.transport}`, options);
+    logImplicitAuthDefault(options);
     
     // Parse environment variables if provided
     if (options.env) {
@@ -274,7 +287,7 @@ export function dumpCommand(): Command {
     .option('--compact', 'Compact JSON output (single line)', false)
     .option('-q, --quiet', 'Suppress progress messages', false)
     .option('-v, --verbose', 'Show detailed debugging information', false)
-    .option('--auth <mode>', 'Authentication mode: none (default), auto, or oauth', 'none')
+    .option('--auth <mode>', 'Authentication mode for HTTP/SSE: none, auto, or oauth (omitted => none)', 'none')
     .option('--oauth-scope <scope>', 'Additional OAuth scope (repeatable)', collectScopes, [])
     .option('--oauth-resource <uri>', 'Override OAuth resource value discovered from server')
     .option('--oauth-callback-port <port>', 'Local port to bind the OAuth callback listener (default: 6274)', parseNumber)
@@ -344,7 +357,9 @@ OUTPUT OPTIONS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AUTHENTICATION OPTIONS (HTTP/SSE transports):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --auth <mode>                 Authentication mode: "none" (default), "auto", or "oauth"
+  --auth <mode>                 Authentication mode for HTTP/SSE: "none", "auto", or "oauth"
+                                If omitted, dump does not attempt authentication.
+                                Use "auto" to probe for OAuth discovery metadata first.
   --oauth-scope <scope>         Request additional OAuth scope (repeatable)
   --oauth-resource <uri>        Override discovered OAuth resource parameter
   --oauth-callback-port <port>  Bind OAuth callback server to a specific port (default: 6274)
@@ -454,8 +469,10 @@ EXAMPLES:
 `;
       }
     })
-    .action(async (options: CLIOptions) => {
+    .action(async (options: CLIOptions, command: Command) => {
       try {
+        options.authSpecified = command.getOptionValueSource('auth') === 'cli';
+
         // Check if wizard mode should be launched
         const hasAnyOption = options.config || options.transport || options.serverName || 
                             options.url || options.command;

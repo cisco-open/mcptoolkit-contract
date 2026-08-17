@@ -329,6 +329,7 @@ export interface CLIOptions {
   quiet?: boolean;         // Suppress progress messages
   verbose?: boolean;       // Show detailed debugging information
   auth?: 'auto' | 'oauth' | 'none'; // Authentication mode selection
+  authSpecified?: boolean; // Whether --auth was explicitly provided on the command line
   browser?: boolean;       // Whether to auto-launch browser for OAuth flow (default true)
   oauthScope?: string[];   // Additional OAuth scopes requested
   oauthResource?: string;  // Override for OAuth resource parameter
