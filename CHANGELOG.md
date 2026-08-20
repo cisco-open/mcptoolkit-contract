@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.2.3] - 2026-08-20](#123---2026-08-20)
 - [[1.2.2] - 2026-08-17](#122---2026-08-17)
 - [[1.2.1] - 2026-08-17](#121---2026-08-17)
 - [[1.2.0] - 2026-08-17](#120---2026-08-17)
@@ -26,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.2.3] - 2026-08-20
+
+### Fixed
+
+- Updated `overrides.js-yaml` to `^4.3.1` so dependency resolution avoids vulnerable `js-yaml` 4.0.0-4.3.0 (quadratic CPU consumption in `!!omap` resolution, GHSA-5p4m-2wfm-xmqj).
 
 ## [1.2.2] - 2026-08-17
 
