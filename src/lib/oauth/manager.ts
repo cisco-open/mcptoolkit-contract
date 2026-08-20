@@ -4,7 +4,6 @@
 
 import type { ClientMetadata } from 'openid-client';
 import {
-  authorizationCodeGrant,
   buildAuthorizationUrl,
   randomPKCECodeVerifier,
   calculatePKCECodeChallenge,
@@ -16,9 +15,14 @@ import {
   None
 } from 'openid-client';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { AddressInfo } from 'node:net';
 import { Buffer } from 'node:buffer';
-import { CLIENT_METADATA, TOKEN_REFRESH_THRESHOLD_SECONDS } from './constants.js';
+import {
+  CLIENT_METADATA,
+  DEFAULT_OAUTH_CALLBACK_FALLBACK_ATTEMPTS,
+  DEFAULT_OAUTH_CALLBACK_PATH,
+  DEFAULT_OAUTH_CALLBACK_PORT,
+  TOKEN_REFRESH_THRESHOLD_SECONDS
+} from './constants.js';
 import { discoverOAuthMetadata, OAuthDiscoveryResult } from './discovery.js';
 import { TokenStorage, StoredToken } from './token-storage.js';
 import { ClientRegistrar, ClientIdentity } from './registration.js';
@@ -32,12 +36,19 @@ interface LoopbackResult {
 
 class LoopbackListener {
   private server?: ReturnType<typeof createServer>;
-  private port?: number;
   private resolveParams?: (result: LoopbackResult) => void;
   private rejectParams?: (error: Error) => void;
   private paramsPromise: Promise<LoopbackResult>;
+  private readonly requestedPort: number;
+  private readonly path: string;
+  private boundPort: number;
 
-  constructor(private requestedPort?: number) {
+  // port is fixed at construction time so the redirect URI is stable before the
+  // listener starts — allowing dynamic client registration to use the same URI.
+  constructor(port: number, path: string = DEFAULT_OAUTH_CALLBACK_PATH) {
+    this.requestedPort = port;
+    this.path = path;
+    this.boundPort = port;
     this.paramsPromise = new Promise<LoopbackResult>((resolve, reject) => {
       this.resolveParams = resolve;
       this.rejectParams = reject;
@@ -52,20 +63,28 @@ class LoopbackListener {
     this.server = createServer(this.handleRequest.bind(this));
 
     await new Promise<void>((resolve, reject) => {
-      this.server!.on('error', reject);
-      this.server!.listen(this.requestedPort ?? 0, '127.0.0.1', () => {
-        const address = this.server!.address() as AddressInfo;
-        this.port = address.port;
+      this.server!.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          reject(new ConfigurationError(
+            `OAuth callback port ${this.requestedPort} is already in use. ` +
+            `Use --oauth-callback-port or --oauth-callback-url to specify a different callback endpoint.`
+          ));
+        } else {
+          reject(err);
+        }
+      });
+      this.server!.listen(this.requestedPort, '127.0.0.1', () => {
+        const address = this.server!.address();
+        if (address && typeof address === 'object') {
+          this.boundPort = address.port;
+        }
         resolve();
       });
     });
   }
 
   getRedirectUri(): string {
-    if (!this.port) {
-      throw new Error('Loopback listener not started');
-    }
-    return `http://127.0.0.1:${this.port}/callback`;
+    return `http://127.0.0.1:${this.boundPort}${this.path}`;
   }
 
   async waitForParams(timeoutMs: number = AUTH_TIMEOUT_MS): Promise<LoopbackResult> {
@@ -87,7 +106,7 @@ class LoopbackListener {
   }
 
   private handleRequest(req: IncomingMessage, res: ServerResponse): void {
-    if (!this.resolveParams || !this.rejectParams || !this.port) {
+    if (!this.resolveParams || !this.rejectParams || !this.boundPort) {
       res.writeHead(500, { 'Content-Type': 'text/html' });
       res.end('<html><body><h1>OAuth callback not ready.</h1></body></html>');
       return;
@@ -99,9 +118,9 @@ class LoopbackListener {
       return;
     }
 
-    const url = new URL(req.url, `http://127.0.0.1:${this.port}`);
+    const url = new URL(req.url, `http://127.0.0.1:${this.boundPort}`);
 
-    if (url.pathname !== '/callback') {
+    if (url.pathname !== this.path) {
       res.writeHead(404, { 'Content-Type': 'text/html' });
       res.end('<html><body><h1>Not Found</h1></body></html>');
       return;
@@ -186,63 +205,73 @@ export class OAuthManager {
     this.verbose(`[OAUTH FLOW] Scopes Supported: ${JSON.stringify(discovery.resource.scopes_supported || [])}`);
     this.verbose(`[OAUTH FLOW] Registration Endpoint: ${discovery.authorizationServer.registration_endpoint || 'none'}`);
 
-    const client = await this.ensureClientIdentity(discovery, requestInit);
-    this.verbose(`[OAUTH FLOW] Step 3: Client Identity Resolved`);
-    this.verbose(`[OAUTH FLOW] Client ID: ${client.clientId}`);
-    this.verbose(`[OAUTH FLOW] Client Type: ${client.dynamic ? 'Dynamic' : 'Static'}`);
-    this.verbose(`[OAUTH FLOW] Auth Method: ${client.tokenEndpointAuthMethod}`);
-    this.verbose(`[OAUTH FLOW] Has Secret: ${!!client.clientSecret}`);
-    if (client.dynamic) {
-      this.verbose(`Using dynamically registered OAuth client ${client.clientId}`);
-      if (client.clientSecret) {
-        if (client.clientSecretExpiresAt && client.clientSecretExpiresAt > 0) {
-          const remaining = client.clientSecretExpiresAt - Math.floor(Date.now() / 1000);
-          if (remaining > 0) {
-            this.verbose(`Client secret expires in ${remaining} seconds`);
+    const loopback = await this.prepareLoopbackListener();
+    try {
+      const redirectUri = loopback.redirectUri;
+      this.verbose(`[OAUTH FLOW] Step 3a: Redirect URI resolved: ${redirectUri}`);
+
+      const client = await this.ensureClientIdentity(discovery, requestInit, redirectUri);
+      this.verbose(`[OAUTH FLOW] Step 3: Client Identity Resolved`);
+      this.verbose(`[OAUTH FLOW] Client ID: ${client.clientId}`);
+      this.verbose(`[OAUTH FLOW] Client Type: ${client.dynamic ? 'Dynamic' : 'Static'}`);
+      this.verbose(`[OAUTH FLOW] Auth Method: ${client.tokenEndpointAuthMethod}`);
+      this.verbose(`[OAUTH FLOW] Has Secret: ${!!client.clientSecret}`);
+      if (client.dynamic) {
+        this.verbose(`Using dynamically registered OAuth client ${client.clientId}`);
+        if (client.clientSecret) {
+          if (client.clientSecretExpiresAt && client.clientSecretExpiresAt > 0) {
+            const remaining = client.clientSecretExpiresAt - Math.floor(Date.now() / 1000);
+            if (remaining > 0) {
+              this.verbose(`Client secret expires in ${remaining} seconds`);
+            } else {
+              this.verbose('Client secret reported as expired; registration will refresh automatically when needed');
+            }
           } else {
-            this.verbose('Client secret reported as expired; registration will refresh automatically when needed');
+            this.verbose('Client secret issued via dynamic registration; stored securely for reuse');
           }
-        } else {
-          this.verbose('Client secret issued via dynamic registration; stored securely for reuse');
         }
+      } else if (discovery.authorizationServer.registration_endpoint) {
+        this.verbose('Authorization server advertises registration_endpoint; falling back to built-in client identity');
       }
-    } else if (discovery.authorizationServer.registration_endpoint) {
-      this.verbose('Authorization server advertises registration_endpoint; falling back to built-in client identity');
+
+      const resource = this.resolveResource(discovery, transport.url);
+      this.verbose(`[OAUTH FLOW] Step 4: Resource & Scopes`);
+      this.verbose(`Using OAuth resource parameter: ${resource}`);
+      const scopes = this.resolveScopes(discovery);
+      this.verbose(`Requesting OAuth scopes: ${scopes.join(' ')}`);
+      this.verbose(`[OAUTH FLOW] Scopes: ${JSON.stringify(scopes)}`);
+      const cacheKey = this.buildCacheKey(discovery.authorizationServer.issuer, resource, scopes, client.clientId);
+      this.verbose(`[OAUTH FLOW] Token Cache Key: ${cacheKey}`);
+
+      const baseConfig = await this.buildConfiguration(discovery, client);
+      this.verbose(`[OAUTH FLOW] Step 5: Building OAuth Configuration`);
+      this.verbose(`[OAUTH FLOW] Token Endpoint: ${discovery.authorizationServer.token_endpoint}`);
+      this.verbose(`[OAUTH FLOW] Authorization Endpoint: ${discovery.authorizationServer.authorization_endpoint}`);
+
+      this.verbose(`[OAUTH FLOW] Step 6: Token Acquisition`);
+      const token = await this.obtainToken({
+        cacheKey,
+        config: baseConfig,
+        discovery,
+        resource,
+        scopes,
+        client,
+        redirectUri,
+        loopbackListener: loopback.listener
+      });
+
+      this.verbose(`[OAUTH FLOW] Step 7: Token Acquired Successfully`);
+      this.verbose(`OAuth access token acquired (masked): ${this.maskToken(token)}`);
+      this.verbose(`[OAUTH FLOW] Token Length: ${token.length} chars`);
+      this.resolvedHeader = { Authorization: `Bearer ${token}` };
+      this.verbose('OAuth authorization header prepared for client transport');
+      this.verbose('[OAUTH FLOW] ========================================');
+      this.verbose('[OAUTH FLOW] OAuth Flow Complete');
+      this.verbose('[OAUTH FLOW] ========================================');
+      return this.resolvedHeader;
+    } finally {
+      await loopback.listener.close();
     }
-
-    const resource = this.resolveResource(discovery, transport.url);
-    this.verbose(`[OAUTH FLOW] Step 4: Resource & Scopes`);
-    this.verbose(`Using OAuth resource parameter: ${resource}`);
-    const scopes = this.resolveScopes(discovery);
-    this.verbose(`Requesting OAuth scopes: ${scopes.join(' ')}`);
-    this.verbose(`[OAUTH FLOW] Scopes: ${JSON.stringify(scopes)}`);
-    const cacheKey = this.buildCacheKey(discovery.authorizationServer.issuer, resource, scopes, client.clientId);
-    this.verbose(`[OAUTH FLOW] Token Cache Key: ${cacheKey}`);
-
-    const baseConfig = await this.buildConfiguration(discovery, client);
-    this.verbose(`[OAUTH FLOW] Step 5: Building OAuth Configuration`);
-    this.verbose(`[OAUTH FLOW] Token Endpoint: ${discovery.authorizationServer.token_endpoint}`);
-    this.verbose(`[OAUTH FLOW] Authorization Endpoint: ${discovery.authorizationServer.authorization_endpoint}`);
-
-    this.verbose(`[OAUTH FLOW] Step 6: Token Acquisition`);
-    const token = await this.obtainToken({
-      cacheKey,
-      config: baseConfig,
-      discovery,
-      resource,
-      scopes,
-      client
-    });
-
-    this.verbose(`[OAUTH FLOW] Step 7: Token Acquired Successfully`);
-    this.verbose(`OAuth access token acquired (masked): ${this.maskToken(token)}`);
-    this.verbose(`[OAUTH FLOW] Token Length: ${token.length} chars`);
-    this.resolvedHeader = { Authorization: `Bearer ${token}` };
-    this.verbose('OAuth authorization header prepared for client transport');
-    this.verbose('[OAUTH FLOW] ========================================');
-    this.verbose('[OAUTH FLOW] OAuth Flow Complete');
-    this.verbose('[OAUTH FLOW] ========================================');
-    return this.resolvedHeader;
   }
 
   private shouldAttemptOAuth(): boolean {
@@ -302,7 +331,8 @@ export class OAuthManager {
 
   private async ensureClientIdentity(
     discovery: OAuthDiscoveryResult,
-    requestInit?: RequestInit
+    requestInit: RequestInit | undefined,
+    redirectUri: string
   ): Promise<ClientIdentity> {
     if (this.clientIdentity) {
       this.verbose('Using cached OAuth client registration metadata');
@@ -312,6 +342,7 @@ export class OAuthManager {
     const identity = await this.clientRegistrar.resolve({
       discovery,
       requestInit,
+      redirectUri,
       customClientId: this.options.oauthClientId,
       customClientSecret: this.options.oauthClientSecret,
       log: (message) => {
@@ -385,11 +416,6 @@ export class OAuthManager {
         }
       }
     }
-    if (redirectUris.size === 0) {
-      for (const fallback of CLIENT_METADATA.redirectUris) {
-        redirectUris.add(fallback);
-      }
-    }
     if (redirectUri) {
       redirectUris.add(redirectUri);
     }
@@ -444,6 +470,8 @@ export class OAuthManager {
     resource: string;
     scopes: string[];
     client: ClientIdentity;
+    redirectUri: string;
+    loopbackListener: LoopbackListener;
   }): Promise<string> {
     const cached = await this.tokenStorage.load(params.cacheKey);
 
@@ -464,7 +492,9 @@ export class OAuthManager {
       discovery: params.discovery,
       resource: params.resource,
       scopes: params.scopes,
-      client: params.client
+      client: params.client,
+      redirectUri: params.redirectUri,
+      listener: params.loopbackListener
     });
   }
 
@@ -566,12 +596,121 @@ export class OAuthManager {
     }
   }
 
+  private async prepareLoopbackListener(): Promise<{ listener: LoopbackListener; redirectUri: string }> {
+    const listenerPath = this.resolveListenerPath();
+    const hasExplicitCallback = Boolean(this.options.oauthCallbackUrl) || this.options.oauthCallbackPort !== undefined;
+
+    if (hasExplicitCallback) {
+      const redirectUri = this.resolveRedirectUri();
+      const listener = new LoopbackListener(this.resolveListenerPort(), listenerPath);
+      await listener.start();
+      return { listener, redirectUri };
+    }
+
+    const defaultListener = new LoopbackListener(DEFAULT_OAUTH_CALLBACK_PORT, listenerPath);
+    try {
+      await defaultListener.start();
+      return {
+        listener: defaultListener,
+        redirectUri: defaultListener.getRedirectUri()
+      };
+    } catch (error) {
+      if (!this.isAddressInUseError(error)) {
+        throw error;
+      }
+    }
+
+    this.log(
+      `OAuth callback port ${DEFAULT_OAUTH_CALLBACK_PORT} is already in use. Trying a random local callback port instead.`,
+      true
+    );
+
+    for (let attempt = 1; attempt <= DEFAULT_OAUTH_CALLBACK_FALLBACK_ATTEMPTS; attempt++) {
+      const listener = new LoopbackListener(0, listenerPath);
+      try {
+        await listener.start();
+        const redirectUri = listener.getRedirectUri();
+        this.log(`Using fallback OAuth callback URI ${redirectUri}.`, true);
+        return { listener, redirectUri };
+      } catch (error) {
+        await listener.close();
+        this.verbose(`Random OAuth callback port attempt ${attempt} failed: ${(error as Error).message}`);
+      }
+    }
+
+    throw new ConfigurationError(
+      `Unable to bind an OAuth callback listener after ${DEFAULT_OAUTH_CALLBACK_FALLBACK_ATTEMPTS} random-port attempts. ` +
+      `Specify an exact callback URI with --oauth-callback-url and ensure its local port is available.`
+    );
+  }
+
+  private isAddressInUseError(error: unknown): boolean {
+    return error instanceof ConfigurationError && error.message.includes('already in use');
+  }
+
+  private resolveRedirectUri(): string {
+    if (this.options.oauthCallbackUrl) {
+      let parsed: URL;
+      try {
+        parsed = new URL(this.options.oauthCallbackUrl);
+      } catch {
+        throw new ConfigurationError(
+          `--oauth-callback-url is not a valid URL: ${this.options.oauthCallbackUrl}`
+        );
+      }
+      const isLoopback = parsed.hostname === 'localhost' ||
+                         parsed.hostname === '127.0.0.1' ||
+                         parsed.hostname === '::1';
+      if (!isLoopback && parsed.protocol !== 'https:') {
+        throw new ConfigurationError(
+          `--oauth-callback-url: non-loopback redirect URIs must use HTTPS ` +
+          `(got ${this.options.oauthCallbackUrl}). ` +
+          `Use https:// or a loopback address (127.0.0.1 / localhost).`
+        );
+      }
+      return this.options.oauthCallbackUrl;
+    }
+    const port = this.options.oauthCallbackPort ?? DEFAULT_OAUTH_CALLBACK_PORT;
+    return `http://127.0.0.1:${port}${DEFAULT_OAUTH_CALLBACK_PATH}`;
+  }
+
+  private resolveListenerPort(): number {
+    // When --oauth-callback-url is a loopback URL, extract its port so the local
+    // listener binds to the same port the redirect URI points to.
+    if (this.options.oauthCallbackUrl) {
+      try {
+        const parsed = new URL(this.options.oauthCallbackUrl);
+        const isLoopback = parsed.hostname === 'localhost' ||
+                           parsed.hostname === '127.0.0.1' ||
+                           parsed.hostname === '::1';
+        if (isLoopback && parsed.port) {
+          return parseInt(parsed.port, 10);
+        }
+      } catch { /* fall through to default */ }
+    }
+    return this.options.oauthCallbackPort ?? DEFAULT_OAUTH_CALLBACK_PORT;
+  }
+
+  private resolveListenerPath(): string {
+    // Use the path from --oauth-callback-url when provided (supports /oauth/callback etc.)
+    // For non-loopback URLs (ngrok/tunnel) ngrok preserves the path when forwarding,
+    // so the local listener must handle the same path.
+    if (this.options.oauthCallbackUrl) {
+      try {
+        return new URL(this.options.oauthCallbackUrl).pathname || DEFAULT_OAUTH_CALLBACK_PATH;
+      } catch { /* fall through */ }
+    }
+    return DEFAULT_OAUTH_CALLBACK_PATH;
+  }
+
   private async performAuthorizationCodeFlow(params: {
     cacheKey: string;
     discovery: OAuthDiscoveryResult;
     resource: string;
     scopes: string[];
     client: ClientIdentity;
+    redirectUri: string;
+    listener: LoopbackListener;
   }): Promise<string> {
     this.verbose('[OAUTH FLOW] ========================================');
     this.verbose('[OAUTH FLOW] Starting Authorization Code Flow');
@@ -586,12 +725,11 @@ export class OAuthManager {
     this.verbose(`[OAUTH FLOW] State: ${state}`);
     this.verbose('Generated PKCE verifier and state for OAuth authorization request');
 
-    const listener = new LoopbackListener(this.options.oauthCallbackPort);
-    await listener.start();
-    const redirectUri = listener.getRedirectUri();
+    const { redirectUri } = params;
     this.verbose('[OAUTH FLOW] Step 2: Loopback listener started');
-    this.verbose(`OAuth loopback listener started at ${redirectUri}`);
+  this.verbose(`OAuth loopback listener started at ${params.listener.getRedirectUri()}`);
     this.verbose(`[OAUTH FLOW] Redirect URI: ${redirectUri}`);
+  this.verbose(`[OAUTH FLOW] Local listener: ${params.listener.getRedirectUri()}`);
 
     const config = await this.buildConfiguration(params.discovery, params.client, redirectUri);
     this.verbose('[OAUTH FLOW] Step 3: Configuration built');
@@ -640,13 +778,12 @@ export class OAuthManager {
     let loopbackResult: LoopbackResult;
     try {
       this.verbose('[OAUTH FLOW] Step 5: Waiting for authorization callback...');
-      loopbackResult = await listener.waitForParams();
+      loopbackResult = await params.listener.waitForParams();
       this.verbose('[OAUTH FLOW] Step 6: Authorization callback received');
       this.verbose('Received OAuth callback with authorization code');
       this.verbose(`[OAUTH FLOW] Authorization Code: ${loopbackResult.params.code?.substring(0, 20)}...`);
       this.verbose(`[OAUTH FLOW] State Returned: ${loopbackResult.params.state}`);
     } finally {
-      await listener.close();
       this.verbose('OAuth loopback listener closed');
     }
 
@@ -681,15 +818,82 @@ export class OAuthManager {
         this.verbose(`[OAUTH FLOW]   - Authorization: Basic [REDACTED]`);
       }
       
-      const tokenResponse = await authorizationCodeGrant(
-        config,
-        new URL(redirectUri + '?' + new URLSearchParams(loopbackResult.params).toString()),
-        {
-          expectedState: state,
-          pkceCodeVerifier: codeVerifier
-        },
-        { resource: params.resource }
-      );
+      const callbackUrl = new URL(redirectUri + '?' + new URLSearchParams(loopbackResult.params).toString());
+      void callbackUrl; // constructed only so state/code are URL-parsed below
+
+      // Validate state before exchange (state was checked server-side on issue;
+      // we re-check locally to guard against open-redirector attacks).
+      const returnedState = loopbackResult.params.state;
+      if (returnedState !== state) {
+        throw new ConfigurationError(
+          `OAuth state mismatch: sent "${state}", received "${returnedState}"`
+        );
+      }
+
+      // Make the token exchange as a raw fetch rather than via authorizationCodeGrant.
+      // Reason: some servers (e.g. Miro) return id_tokens signed with HS256 for public
+      // clients. oauth4webapi defaults to expecting RS256 and throws OAUTH_INVALID_RESPONSE
+      // before we can extract the access_token. For MCP usage mcpcontract only needs the
+      // access_token to talk to the resource server; it never needs to validate the user's
+      // identity from the id_token. PKCE is validated server-side (the server checks
+      // code_verifier against the stored code_challenge).
+      const tokenRequestBody = new URLSearchParams();
+      tokenRequestBody.set('grant_type', 'authorization_code');
+      tokenRequestBody.set('code', loopbackResult.params.code);
+      tokenRequestBody.set('redirect_uri', redirectUri);
+      tokenRequestBody.set('code_verifier', codeVerifier);
+      tokenRequestBody.set('resource', params.resource);
+      if (params.client.tokenEndpointAuthMethod !== 'client_secret_basic') {
+        tokenRequestBody.set('client_id', params.client.clientId);
+      }
+      if (params.client.tokenEndpointAuthMethod === 'client_secret_post' && params.client.clientSecret) {
+        tokenRequestBody.set('client_secret', params.client.clientSecret);
+      }
+
+      const tokenRequestHeaders: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      };
+      if (params.client.tokenEndpointAuthMethod === 'client_secret_basic' && params.client.clientSecret) {
+        const basic = Buffer.from(`${params.client.clientId}:${params.client.clientSecret}`).toString('base64');
+        tokenRequestHeaders['Authorization'] = `Basic ${basic}`;
+      }
+
+      const rawTokenResponse = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: tokenRequestHeaders,
+        body: tokenRequestBody
+      });
+
+      let rawTokenJson: Record<string, unknown>;
+      const rawBody = await rawTokenResponse.text();
+      try {
+        rawTokenJson = JSON.parse(rawBody) as Record<string, unknown>;
+      } catch {
+        throw new ConfigurationError(
+          `Token endpoint returned non-JSON response (HTTP ${rawTokenResponse.status}): ${rawBody.slice(0, 500)}`
+        );
+      }
+
+      if (!rawTokenResponse.ok || rawTokenJson.error) {
+        const errCode = String(rawTokenJson.error ?? rawTokenResponse.status);
+        const errDesc = String(rawTokenJson.error_description ?? rawTokenResponse.statusText);
+        throw new ConfigurationError(`Token endpoint error: ${errCode}: ${errDesc}`);
+      }
+
+      if (typeof rawTokenJson.access_token !== 'string' || !rawTokenJson.access_token) {
+        throw new ConfigurationError(
+          `Token endpoint returned no access_token: ${rawBody.slice(0, 500)}`
+        );
+      }
+
+      const tokenResponse = {
+        access_token: rawTokenJson.access_token,
+        refresh_token: typeof rawTokenJson.refresh_token === 'string' ? rawTokenJson.refresh_token : undefined,
+        expires_at: typeof rawTokenJson.expires_at === 'number' ? rawTokenJson.expires_at : undefined,
+        expires_in: typeof rawTokenJson.expires_in === 'number' ? rawTokenJson.expires_in : undefined,
+        scope: typeof rawTokenJson.scope === 'string' ? rawTokenJson.scope : undefined,
+      };
 
       this.verbose('[OAUTH FLOW] Step 8: Token response received');
 
@@ -708,8 +912,41 @@ export class OAuthManager {
       }
       return tokenResponse.access_token!;
     } catch (error) {
+      // Full diagnostics in verbose mode — openid-client v6 errors are not plain
+      // objects, so the standard response.statusCode path often yields nothing.
+      if (this.options.verbose) {
+        try {
+          const allProps: Record<string, unknown> = {};
+          for (const key of Object.getOwnPropertyNames(error as object)) {
+            const val = (error as Record<string, unknown>)[key];
+            if (typeof val !== 'function') {
+              allProps[key] = val;
+            }
+          }
+          this.verbose(`[OAUTH DEBUG] Error class : ${(error as Error)?.constructor?.name}`);
+          this.verbose(`[OAUTH DEBUG] Error props : ${JSON.stringify(allProps, null, 2)}`);
+        } catch { /* ignore serialization failures */ }
+        const cause = (error as Record<string, unknown>)?.cause;
+        if (cause !== undefined) {
+          try {
+            const causeProps: Record<string, unknown> = {};
+            for (const key of Object.getOwnPropertyNames(cause as object)) {
+              const val = (cause as Record<string, unknown>)[key];
+              if (typeof val !== 'function') causeProps[key] = val;
+            }
+            this.verbose(`[OAUTH DEBUG] Error cause: ${JSON.stringify(causeProps, null, 2)}`);
+          } catch {
+            this.verbose(`[OAUTH DEBUG] Error cause (string): ${String(cause)}`);
+          }
+        }
+      }
+
       const err = error as { code?: string; message?: string; response?: { statusCode?: number; status?: number; body?: unknown }; name?: string };
-      const status = err?.response?.statusCode ?? err?.response?.status;
+      // openid-client v6 may expose the HTTP response on err.response as a Web API
+      // Response object rather than a plain {status, body} shape.
+      const status = err?.response?.statusCode
+        ?? err?.response?.status
+        ?? (err?.response instanceof Response ? (err.response as Response).status : undefined);
       const responseBody = err?.response?.body;
       if (status || responseBody || err?.code || err?.name) {
         const summary = [

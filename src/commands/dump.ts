@@ -95,6 +95,18 @@ function parseNumber(value: string): number {
   return parsed;
 }
 
+function logImplicitAuthDefault(options: CLIOptions): void {
+  if (options.quiet || options.authSpecified) {
+    return;
+  }
+
+  if ((options.transport === 'streamable-http' || options.transport === 'http' || options.transport === 'sse') && options.auth === 'none') {
+    log('Authentication mode not specified; defaulting to no authentication.', options);
+    log('Use --auth auto to probe for OAuth, or --auth oauth to require OAuth.', options);
+    log('', options);
+  }
+}
+
 /** * Main dump execution
  */
 async function runDump(options: CLIOptions): Promise<void> {
@@ -117,6 +129,7 @@ async function runDump(options: CLIOptions): Promise<void> {
   } else {
     log('Creating configuration from CLI options', options);
     verboseLog(`Transport type: ${options.transport}`, options);
+    logImplicitAuthDefault(options);
     
     // Parse environment variables if provided
     if (options.env) {
@@ -274,10 +287,11 @@ export function dumpCommand(): Command {
     .option('--compact', 'Compact JSON output (single line)', false)
     .option('-q, --quiet', 'Suppress progress messages', false)
     .option('-v, --verbose', 'Show detailed debugging information', false)
-    .option('--auth <mode>', 'Authentication mode: none (default), auto, or oauth', 'none')
+    .option('--auth <mode>', 'Authentication mode for HTTP/SSE: none, auto, or oauth (omitted => none)', 'none')
     .option('--oauth-scope <scope>', 'Additional OAuth scope (repeatable)', collectScopes, [])
     .option('--oauth-resource <uri>', 'Override OAuth resource value discovered from server')
-    .option('--oauth-callback-port <port>', 'Local port to bind the OAuth callback listener', parseNumber)
+    .option('--oauth-callback-port <port>', 'Local port to bind the OAuth callback listener (default: 6274)', parseNumber)
+    .option('--oauth-callback-url <url>', 'Override the full OAuth redirect URI, e.g. https://tunnel.example.com/oauth/callback (non-loopback must use HTTPS)')
     .option('--oauth-client-id <id>', 'Pre-registered OAuth client ID (overrides default)')
     .option('--oauth-client-secret <secret>', 'Pre-registered OAuth client secret (for confidential clients)')
     .option('--skip-cors-check', 'Skip CORS support detection for HTTP/SSE transports', false)
@@ -343,10 +357,16 @@ OUTPUT OPTIONS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AUTHENTICATION OPTIONS (HTTP/SSE transports):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --auth <mode>                 Authentication mode: "none" (default), "auto", or "oauth"
+  --auth <mode>                 Authentication mode for HTTP/SSE: "none", "auto", or "oauth"
+                                If omitted, dump does not attempt authentication.
+                                Use "auto" to probe for OAuth discovery metadata first.
   --oauth-scope <scope>         Request additional OAuth scope (repeatable)
   --oauth-resource <uri>        Override discovered OAuth resource parameter
-  --oauth-callback-port <port>  Bind OAuth callback server to a specific port (default: auto)
+  --oauth-callback-port <port>  Bind OAuth callback server to a specific port (default: 6274)
+  --oauth-callback-url <url>    Override the full OAuth redirect URI
+                                (e.g. https://tunnel.example.com/oauth/callback for ngrok/hosted flows;
+                                non-loopback URLs must use HTTPS; pair with --oauth-callback-port
+                                to specify which local port the tunnel forwards to)
   --oauth-client-id <id>        Pre-registered OAuth client ID (overrides default)
   --oauth-client-secret <secret> Pre-registered OAuth client secret (for confidential clients)
   
@@ -354,6 +374,11 @@ AUTHENTICATION OPTIONS (HTTP/SSE transports):
   an authorization URL that you must copy and paste into your browser. Some OAuth
   providers (e.g., Figma) require pre-registration - register your application in
   their developer portal to obtain client credentials.
+  Default loopback callback URI: http://127.0.0.1:6274/oauth/callback
+  If port 6274 is unavailable and you did not explicitly set --oauth-callback-port or
+  --oauth-callback-url, mcpcontract retries with a random local port up to 3 times.
+  If all retries fail, the command exits with an error and asks you to provide an
+  explicit callback URL with --oauth-callback-url.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CORS DETECTION OPTIONS (HTTP/SSE transports only):
@@ -434,11 +459,20 @@ EXAMPLES:
 
   # Test pagination with small page size (forces pagination for testing)
   $ mcpcontract dump --config config.json --page-size 5 --verbose
+
+  # OAuth via tunnel with an explicit callback path
+  $ mcpcontract dump \
+      --transport streamable-http \
+      --url "https://api.example.com/mcp" \
+      --auth oauth \
+      --oauth-callback-url "https://abc.ngrok.io/oauth/callback"
 `;
       }
     })
-    .action(async (options: CLIOptions) => {
+    .action(async (options: CLIOptions, command: Command) => {
       try {
+        options.authSpecified = command.getOptionValueSource('auth') === 'cli';
+
         // Check if wizard mode should be launched
         const hasAnyOption = options.config || options.transport || options.serverName || 
                             options.url || options.command;
@@ -451,6 +485,7 @@ EXAMPLES:
         }
         
         await runDump(options);
+        process.exit(0);
       } catch (error) {
         handleError(error);
         process.exit(1);

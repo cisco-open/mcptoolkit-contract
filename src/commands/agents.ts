@@ -279,29 +279,11 @@ mcpcontract dump \\
 
 ### HTTP Transport with Bearer Token (Most Common)
 \`\`\`bash
-# Using environment variable for token (recommended)
 export TOKEN="your-secret-token-here"
 mcpcontract dump \\
   --transport streamable-http \\
   --url https://api.example.com/mcp \\
   -H "Authorization: Bearer $TOKEN" \\
-  --output dump.json
-
-# Or using config file (better for multiple servers)
-mcpcontract dump \\
-  --config http-with-auth-config.yaml \\
-  --mcp-server my-api-server \\
-  --output dump.json
-\`\`\`
-
-### HTTP Transport with Custom Headers
-\`\`\`bash
-mcpcontract dump \\
-  --transport streamable-http \\
-  --url https://api.example.com/mcp \\
-  -H "Authorization: Bearer TOKEN" \\
-  -H "X-API-Key: KEY" \\
-  -H "X-Client-ID: mcpcontract" \\
   --output dump.json
 \`\`\`
 
@@ -322,6 +304,16 @@ mcpcontract validate dump.json --schema mcpdesc
 mcpcontract dump --config mcp.json --quiet --output dump.json
 \`\`\`
 
+### OAuth Callback Overrides
+\`\`\`bash
+mcpcontract dump \\
+  --transport streamable-http \\
+  --url https://api.example.com/mcp \\
+  --auth oauth \\
+  --oauth-callback-url https://abc.ngrok.io/oauth/callback \\
+  --output dump.json
+\`\`\`
+
 ## Key Parameters
 
 ### Required (choose one approach)
@@ -337,6 +329,7 @@ mcpcontract dump --config mcp.json --quiet --output dump.json
 - \`--args <args>\` - Server arguments (for stdio transport)
 - \`--url <url>\` - Server URL (for streamable-http/sse transport)
 - \`--env <vars>\` - Environment variables (for stdio transport, format: "KEY=VALUE,KEY2=VALUE2")
+- \`--oauth-callback-url <url>\` - Exact OAuth redirect URI; default loopback is \`http://127.0.0.1:6274/oauth/callback\`
 
 ## What You Get
 
@@ -378,7 +371,11 @@ Example dump.json structure:
 - Verify server command in config file
 - Test server manually first: \`node server.js\`
 - Check server logs for startup errors
-- Ensure server implements MCP protocol correctly
+
+### OAuth callback port is busy
+- By default, dump listens on \`http://127.0.0.1:6274/oauth/callback\`
+- If 6274 is busy and you did not set callback options, dump retries with a random loopback port up to 3 times
+- If your provider requires a fixed redirect URI, set \`--oauth-callback-url\` to the exact URI you registered
 
 ### Protocol version mismatch
 - Error: "Unsupported MCP Protocol Version"

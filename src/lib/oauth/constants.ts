@@ -12,12 +12,20 @@
 // rather than impersonating the upstream Cisco-published client.
 //
 // See: https://datatracker.ietf.org/doc/html/rfc7591
+// Default port for the local OAuth callback listener. Use --oauth-callback-port to override.
+// If you use --oauth-callback-url with an external URL (e.g. ngrok), bind ngrok to this port
+// or specify --oauth-callback-port to tell mcpcontract which local port to listen on.
+export const DEFAULT_OAUTH_CALLBACK_PORT = 6274;
+
+// Default path for the local OAuth callback listener when no explicit callback URL is supplied.
+export const DEFAULT_OAUTH_CALLBACK_PATH = '/oauth/callback';
+
+// Number of random loopback port attempts after the default callback port is unavailable.
+export const DEFAULT_OAUTH_CALLBACK_FALLBACK_ATTEMPTS = 3;
+
 export const CLIENT_METADATA = {
   clientId: 'com.cisco.devnet.mcpcontract',
   clientMetadataUri: 'https://developer.cisco.com/docs/mcpcontract/.well-known/client-id-metadata.json',
-  redirectUris: [
-    'http://localhost'
-  ],
   clientName: 'mcpcontract CLI',
   softwareId: 'mcpcontract-cli',
   softwareVersion: '0.20.1',

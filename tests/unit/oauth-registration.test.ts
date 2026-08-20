@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { ClientRegistrar } from '../../src/lib/oauth/registration.js';
 import type { ClientRegistrationStorage, StoredClientRegistration } from '../../src/lib/oauth/client-registration-storage.js';
 import type { OAuthDiscoveryResult } from '../../src/lib/oauth/discovery.js';
-import { CLIENT_METADATA } from '../../src/lib/oauth/constants.js';
+import { CLIENT_METADATA, DEFAULT_OAUTH_CALLBACK_PATH, DEFAULT_OAUTH_CALLBACK_PORT } from '../../src/lib/oauth/constants.js';
+
+const TEST_REDIRECT_URI = `http://127.0.0.1:${DEFAULT_OAUTH_CALLBACK_PORT}${DEFAULT_OAUTH_CALLBACK_PATH}`;
 
 class MemoryRegistrationStorage {
   private records = new Map<string, StoredClientRegistration>();
@@ -82,10 +84,11 @@ describe('ClientRegistrar', () => {
     const fetchMock = jest.fn();
     global.fetch = fetchMock as unknown as typeof global.fetch;
 
-    const identity = await registrar.resolve({ discovery: createDiscovery() });
+    const identity = await registrar.resolve({ discovery: createDiscovery(), redirectUri: TEST_REDIRECT_URI });
 
     expect(identity.dynamic).toBe(false);
     expect(identity.clientId).toBe(CLIENT_METADATA.clientId);
+    expect(identity.metadata.redirect_uris).toEqual([TEST_REDIRECT_URI]);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(storage.keys()).toHaveLength(0);
   });
@@ -110,7 +113,7 @@ describe('ClientRegistrar', () => {
     const discovery = createDiscovery('https://api.figma.com/v1/oauth/mcp/register', {
       resourceScopes: ['mcp:connect']
     });
-    const identity = await registrar.resolve({ discovery });
+    const identity = await registrar.resolve({ discovery, redirectUri: TEST_REDIRECT_URI });
 
     expect(identity.dynamic).toBe(true);
     expect(identity.clientId).toBe('figma-client-123');
@@ -123,7 +126,7 @@ describe('ClientRegistrar', () => {
     expect(typeof body).toBe('string');
     if (typeof body === 'string') {
       const parsed = JSON.parse(body) as Record<string, unknown>;
-      expect(parsed.redirect_uris).toEqual(expect.arrayContaining(Array.from(CLIENT_METADATA.redirectUris)));
+      expect(parsed.redirect_uris).toEqual([TEST_REDIRECT_URI]);
       expect(parsed.token_endpoint_auth_method).toBe('none');
       expect(parsed.scope).toBe('mcp:connect');
     }
@@ -132,7 +135,6 @@ describe('ClientRegistrar', () => {
     expect(storedKeys).toHaveLength(1);
     const stored = storage.get(storedKeys[0]!);
     expect(stored?.clientId).toBe('figma-client-123');
-    expect(stored?.metadata.redirect_uris).toEqual(expect.arrayContaining(Array.from(CLIENT_METADATA.redirectUris)));
   });
 
   it('reuses stored registration when still valid', async () => {
@@ -142,13 +144,13 @@ describe('ClientRegistrar', () => {
     global.fetch = fetchMock as unknown as typeof global.fetch;
 
     const endpoint = 'https://api.figma.com/v1/oauth/mcp/register';
-    const key = `https://login.example.com|${endpoint}|${CLIENT_METADATA.softwareId}`;
+    const key = `https://login.example.com|${endpoint}|${CLIENT_METADATA.softwareId}|${TEST_REDIRECT_URI}`;
     storage.set(key, {
       issuer: 'https://login.example.com',
       registrationEndpoint: endpoint,
       clientId: 'cached-client-id',
       metadata: {
-        redirect_uris: CLIENT_METADATA.redirectUris,
+        redirect_uris: [TEST_REDIRECT_URI],
         grant_types: CLIENT_METADATA.grantTypes,
         response_types: CLIENT_METADATA.responseTypes,
         token_endpoint_auth_method: 'none'
@@ -157,7 +159,7 @@ describe('ClientRegistrar', () => {
       tokenEndpointAuthMethod: 'none'
     } as StoredClientRegistration);
 
-    const identity = await registrar.resolve({ discovery: createDiscovery(endpoint) });
+    const identity = await registrar.resolve({ discovery: createDiscovery(endpoint), redirectUri: TEST_REDIRECT_URI });
 
     expect(identity.dynamic).toBe(true);
     expect(identity.clientId).toBe('cached-client-id');
@@ -169,7 +171,7 @@ describe('ClientRegistrar', () => {
     const storage = new MemoryRegistrationStorage();
     const registrar = new ClientRegistrar(storage as unknown as ClientRegistrationStorage);
     const endpoint = 'https://api.figma.com/v1/oauth/mcp/register';
-    const key = `https://login.example.com|${endpoint}|${CLIENT_METADATA.softwareId}`;
+    const key = `https://login.example.com|${endpoint}|${CLIENT_METADATA.softwareId}|${TEST_REDIRECT_URI}`;
     storage.set(key, {
       issuer: 'https://login.example.com',
       registrationEndpoint: endpoint,
@@ -177,7 +179,7 @@ describe('ClientRegistrar', () => {
       clientSecret: 'secret',
       clientSecretExpiresAt: Math.floor(Date.now() / 1000) - 30,
       metadata: {
-        redirect_uris: CLIENT_METADATA.redirectUris,
+        redirect_uris: [TEST_REDIRECT_URI],
         grant_types: CLIENT_METADATA.grantTypes,
         response_types: CLIENT_METADATA.responseTypes,
         token_endpoint_auth_method: 'client_secret_post'
@@ -197,7 +199,7 @@ describe('ClientRegistrar', () => {
     );
     global.fetch = fetchMock as unknown as typeof global.fetch;
 
-    const identity = await registrar.resolve({ discovery: createDiscovery(endpoint) });
+    const identity = await registrar.resolve({ discovery: createDiscovery(endpoint), redirectUri: TEST_REDIRECT_URI });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(identity.clientId).toBe('fresh-client-id');

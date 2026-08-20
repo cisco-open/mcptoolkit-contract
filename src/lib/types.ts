@@ -329,10 +329,12 @@ export interface CLIOptions {
   quiet?: boolean;         // Suppress progress messages
   verbose?: boolean;       // Show detailed debugging information
   auth?: 'auto' | 'oauth' | 'none'; // Authentication mode selection
+  authSpecified?: boolean; // Whether --auth was explicitly provided on the command line
   browser?: boolean;       // Whether to auto-launch browser for OAuth flow (default true)
   oauthScope?: string[];   // Additional OAuth scopes requested
   oauthResource?: string;  // Override for OAuth resource parameter
-  oauthCallbackPort?: number; // Override for local OAuth callback listener port
+  oauthCallbackPort?: number; // Override for local OAuth callback listener port (default: 6274)
+  oauthCallbackUrl?: string;  // Override the full OAuth redirect URI (e.g. https://tunnel.example.com/oauth/callback); non-loopback URLs must use HTTPS
   oauthClientId?: string;  // Pre-registered OAuth client ID (overrides default)
   oauthClientSecret?: string; // Pre-registered OAuth client secret (for confidential clients)
   validateSchema?: string; // Path to schema file for validation

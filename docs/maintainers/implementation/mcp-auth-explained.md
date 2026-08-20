@@ -1056,6 +1056,84 @@ For additional details, refer to:
 
 Understanding these standards will help you implement authorization correctly and troubleshoot issues when they arise.
 
+---
+
+## How mcpcontract Implements This Flow
+
+> This section documents mcpcontract-specific implementation decisions. The content above is protocol background; this section covers what the `dump --auth oauth` code path actually does and why.
+
+### Authorization Server Metadata: Field-by-Field Usage
+
+When mcpcontract fetches the Authorization Server Metadata document (RFC 8414,
+`/.well-known/oauth-authorization-server`), each field drives a specific runtime
+behavior:
+
+| Field | How mcpcontract uses it |
+|---|---|
+| `authorization_endpoint` | Passed to openid-client `buildAuthorizationUrl` to construct the browser URL |
+| `token_endpoint` | POSTed to directly (raw `fetch`) during code exchange and token refresh |
+| `registration_endpoint` | If present → Dynamic Client Registration (RFC 7591); absent → static client identity |
+| `code_challenge_methods_supported` | Passed to openid-client `Configuration`; mcpcontract always uses S256 |
+| `grant_types_supported` | Passed to `Configuration` for library-level validation |
+| `response_types_supported` | Passed to `Configuration` for library-level validation |
+| `token_endpoint_auth_methods_supported` | Drives `resolveClientAuthentication`: selects `None`, `ClientSecretPost`, or `ClientSecretBasic` |
+| `scopes_supported` (auth server) | Stored but not actively used for scope selection |
+
+Scope selection prefers `resource.scopes_supported` from the **Protected Resource
+Metadata** (the document at `/.well-known/oauth-protected-resource`), then falls
+back to scopes from the `WWW-Authenticate` challenge, then to the `--oauth-scope`
+CLI flag.
+
+### Token Exchange: Why mcpcontract Uses a Raw Fetch
+
+mcpcontract performs the authorization code → access token exchange as a direct
+`fetch` to `token_endpoint`, not via openid-client's `authorizationCodeGrant`.
+
+The reason is interoperability: some servers (Miro is a confirmed example) return
+an `id_token` signed with **HS256** alongside the `access_token`. The `oauth4webapi`
+library (which openid-client wraps) defaults to expecting RS256 and rejects HS256
+tokens as `OAUTH_INVALID_RESPONSE` before the `access_token` can be extracted.
+For a public client with no `client_secret` there is also no key available to
+verify HS256, so any library-level configuration workaround fails too.
+
+mcpcontract only needs the `access_token` to authenticate MCP requests — it never
+needs to verify the user's identity from the `id_token`. The raw fetch approach:
+
+- Extracts `access_token`, `refresh_token`, `expires_in`, and `scope` directly.
+- Skips `id_token` entirely.
+- Still enforces PKCE server-side (the server validates `code_verifier` against
+  the stored `code_challenge`).
+- Validates `state` locally before making the request.
+
+### Redirect URI and Callback Configuration
+
+The local OAuth callback listener binds to a **fixed default port `6274`** so
+users can pre-register the exact URI `http://127.0.0.1:6274/callback` with their
+OAuth app before running `dump`. The same URI is used for dynamic client
+registration, the authorization request, and the token exchange — they must all
+match.
+
+Both the port and the full URL can be overridden:
+
+```bash
+# Use a specific local port
+mcpcontract dump --auth oauth --oauth-callback-port 8888 --url ...
+
+# Full URL override — for tunnel/ngrok/hosted flows
+# Non-loopback URLs must use HTTPS.
+mcpcontract dump --auth oauth \
+  --oauth-callback-url https://abc.ngrok.io/oauth/callback \
+  --url ...
+```
+
+The **path** component of `--oauth-callback-url` (e.g. `/oauth/callback`) is
+extracted automatically and applied to both the local listener and the redirect
+URI sent to the authorization server, so providers that require a specific path
+(not the default `/callback`) are supported without any additional flags.
+
+See [33-oauth-best-practices.md](33-oauth-best-practices.md) for the full
+implementation design rationale.
+
 
 ---
 
