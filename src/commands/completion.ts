@@ -261,7 +261,7 @@ _mcpcontract_completion() {
                 # User typed --, show long options
                 case "\${cmd}" in
                     dump)
-                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
+                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     split)
@@ -363,7 +363,7 @@ _mcpcontract_completion() {
                         # Other commands show options to improve discoverability
                         case "\${cmd}" in
                             dump)
-                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
+                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             diff)
@@ -454,7 +454,8 @@ _mcp_contract() {
                         '--auth[Authentication mode]:mode:(none auto oauth)' \\
                         '--oauth-scope[Additional OAuth scope (repeatable)]:scope:' \\
                         '--oauth-resource[Override OAuth resource value]:uri:' \\
-                        '--oauth-callback-port[OAuth callback port]:port:' \\
+                        '--oauth-callback-port[OAuth callback port (default 6274)]:port:' \\
+                        '--oauth-callback-url[Override OAuth redirect URI (default path /oauth/callback)]:url:' \\
                         '--oauth-client-id[OAuth client id]:id:' \\
                         '--oauth-client-secret[OAuth client secret]:secret:' \\
                         '(-i --info)'{-i,--info}'[Enrichment info file]:file:_files' \\
@@ -686,7 +687,8 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l page-size -d "P
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l auth -d "Authentication mode" -a "none auto oauth"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-scope -d "Additional OAuth scope (repeatable)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-resource -d "Override OAuth resource value"
-complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-callback-port -d "OAuth callback port"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-callback-port -d "OAuth callback port (default 6274)"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-callback-url -d "Override OAuth redirect URI (default path /oauth/callback)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-client-id -d "OAuth client id"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-client-secret -d "OAuth client secret"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s i -l info -d "Enrichment info file" -F

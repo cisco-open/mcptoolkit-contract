@@ -20,6 +20,7 @@ See [reference/](reference/):
 
 - [schemas.md](reference/schemas.md) — the mcpdesc schema and field reference
 - [compatibility.md](reference/compatibility.md) — backward-compatibility philosophy and rules
+- [exit-codes.md](reference/exit-codes.md) — normative exit code reference for all commands
 - [convert-legacy.md](reference/convert-legacy.md) — migrating legacy dump files to mcpdesc
 
 ## Tutorials
