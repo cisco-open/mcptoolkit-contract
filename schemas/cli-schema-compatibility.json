@@ -3,6 +3,18 @@
   "description": "Maps CLI versions to compatible schema versions - append new entries on release",
   "compatibility": [
     {
+      "cliVersion": "2.0.0-rc.1",
+      "releaseDate": "2026-08-31",
+      "schemas": {
+        "mcp-description": "0.8.0-draft.4",
+        "x-cisco-metadata": "read-only 0.2.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0"
+      },
+      "notes": "Emits MCP Description 0.8.0 Draft 4; validates and migrates 0.7.0; no generated Cisco metadata."
+    },
+    {
       "cliVersion": "1.0.0-rc1",
       "releaseDate": "2026-06-04",
       "schemas": {

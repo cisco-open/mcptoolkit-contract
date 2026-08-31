@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.0-rc.1] - 2026-08-31](#200-rc1---2026-08-31)
 - [[1.2.3] - 2026-08-20](#123---2026-08-20)
 - [[1.2.2] - 2026-08-17](#122---2026-08-17)
 - [[1.2.1] - 2026-08-17](#121---2026-08-17)
@@ -27,6 +28,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.0.0-rc.1] - 2026-08-31
+
+### Added
+
+- Added dual-era MCP negotiation for legacy initialize/session servers and
+  stateless MCP `2026-07-28` discovery, with `--protocol auto`, `legacy`, and
+  `2026-07-28` modes across CLI help and shell completions.
+- Added `--protocol-version` selection to `diff`, `compare`, and `document` for
+  processing one effective view of a multi-version MCP Description.
+
+### Changed
+
+- **Breaking:** `dump` now emits MCP Description `0.8.0-draft.4` with its exact
+  immutable `$schema` URI instead of mcpdesc 0.7.0, and no longer generates
+  `x-cisco-metadata`.
+- **Breaking:** the minimum supported Node.js version is now 22.
+- Replaced the legacy MCP SDK integration with `@modelcontextprotocol/client`
+  2.0.0 and adopted `@mcpdesc/validator` 0.4.0 for exact Draft 4 validation.
+- Upgraded `@mcpdesc/core` to 0.2.0 and delegated Draft 4 declaration selection
+  and MCP Description 0.7.0 migration to shared semantic operations.
+- Validation now dispatches MCP Description 0.8.0 documents by exact draft
+  snapshot without falling back to a mutable latest schema; historical 0.7.0
+  validation remains available.
+- `split` now preserves all protocol-scoped variants of selected tool identities
+  and document-wide content without generating split metadata or altering an
+  existing extension.
+- The deprecated `convert` command now validates and migrates mcpdesc 0.7.0
+  documents to MCP Description 0.8.0 Draft 4.
+- CI and npm publication now run only on supported Node.js releases, package
+  creation starts from a clean build, and release tags must exactly match the
+  reviewed package version.
 
 ## [1.2.3] - 2026-08-20
 

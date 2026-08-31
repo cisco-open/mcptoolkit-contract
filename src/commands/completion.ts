@@ -135,6 +135,14 @@ _mcpcontract_completion() {
             COMPREPLY=( $(compgen -W "none auto oauth" -- "\${cur}") )
             return
             ;;
+        --protocol)
+            COMPREPLY=( $(compgen -W "legacy auto 2026-07-28" -- "\${cur}") )
+            return
+            ;;
+        --protocol-version)
+            COMPREPLY=( $(compgen -W "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28" -- "\${cur}") )
+            return
+            ;;
         --schema)
             COMPREPLY=( $(compgen -W "mcpdesc mcp-description dump diff diff-breaking dump-split" -- "\${cur}") )
             return
@@ -261,7 +269,7 @@ _mcpcontract_completion() {
                 # User typed --, show long options
                 case "\${cmd}" in
                     dump)
-                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
+                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     split)
@@ -277,11 +285,11 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     document)
-                        local opts="--template --rendering --output --type --list --show-extraction-details --markdown-engine --quiet --help"
+                        local opts="--template --rendering --protocol-version --output --type --list --show-extraction-details --markdown-engine --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     diff)
-                        local opts="--from --to --output --detect-renames --quiet --help"
+                        local opts="--from --to --protocol-version --output --detect-renames --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     breaking)
@@ -293,7 +301,7 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     compare)
-                        local opts="--from --to --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
+                        local opts="--from --to --protocol-version --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     completion)
@@ -363,11 +371,11 @@ _mcpcontract_completion() {
                         # Other commands show options to improve discoverability
                         case "\${cmd}" in
                             dump)
-                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
+                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             diff)
-                                local opts="--from --to --output --detect-renames --quiet --help"
+                                local opts="--from --to --protocol-version --output --detect-renames --quiet --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             breaking)
@@ -379,7 +387,7 @@ _mcpcontract_completion() {
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             compare)
-                                local opts="--from --to --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
+                                local opts="--from --to --protocol-version --output --rules --format --suggest-version --exit-zero --quiet --emit-diff --emit-breaking --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             *)
@@ -448,6 +456,7 @@ _mcp_contract() {
                         '--compact[Compact JSON output]' \\
                         '(-q --quiet)'{-q,--quiet}'[Suppress messages]' \\
                         '(-v --verbose)'{-v,--verbose}'[Verbose output]' \\
+                        '--protocol[MCP protocol mode]:mode:(legacy auto 2026-07-28)' \
                         '--skip-cors-check[Skip CORS detection]' \\
                         '--cors-origin[CORS preflight origin]:origin:' \\
                         '--page-size[Page size for pagination testing]:number:' \\
@@ -503,6 +512,7 @@ _mcp_contract() {
                         '1:file:_files' \\
                         '(-t --template)'{-t,--template}'[Template name]:template:(mcpdesc-documentation reference-documentation card-view)' \\
                         '(-r --rendering)'{-r,--rendering}'[Rendering mode]:mode:(full reference)' \\
+                        '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
                         '--type[Input type]:type:(mcpdesc dump auto)' \\
                         '--list[List templates]' \\
@@ -516,6 +526,7 @@ _mcp_contract() {
                     _arguments \\
                         '--from[Source MCP description]:file:_files' \\
                         '--to[Target MCP description]:file:_files' \\
+                        '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '--output[Output file]:file:_files' \\
                         '--detect-renames[Detect renames]' \\
                         '--quiet[Suppress output]' \\
@@ -549,6 +560,7 @@ _mcp_contract() {
                     _arguments \\
                         '--from[Source MCP description]:file:_files' \\
                         '--to[Target MCP description]:file:_files' \\
+                        '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '--output[Changelog output file]:file:_files' \\
                         '--rules[Custom rules file]:file:_files' \\
                         '--format[Changelog format]:format:(release compact)' \\
@@ -681,6 +693,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s f -l format -d 
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l compact -d "Compact JSON output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s q -l quiet -d "Suppress messages"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s v -l verbose -d "Verbose output"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l protocol -d "MCP protocol mode" -a "legacy auto 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l skip-cors-check -d "Skip CORS detection"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l cors-origin -d "CORS preflight origin"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l page-size -d "Page size for pagination testing"
@@ -726,6 +739,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s h -l help -
 # document command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s t -l template -d "Template name" -a "mcpdesc-documentation reference-documentation card-view"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s r -l rendering -d "Rendering mode" -a "full reference"
+complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s o -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "mcpdesc dump auto"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l list -d "List templates"
@@ -737,6 +751,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s h -l help -
 # diff command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l from -d "Source MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target MCP description" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Detect renames"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l quiet -d "Suppress output"
@@ -764,6 +779,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s h -l help 
 # compare command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l from -d "Source MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l to -d "Target MCP description" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l output -d "Changelog output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l rules -d "Custom rules file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l format -d "Changelog format" -a "release compact"

@@ -3,21 +3,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Bidirectional converter between ContractDump (internal) and mcpdesc + x-cisco-metadata (output)
- * 
- * The mcpdesc format is the MCP Server Description specification v0.7.0.
- * The x-cisco-metadata v0.2.0 extension carries provenance, runtime observations, CORS,
- * pagination, and split metadata that aren't part of the core mcpdesc schema.
+ * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
+ * New output targets MCP Description 0.8.0 Draft 4. Legacy v0.7 documents and
+ * x-cisco-metadata remain readable for migration.
  */
 
+import {
+  DRAFT_4_SCHEMA_URI,
+  migrateMcpDescription07ToDraft4 as migrateMcpDescription07ToDraft4Core,
+  projectEffectiveProtocolView,
+  type CoreDiagnostic,
+} from '@mcpdesc/core';
+import {
+  supportedProtocolVersions,
+  type SupportedProtocolVersion,
+} from '@mcpdesc/validator';
 import type {
   ContractDump,
   DumpServerConfig,
   RuntimeFindings,
-  CorsSupport,
   ClientCapabilities,
   Icon,
 } from './types.js';
+import { Validator } from './validator.js';
 
 // ============================================================================
 // mcpdesc Output Types
@@ -25,6 +33,7 @@ import type {
 
 export interface McpDescTransport {
   type: 'stdio' | 'streamable-http' | 'sse';
+  protocolVersions?: string[];
   url?: string;
   command?: string;
   args?: string[];
@@ -53,9 +62,11 @@ export interface McpDescDocument {
   $schema?: string;
   mcpdesc: string;
   info: McpDescInfo;
-  transports: McpDescTransport[];
+  protocolVersions?: string[];
+  instructions?: string;
+  transports?: McpDescTransport[];
   security?: unknown[];
-  capabilities?: Record<string, unknown>;
+  capabilities?: Array<Record<string, unknown>> | Record<string, unknown>;
   tools?: unknown[];
   resources?: unknown[];
   resourceTemplates?: unknown[];
@@ -168,26 +179,32 @@ export interface XCiscoMetadataV1 {
 // Constants
 // ============================================================================
 
-const MCPDESC_VERSION = '0.7.0';
-const XCISCO_METADATA_VERSION = '0.2.0';
+const MCPDESC_VERSION = '0.8.0';
+const MCPDESC_SCHEMA = 'https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json';
 
 // ============================================================================
-// ContractDump → mcpdesc + x-cisco-metadata
+// ContractDump → mcpdesc
 // ============================================================================
 
 /**
- * Convert a ContractDump to an mcpdesc v0.6.0 document with x-cisco-metadata v0.2.0 extension.
+ * Convert a captured ContractDump to one observed mcpdesc Draft 4 protocol view.
  */
 export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocument {
   const doc: McpDescDocument = {
+    $schema: MCPDESC_SCHEMA,
     mcpdesc: MCPDESC_VERSION,
     info: buildInfo(dump),
+    protocolVersions: [dump.serverInfo.protocolVersion],
     transports: buildTransports(dump.dumpDetails.mcpServerConfig),
   };
 
+  if (dump.serverInfo.instructions) {
+    doc.instructions = dump.serverInfo.instructions;
+  }
+
   // Server capabilities — include if present
   if (dump.serverInfo.capabilities && Object.keys(dump.serverInfo.capabilities).length > 0) {
-    doc.capabilities = dump.serverInfo.capabilities as Record<string, unknown>;
+    doc.capabilities = [dump.serverInfo.capabilities as Record<string, unknown>];
   }
 
   // Capability arrays — only include non-empty ones
@@ -203,9 +220,6 @@ export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocumen
   if (dump.prompts && dump.prompts.length > 0) {
     doc.prompts = dump.prompts;
   }
-
-  // x-cisco-metadata extension — always included (carries provenance)
-  doc['x-cisco-metadata'] = buildXCiscoMetadata(dump);
 
   return doc;
 }
@@ -224,10 +238,6 @@ function buildInfo(dump: ContractDump): McpDescInfo {
     info.description = dump.serverInfo.description;
   }
 
-  if (dump.serverInfo.protocolVersion) {
-    info.protocolVersion = dump.serverInfo.protocolVersion;
-  }
-
   if (dump.serverInfo.websiteUrl) {
     info.websiteUrl = dump.serverInfo.websiteUrl;
   }
@@ -235,9 +245,6 @@ function buildInfo(dump: ContractDump): McpDescInfo {
   if (dump.serverInfo.icons && dump.serverInfo.icons.length > 0) {
     info.icons = dump.serverInfo.icons;
   }
-
-  // Instructions go to x-cisco-metadata.runtimeObservations, not info.description
-  // info.description is reserved for the server's own description from the initialize handshake
 
   return info;
 }
@@ -258,113 +265,6 @@ function buildTransports(serverConfig: DumpServerConfig): McpDescTransport[] {
   }
 
   return [transport];
-}
-
-function buildXCiscoMetadata(dump: ContractDump): XCiscoMetadata {
-  const dumpPayload: XCiscoMetadataDump = {
-    toolName: dump.dumpDetails.toolName,
-    toolVersion: dump.dumpDetails.toolVersion,
-    createdAt: dump.dumpDetails.createdAt,
-  };
-
-  // Server config
-  dumpPayload.serverConfig = buildServerConfig(dump.dumpDetails.mcpServerConfig);
-
-  // Runtime observations
-  const runtime = buildRuntimeObservations(dump.dumpDetails.dumpExecution, dump.serverInfo.instructions);
-  if (runtime) {
-    dumpPayload.runtimeObservations = runtime;
-  }
-
-  // CORS
-  if (dump.dumpDetails.dumpExecution.corsSupport) {
-    dumpPayload.cors = buildCors(dump.dumpDetails.dumpExecution.corsSupport);
-  }
-
-  // Pagination detection (dynamically added field, not in TypeScript type)
-  const dumpExec = dump.dumpDetails.dumpExecution as unknown as Record<string, unknown>;
-  if (dumpExec.paginationSupport) {
-    dumpPayload.paginationDetection = dumpExec.paginationSupport as XCiscoMetadataPaginationDetection;
-  }
-
-  // Client capabilities
-  if (dump.dumpDetails.dumpExecution.clientCapabilitiesSent) {
-    dumpPayload.clientCapabilities = dump.dumpDetails.dumpExecution.clientCapabilitiesSent;
-  }
-
-  // Split operation
-  if (dump.dumpDetails.dumpExecution.splitOperation) {
-    dumpPayload.splitOperation = dump.dumpDetails.dumpExecution.splitOperation;
-  }
-
-  return {
-    version: XCISCO_METADATA_VERSION,
-    dump: dumpPayload,
-  };
-}
-
-function buildServerConfig(config: DumpServerConfig): XCiscoMetadataServerConfig {
-  const sc: XCiscoMetadataServerConfig = {};
-
-  if (config.name) sc.name = config.name;
-  if (config.transport) sc.transport = config.transport;
-  if (config.url) sc.url = config.url;
-  if (config.command) sc.command = config.command;
-  if (config.args && config.args.length > 0) sc.args = config.args;
-  if (config.env) sc.env = config.env;
-
-  return sc;
-}
-
-function buildRuntimeObservations(
-  exec: RuntimeFindings,
-  instructions?: string
-): XCiscoMetadataRuntimeObservations | undefined {
-  const obs: XCiscoMetadataRuntimeObservations = {};
-  let hasData = false;
-
-  if (exec.mcpProtocolUsed) {
-    obs.mcpProtocolUsed = exec.mcpProtocolUsed;
-    hasData = true;
-  }
-  if (exec.sessionIdSupported !== undefined) {
-    obs.sessionIdSupported = exec.sessionIdSupported;
-    hasData = true;
-  }
-  if (exec.sessionIdHeader) {
-    obs.sessionIdHeader = exec.sessionIdHeader;
-    hasData = true;
-  }
-  if (exec.pingSupported !== undefined) {
-    obs.pingSupported = exec.pingSupported;
-    hasData = true;
-  }
-  if (exec.pingLatencyMs !== undefined) {
-    obs.pingLatencyMs = exec.pingLatencyMs;
-    hasData = true;
-  }
-  if (instructions) {
-    obs.instructions = instructions;
-    hasData = true;
-  }
-
-  return hasData ? obs : undefined;
-}
-
-function buildCors(cors: CorsSupport): XCiscoMetadataCors {
-  const result: XCiscoMetadataCors = {};
-
-  if (cors.browserReady !== undefined) {
-    result.browserReady = cors.browserReady;
-  }
-  if (cors.responseHeaders) {
-    result.responseHeaders = cors.responseHeaders;
-  }
-  if (cors.preflight) {
-    result.preflight = cors.preflight;
-  }
-
-  return result;
 }
 
 // ============================================================================
@@ -410,7 +310,7 @@ export function mcpDescriptionToContractDump(doc: McpDescDocument): ContractDump
 
   // Build dumpExecution (RuntimeFindings) from runtime observations
   const dumpExecution: RuntimeFindings = {
-    mcpProtocolUsed: meta?.runtimeObservations?.mcpProtocolUsed || doc.info.protocolVersion || 'unknown',
+    mcpProtocolUsed: meta?.runtimeObservations?.mcpProtocolUsed || doc.info.protocolVersion || doc.protocolVersions?.[0] || 'unknown',
   };
 
   if (meta?.runtimeObservations) {
@@ -483,9 +383,9 @@ export function mcpDescriptionToContractDump(doc: McpDescDocument): ContractDump
       ...(doc.info.description && { description: doc.info.description }),
       ...(doc.info.websiteUrl && { websiteUrl: doc.info.websiteUrl }),
       ...(doc.info.icons && (doc.info.icons as unknown[]).length > 0 && { icons: doc.info.icons as Icon[] }),
-      protocolVersion: doc.info.protocolVersion || dumpExecution.mcpProtocolUsed,
+      protocolVersion: doc.info.protocolVersion || doc.protocolVersions?.[0] || dumpExecution.mcpProtocolUsed,
       capabilities: inferCapabilities(doc),
-      instructions: meta?.runtimeObservations?.instructions,
+      instructions: doc.instructions || meta?.runtimeObservations?.instructions,
     },
     tools: (doc.tools || []) as ContractDump['tools'],
     resources: (doc.resources || []) as ContractDump['resources'],
@@ -502,7 +402,7 @@ function buildDumpServerConfig(doc: McpDescDocument, meta?: XCiscoMetadataDump):
     const sc = meta.serverConfig;
     return {
       name: sc.name || doc.info.name,
-      transport: (sc.transport as 'stdio' | 'streamable-http' | 'sse') || doc.transports[0]?.type || 'stdio',
+      transport: (sc.transport as 'stdio' | 'streamable-http' | 'sse') || doc.transports?.[0]?.type || 'stdio',
       url: sc.url,
       command: sc.command,
       args: sc.args,
@@ -511,7 +411,7 @@ function buildDumpServerConfig(doc: McpDescDocument, meta?: XCiscoMetadataDump):
   }
 
   // Fallback — derive from transports array
-  const transport = doc.transports[0];
+  const transport = doc.transports?.[0];
   return {
     name: doc.info.name,
     transport: transport?.type || 'stdio',
@@ -523,6 +423,11 @@ function buildDumpServerConfig(doc: McpDescDocument, meta?: XCiscoMetadataDump):
 
 function inferCapabilities(doc: McpDescDocument): ContractDump['serverInfo']['capabilities'] {
   // Prefer explicit capabilities from mcpdesc document
+  if (Array.isArray(doc.capabilities) && doc.capabilities.length > 0) {
+    const capability = { ...doc.capabilities[0] };
+    delete capability.protocolVersions;
+    return capability as ContractDump['serverInfo']['capabilities'];
+  }
   if (doc.capabilities && Object.keys(doc.capabilities).length > 0) {
     return doc.capabilities as ContractDump['serverInfo']['capabilities'];
   }
@@ -542,7 +447,7 @@ function inferCapabilities(doc: McpDescDocument): ContractDump['serverInfo']['ca
  * Returns true if the parsed data looks like an mcpdesc document.
  */
 export function isMcpDescDocument(data: Record<string, unknown>): boolean {
-  return typeof data.mcpdesc === 'string' && data.info !== undefined && data.transports !== undefined;
+  return typeof data.mcpdesc === 'string' && data.info !== undefined;
 }
 
 /**
@@ -552,14 +457,63 @@ export function isContractDump(data: Record<string, unknown>): boolean {
   return data.dumpDetails !== undefined && data.serverInfo !== undefined && data.version !== undefined;
 }
 
+export interface McpDescriptionMigrationResult {
+  document: McpDescDocument;
+  diagnostics: readonly CoreDiagnostic[];
+}
+
+/**
+ * Validate a legacy MCP Description against its frozen schema, then migrate it
+ * to the current Draft 4 snapshot using the shared core semantics.
+ */
+export async function migrateMcpDescription07ToDraft4(
+  document: McpDescDocument,
+  sourceName: string = 'data'
+): Promise<McpDescriptionMigrationResult> {
+  if (document.mcpdesc !== '0.7.0') {
+    throw new Error(`Migration requires MCP Description 0.7.0, received ${document.mcpdesc}`);
+  }
+
+  const sourceValidation = await new Validator().validateData(document, 'mcpdesc', sourceName);
+  if (!sourceValidation.valid) {
+    const details = sourceValidation.errors
+      .map((issue) => `${issue.path}: ${issue.message}`)
+      .join('; ');
+    throw new Error(`MCP Description 0.7.0 validation failed: ${details}`);
+  }
+
+  const migration = migrateMcpDescription07ToDraft4Core(document, {
+    specification: '0.8.0-draft.4',
+    sourceValidated: true,
+  });
+  if (!migration.ok) {
+    const details = migration.diagnostics
+      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+      .join('; ');
+    throw new Error(`Cannot migrate MCP Description 0.7.0: ${details}`);
+  }
+
+  return {
+    document: migration.value as unknown as McpDescDocument,
+    diagnostics: migration.diagnostics,
+  };
+}
+
 /**
  * Parse an MCP description (mcpdesc) document into the internal ContractDump model.
  * The legacy on-disk capability-dump format is no longer accepted as input — use
  * `mcpcontract convert` to migrate older dumps to mcpdesc first.
  */
-export function parseAsContractDump(data: Record<string, unknown>): ContractDump {
+export function parseAsContractDump(
+  data: Record<string, unknown>,
+  protocolVersion?: string
+): ContractDump {
   if (isMcpDescDocument(data)) {
-    return mcpDescriptionToContractDump(data as unknown as McpDescDocument);
+    let document = data as unknown as McpDescDocument;
+    if (document.mcpdesc === '0.8.0') {
+      document = projectMcpDescriptionView(document, protocolVersion);
+    }
+    return mcpDescriptionToContractDump(document);
   }
   if (isContractDump(data)) {
     throw new Error(
@@ -568,6 +522,46 @@ export function parseAsContractDump(data: Record<string, unknown>): ContractDump
     );
   }
   throw new Error('Unrecognized input format: expected an MCP description (mcpdesc) document');
+}
+
+export function projectMcpDescriptionView(
+  document: McpDescDocument,
+  requestedProtocolVersion?: string
+): McpDescDocument {
+  if (document.$schema !== DRAFT_4_SCHEMA_URI) {
+    throw new Error(
+      `MCP Description 0.8.0 processing requires $schema ${DRAFT_4_SCHEMA_URI}`
+    );
+  }
+
+  const declaredVersions = document.protocolVersions;
+  if (!Array.isArray(declaredVersions) || declaredVersions.length === 0) {
+    throw new Error('MCP Description 0.8.0 requires non-empty protocolVersions');
+  }
+
+  const selectedVersion = requestedProtocolVersion ?? (
+    declaredVersions.length === 1 ? declaredVersions[0] : undefined
+  );
+  if (!selectedVersion) {
+    throw new Error(
+      'MCP Description declares multiple protocol versions; select one with --protocol-version'
+    );
+  }
+  if (!supportedProtocolVersions.includes(selectedVersion as SupportedProtocolVersion)) {
+    throw new Error(`Unsupported MCP protocol version: ${selectedVersion}`);
+  }
+
+  const projection = projectEffectiveProtocolView(document, {
+    specification: '0.8.0-draft.4',
+    protocolVersion: selectedVersion as SupportedProtocolVersion,
+  });
+  if (!projection.ok) {
+    const details = projection.diagnostics
+      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+      .join('; ');
+    throw new Error(`Cannot project MCP Description protocol view: ${details}`);
+  }
+  return projection.value as unknown as McpDescDocument;
 }
 
 // ============================================================================

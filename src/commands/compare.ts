@@ -38,6 +38,7 @@ export const compareCommand = new Command('compare')
   .description('Human-readable comparison report: diff + breaking analysis + changelog in one step')
   .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
   .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
+  .option('--protocol-version <version>', 'Compare one effective MCP protocol view')
   .option('--output <file>', 'Write the changelog to a file instead of stdout')
   .option('--rules <file>', 'Custom compatibility rules YAML file (default: built-in breaking-changes.yaml)')
   .option('--format <type>', 'Changelog format: release (default), compact', 'release')
@@ -62,6 +63,7 @@ INPUT FILES (Required):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   --from <file>                 Source version (MCP description, JSON/YAML)
   --to <file>                   Target version (MCP description, JSON/YAML)
+  --protocol-version <version>  Compare one effective MCP protocol view
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT OPTIONS:
@@ -127,6 +129,7 @@ EXAMPLES:
     const {
       from: fromFile,
       to: toFile,
+      protocolVersion,
       output,
       rules: customRules,
       format,
@@ -191,8 +194,8 @@ EXAMPLES:
         process.exit(2);
       }
     }
-    fromData = parseAsContractDump(fromData);
-    toData = parseAsContractDump(toData);
+    fromData = parseAsContractDump(fromData, protocolVersion);
+    toData = parseAsContractDump(toData, protocolVersion);
 
     // ── Step 2: Structural diff ───────────────────────────────────────────
     const differ = new Differ({ detectRenames: false });

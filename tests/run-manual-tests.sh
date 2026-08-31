@@ -232,13 +232,13 @@ test ${#COMPREPLY[@]} -eq 3 || exit 1  # Should match: dump, document, diff
 COMP_WORDS=(mcpcontract "")
 COMP_CWORD=1
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 11 || exit 1  # All 11 commands
+test ${#COMPREPLY[@]} -eq 12 || exit 1  # All 12 commands
 
 # Test 3: dump options (without -- prefix)
 COMP_WORDS=(mcpcontract dump "")
 COMP_CWORD=2
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 14 || exit 1  # All dump options
+[[ " ${COMPREPLY[*]} " == *" --protocol "* ]] || exit 1
 
 # Test 5: rules subcommand completion
 COMP_WORDS=(mcpcontract rules "")
@@ -270,7 +270,14 @@ COMP_CWORD=3
 _mcpcontract_completion
 test ${#COMPREPLY[@]} -eq 6 || exit 1  # mcpdesc, mcp-description, dump, diff, diff-breaking, dump-split
 
-# Test 10: Enum value completion for --category
+# Test 10: Enum value completion for --protocol
+COMP_WORDS=(mcpcontract dump --protocol "")
+COMP_CWORD=3
+_mcpcontract_completion
+test ${#COMPREPLY[@]} -eq 3 || exit 1  # legacy, auto, 2026-07-28
+[[ " ${COMPREPLY[*]} " == *" 2026-07-28 "* ]] || exit 1
+
+# Test 11: Enum value completion for --category
 COMP_WORDS=(mcpcontract rules list --category "")
 COMP_CWORD=4
 _mcpcontract_completion
@@ -282,13 +289,14 @@ COMPLETION_TEST
 chmod +x /tmp/test-mcpcontract-completion.sh
 if bash /tmp/test-mcpcontract-completion.sh 2>/dev/null; then
   echo "✓ Command completion working (mcpcontract d → dump, document, diff)"
-  echo "✓ All commands completion working (11 commands)"
-  echo "✓ dump options completion working (14 options without -- prefix)"
+  echo "✓ All commands completion working (12 commands)"
+  echo "✓ dump options include --protocol"
   echo "✓ rules subcommand completion working (6 subcommands)"
   echo "✓ rules list options completion working (7 options without -- prefix)"
-  echo "✓ Enum completion for --transport (4 values)"
+  echo "✓ Enum completion for --transport (3 values)"
   echo "✓ Enum completion for --format (3 values for dump)"
   echo "✓ Enum completion for --schema (6 values)"
+  echo "✓ Enum completion for --protocol (3 values)"
   echo "✓ Enum completion for --category (5 values)"
   echo "✓ Completion works without bash-completion package"
 else

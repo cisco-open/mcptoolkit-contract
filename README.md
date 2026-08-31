@@ -3,8 +3,8 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-1.2.3-brightgreen.svg)](CHANGELOG.md)
-[![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
+[![Status: pre-release](https://img.shields.io/badge/status-2.0.0--rc.1-orange.svg)](CHANGELOG.md)
+[![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
 [![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
@@ -83,7 +83,11 @@ text, guides, examples, governance, and version history live under
 - **Start here:** [spec/README.md](spec/README.md) — overview and quick example
 - **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
 - **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
-- **Current schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+- **Current stable schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+
+The v2 CLI emits only MCP Description `0.8.0-draft.4`, using the exact immutable
+schema URI. It retains v0.7 validation and migration support. New dumps do not
+include `x-cisco-metadata`.
 
 The format is versioned **independently of this CLI**. `mcpcontract` targets a
 specific `mcpdesc` version and is kept in sync as the specification advances,
@@ -104,6 +108,11 @@ Connects to a live MCP server and extract its description (transport, tools, pro
 > - `streamable-http` or `http` (accepted as alias)
 > - `stdio`
 > - `sse` (legacy - deprecated transport for MCP servers)
+>
+> Protocol negotiation defaults to `--protocol auto`, which probes modern MCP
+> `2026-07-28` discovery and falls back to legacy initialization. Use
+> `--protocol legacy` to skip discovery or `--protocol 2026-07-28` to require
+> modern discovery without fallback.
 
 ```bash
 # Dump capabilities using a config file
@@ -130,6 +139,8 @@ Generate human-readable documentation from an MCP description.
 ```bash
 mcpcontract document dump.yaml --template reference-documentation --output doc.md
 mcpcontract document dump.yaml --template mcpdesc-documentation --output README.md
+# Authored multi-version descriptions require one effective view
+mcpcontract document spec.yaml --protocol-version 2026-07-28 --output README.md
 ```
 
 ### ✅ diff - Compare two releases of an MCP server
@@ -138,6 +149,8 @@ Generate structural diff between two MCP descriptions.
 
 ```bash
 mcpcontract diff --from dump-v1.json --to dump-v2.json --output diff.json
+# Authored multi-version descriptions require one effective view
+mcpcontract diff --from v1.json --to v2.json --protocol-version 2026-07-28
 ```
 
 ### ✅ breaking - Detect Breaking Changes

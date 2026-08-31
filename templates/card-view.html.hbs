@@ -238,7 +238,7 @@
       <div class="title-row">
         <h1>{{#if info.title}}{{info.title}}{{else}}{{info.name}}{{/if}}</h1>
         {{#if info.version}}<span class="badge version">v{{info.version}}</span>{{/if}}
-        {{#if info.protocolVersion}}<span class="badge protocol">MCP {{info.protocolVersion}}</span>{{/if}}
+        {{#if protocolVersions}}<span class="badge protocol">MCP {{join protocolVersions ", "}}</span>{{else}}{{#if info.protocolVersion}}<span class="badge protocol">MCP {{info.protocolVersion}}</span>{{/if}}{{/if}}
         {{#if showDumpInformation}}
           {{#if _meta.dump.cors}}
             {{#if _meta.dump.cors.browserReady}}

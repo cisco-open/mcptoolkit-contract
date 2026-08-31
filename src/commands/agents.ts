@@ -304,14 +304,14 @@ mcpcontract validate dump.json --schema mcpdesc
 mcpcontract dump --config mcp.json --quiet --output dump.json
 \`\`\`
 
-### OAuth Callback Overrides
+### Select a Protocol Era
 \`\`\`bash
-mcpcontract dump \\
-  --transport streamable-http \\
-  --url https://api.example.com/mcp \\
-  --auth oauth \\
-  --oauth-callback-url https://abc.ngrok.io/oauth/callback \\
-  --output dump.json
+# Probe modern discovery and fall back to legacy initialize (default)
+mcpcontract dump --config mcp.json --protocol auto --output dump.json
+
+# Require a specific era
+mcpcontract dump --config mcp.json --protocol legacy --output legacy.json
+mcpcontract dump --config mcp.json --protocol 2026-07-28 --output modern.json
 \`\`\`
 
 ## Key Parameters
@@ -324,6 +324,7 @@ mcpcontract dump \\
 - \`--output <file>\` - Output file (default: stdout)
 - \`--format <type>\` - Output format: json, yaml, markdown (default: json)
 - \`--quiet\` - Suppress progress messages
+- \`--protocol <mode>\` - Negotiation mode: legacy, auto, or 2026-07-28 (default: auto)
 - \`-H, --header <header>\` - HTTP header for streamable-http/sse (repeatable, format: "Key: Value")
 - \`--command <cmd>\` - Server command (for stdio transport)
 - \`--args <args>\` - Server arguments (for stdio transport)
@@ -334,7 +335,10 @@ mcpcontract dump \\
 ## What You Get
 
 A dump file containing:
-- **serverInfo** - Name, version, protocol version, capabilities array
+- **$schema** and **mcpdesc** - Exact Draft 4 schema snapshot and format version
+- **info** - Server name, version, and descriptive metadata
+- **protocolVersions** - Negotiated MCP protocol revision
+- **capabilities** - Protocol-scoped server capability declarations
 - **tools** - Available tools with input schemas
 - **resources** - Static resources with URI patterns
 - **resourceTemplates** - Dynamic resource templates
@@ -343,12 +347,14 @@ A dump file containing:
 Example dump.json structure:
 \`\`\`json
 {
-  "serverInfo": {
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json",
+  "mcpdesc": "0.8.0",
+  "info": {
     "name": "my-server",
-    "version": "1.0.0",
-    "protocolVersion": "2024-11-05",
-    "capabilities": ["tools", "resources", "prompts"]
+    "version": "1.0.0"
   },
+  "protocolVersions": ["2026-07-28"],
+  "capabilities": [{ "tools": {}, "resources": {}, "prompts": {} }],
   "tools": [
     {
       "name": "search",
@@ -378,19 +384,14 @@ Example dump.json structure:
 - If your provider requires a fixed redirect URI, set \`--oauth-callback-url\` to the exact URI you registered
 
 ### Protocol version mismatch
-- Error: "Unsupported MCP Protocol Version"
-- Tool supports MCP protocol 2024-11-05
-- Update server or tool version to match
+- Use \`--protocol auto\` to probe modern discovery and fall back to legacy initialize
+- Use \`--protocol legacy\` for servers that must not receive a discovery probe
+- Use \`--protocol 2026-07-28\` to require modern discovery without fallback
 
 ### Missing capabilities
 - Server may not implement all MCP features
 - Check server documentation for supported capabilities
 - Empty arrays are normal if server doesn't offer that capability type
-
-### Connection timeout
-- Server may be slow to start
-- Increase timeout (not yet configurable, file an issue)
-- Check server isn't stuck waiting for input
 `;
 
 const SPLIT_GUIDE = `# split - Split Large MCP Descriptions into Subsets
@@ -470,27 +471,22 @@ categories:
     outputFile: networking-tools
     filters:
       tools:
-        namePatterns:
-          - "^network_.*"
-          - "^route_.*"
-          - ".*_network$"
+        - type: name-pattern
+          pattern: "^(network_|route_).*$|.*_network$"
   
   - name: storage
     outputFile: storage-tools
     filters:
       tools:
-        namePatterns:
-          - "^storage_.*"
-          - "^disk_.*"
-          - ".*_storage$"
+        - type: name-pattern
+          pattern: "^(storage_|disk_).*$|.*_storage$"
   
   - name: compute
     outputFile: compute-tools
     filters:
       tools:
-        namePatterns:
-          - "^vm_.*"
-          - "^container_.*"
+        - type: name-pattern
+          pattern: "^(vm_|container_).*"
 
 unmatchedItems:
   action: separate-file  # or: ignore, warn, error
@@ -506,12 +502,10 @@ Multiple output files, one per category:
 - \`other-tools.json\` - Unmatched tools (if action: separate-file)
 
 Each split output contains:
-- Original serverInfo
-- Filtered tools matching the category
-- Split metadata in \`dumpExecution.splitOperation\`:
-  - Source file, category, filter rules
-  - Original vs filtered counts
-  - Tool name, version, timestamps
+- Original document-wide MCP Description content
+- Tools matching the category by normative \`name\` identity
+- Every protocol-scoped variant of each selected tool
+- Existing extensions unchanged; no generated \`x-cisco-metadata\`
 
 ## Next Steps After Split
 
@@ -667,6 +661,12 @@ mcpcontract diff \\
 mcpcontract diff --from v1.json --to v2.json --output diff.json
 \`\`\`
 
+### Compare a Multi-Version Protocol View
+\`\`\`bash
+mcpcontract diff --from v1.json --to v2.json \\
+  --protocol-version 2026-07-28 --output diff.json
+\`\`\`
+
 ### Compare Dumps
 \`\`\`bash
 mcpcontract diff --from old-dump.json --to new-dump.json --output diff.json
@@ -686,6 +686,7 @@ mcpcontract diff --from old.json --to new.json | \\
 
 ### Optional
 - \`--output <file>\` - Output file (default: stdout)
+- \`--protocol-version <version>\` - Effective view to compare; required for multi-version documents
 
 ## What You Get
 
@@ -997,6 +998,12 @@ mcpcontract compare --from prev.json --to next.json \\
   --suggest-version --output CHANGELOG.md
 \`\`\`
 
+### Compare a Multi-Version Protocol View
+\`\`\`bash
+mcpcontract compare --from prev.json --to next.json \\
+  --protocol-version 2026-07-28
+\`\`\`
+
 ### Compact format
 \`\`\`bash
 mcpcontract compare --from prev.json --to next.json \\
@@ -1029,6 +1036,7 @@ mcpcontract compare --from prev.json --to next.json \\
 - \`--to <file>\` - Target version (MCP description, JSON/YAML)
 
 ### Optional
+- \`--protocol-version <version>\` - Effective view to compare; required for multi-version documents
 - \`--output <file>\` - Write changelog to a file (default: stdout)
 - \`--format <type>\` - Changelog format: \`release\` (default) or \`compact\`
 - \`--rules <file>\` - Custom compatibility rules YAML (default: built-in)
@@ -1113,6 +1121,11 @@ mcpcontract document dump.yaml --output CAPABILITIES.md
 mcpcontract document dump.yaml --rendering reference --output REF.md
 \`\`\`
 
+### Render a Multi-Version Protocol View
+\`\`\`bash
+mcpcontract document spec.yaml --protocol-version 2026-07-28 --output API.md
+\`\`\`
+
 ### Custom Template
 \`\`\`bash
 mcpcontract document dump.json \\
@@ -1137,6 +1150,7 @@ mcpcontract document spec.yaml \\
 - \`--output <file>\` - Output file (default: stdout)
 - \`--template <name|file>\` - Built-in template name or path to custom .hbs file
 - \`--rendering <mode>\` - Rendering mode: \`full\` (detailed, default) or \`reference\` (concise)
+- \`--protocol-version <version>\` - Effective view to render; required for multi-version documents
 - \`--type <type>\` - Input file type: \`mcpdesc\`, \`dump\` (legacy), or \`auto\` (default)
 - \`--markdown-engine <engine>\` - Markdown engine for HTML templates: \`marked\` (default), \`markdown-it\`, \`snarkdown\`
 - \`--show-extraction-details\` - Show session, CORS, and extraction information sections

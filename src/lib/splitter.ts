@@ -9,6 +9,11 @@
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { parse as yamlParse } from 'yaml';
+import {
+  parseMcpDescriptionSource,
+  selectMcpDescriptionDeclarations,
+  type McpDescriptionDocument,
+} from '@mcpdesc/core';
 import type {
   ContractDump,
   Tool,
@@ -17,7 +22,12 @@ import type {
   SplitResult,
   SplitStats,
 } from './types.js';
-import { parseAsContractDump } from './mcpdesc-converter.js';
+import {
+  isMcpDescDocument,
+  mcpDescriptionToContractDump,
+  migrateMcpDescription07ToDraft4,
+  type McpDescDocument,
+} from './mcpdesc-converter.js';
 
 export interface SplitOptions {
   mcpdescPath: string;
@@ -28,6 +38,7 @@ export interface SplitOptions {
 
 export class Splitter {
   private dump!: ContractDump;
+  private document!: McpDescriptionDocument;
   private config!: SplitConfig;
   private stats: SplitStats = {
     totalTools: 0,
@@ -42,25 +53,51 @@ export class Splitter {
    */
   async loadMcpDescription(filePath: string): Promise<ContractDump> {
     const content = await readFile(filePath, 'utf-8');
-    
-    let rawData: unknown;
-    try {
-      // Try JSON first
-      rawData = JSON.parse(content);
-    } catch {
-      // If JSON fails, try YAML
-      try {
-        rawData = yamlParse(content);
-      } catch (yamlError) {
-        throw new Error(`Failed to parse MCP description file as JSON or YAML: ${(yamlError as Error).message}`);
-      }
+
+    const parsed = parseMcpDescriptionSource(content);
+    if (!parsed.ok) {
+      const details = parsed.diagnostics
+        .map((diagnostic) => diagnostic.message)
+        .join('; ');
+      throw new Error(`Failed to parse MCP description file as JSON or YAML: ${details}`);
     }
-    // Auto-detect format: mcpdesc or ContractDump
-    const dump = parseAsContractDump(rawData as Record<string, unknown>);
+
+    if (
+      typeof parsed.value !== 'object' ||
+      parsed.value === null ||
+      Array.isArray(parsed.value) ||
+      !isMcpDescDocument(parsed.value)
+    ) {
+      throw new Error('Unrecognized input format: expected an MCP description (mcpdesc) document');
+    }
+
+    let document = parsed.value as unknown as McpDescDocument;
+    if (document.mcpdesc === '0.7.0') {
+      document = (await migrateMcpDescription07ToDraft4(document, filePath)).document;
+    } else if (document.mcpdesc !== '0.8.0') {
+      throw new Error(`Unsupported MCP Description version: ${document.mcpdesc}`);
+    }
+
+    this.document = document as unknown as McpDescriptionDocument;
+    const dump = mcpDescriptionToContractDump(document);
 
     this.dump = dump;
-    this.stats.totalTools = dump.tools?.length || 0;
+    this.stats.totalTools = new Set((dump.tools || []).map((tool) => tool.name)).size;
     return dump;
+  }
+
+  private selectDocument(toolNames: readonly string[]): McpDescriptionDocument {
+    const selection = selectMcpDescriptionDeclarations(this.document, {
+      specification: '0.8.0-draft.4',
+      selections: { tools: toolNames },
+    });
+    if (!selection.ok) {
+      const details = selection.diagnostics
+        .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+        .join('; ');
+      throw new Error(`Cannot select MCP Description declarations: ${details}`);
+    }
+    return selection.value;
   }
 
   /**
@@ -230,6 +267,14 @@ export class Splitter {
     stats: SplitStats;
     unmatchedTools: Tool[];
   }> {
+    this.stats = {
+      totalTools: 0,
+      matchedTools: 0,
+      unmatchedTools: 0,
+      categories: [],
+      multipleMatches: [],
+    };
+
     // Load MCP description and config
     await this.loadMcpDescription(options.mcpdescPath);
     await this.loadConfig(options.configPath);
@@ -244,8 +289,13 @@ export class Splitter {
       matchedToolsByCategory.set(category.name, []);
     }
 
-    // Process each tool
+    const toolsByName = new Map<string, Tool>();
     for (const tool of this.dump.tools || []) {
+      if (!toolsByName.has(tool.name)) toolsByName.set(tool.name, tool);
+    }
+
+    // Process each normative tool identity. Scoped variants share one name.
+    for (const tool of toolsByName.values()) {
       const matchingCategories = this.findMatchingCategories(tool);
 
       if (matchingCategories.length === 0) {
@@ -270,10 +320,11 @@ export class Splitter {
     // Create output dumps for each category
     for (const category of this.config.categories) {
       const matchedTools = matchedToolsByCategory.get(category.name)!;
+      const document = this.selectDocument(matchedTools.map((tool) => tool.name));
 
       const filteredDump = this.createFilteredDump(
         category,
-        matchedTools,
+        (document.tools || []) as unknown as Tool[],
         options.mcpdescPath,
         options.configPath
       );
@@ -283,6 +334,7 @@ export class Splitter {
         outputFile: category.outputFile,
         matchedTools: matchedTools.length,
         dump: filteredDump,
+        document,
       });
 
       // Update stats
@@ -311,6 +363,7 @@ export class Splitter {
       const unmatchedConfig = this.config.unmatchedItems;
       
       if (unmatchedConfig?.action === 'separate-file' && unmatchedConfig.outputFile) {
+        const document = this.selectDocument(unmatchedTools.map((tool) => tool.name));
         const unmatchedDump: ContractDump = {
           version: this.dump.version, // Internal model field; dropped on mcpdesc output
           dumpDetails: {
@@ -346,7 +399,7 @@ export class Splitter {
             },
           },
           serverInfo: this.dump.serverInfo,
-          tools: unmatchedTools,
+          tools: (document.tools || []) as unknown as Tool[],
           resources: [],
           resourceTemplates: [],
           prompts: [],
@@ -361,6 +414,7 @@ export class Splitter {
           outputFile: unmatchedConfig.outputFile,
           matchedTools: unmatchedTools.length,
           dump: unmatchedDump,
+          document,
         });
       }
     }

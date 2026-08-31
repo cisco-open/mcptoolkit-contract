@@ -24,36 +24,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify tag base matches package.json and select dist-tag
+      - name: Verify tag matches package.json and select dist-tag
         id: release
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          # Allow RC tags (e.g. v1.1.2-rc.1) against a stable package.json
-          # (e.g. 1.1.2) by comparing only the semver base (pre '-').
-          PKG_BASE="${PKG_VERSION%%-*}"
-          TAG_BASE="${TAG_VERSION%%-*}"
-          if [ "$PKG_BASE" != "$TAG_BASE" ]; then
-            echo "::error::Tag base '${TAG_BASE}' does not match package.json base version '${PKG_BASE}'"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' does not match package.json version '${PKG_VERSION}'"
             exit 1
           fi
-          # When the tag carries a pre-release label that package.json lacks
-          # (RC workflow), align package.json to the tag version so the
-          # published package carries the correct version string.
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "RC mode: aligning package version from ${PKG_VERSION} to ${TAG_VERSION}"
-            npm version "$TAG_VERSION" --no-git-tag-version --allow-same-version
-          fi
-          # Dist-tag is driven by the tag, not by package.json:
-          # tags containing '-' (e.g. 1.1.2-rc.1) publish under 'next';
-          # clean semver tags (e.g. 1.1.2) publish under 'latest'.
           if printf '%s' "$TAG_VERSION" | grep -q '-'; then
             DIST_TAG=next
           else

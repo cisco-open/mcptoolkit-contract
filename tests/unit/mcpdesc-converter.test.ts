@@ -7,9 +7,12 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
+  migrateMcpDescription07ToDraft4,
+  parseAsContractDump,
   applyEnrichment,
   McpDescTag,
 } from '../../src/lib/mcpdesc-converter.js';
@@ -48,7 +51,7 @@ function minimalDump(overrides: Partial<ContractDump> = {}): ContractDump {
   } as ContractDump;
 }
 
-describe('mcpdesc-converter tags', () => {
+describe('mcpdesc-converter', () => {
   describe('McpDescTag interface (v0.7.0 flat tags)', () => {
     it('should accept flat tags without nested tags property', () => {
       const tag: McpDescTag = { name: 'api', description: 'API operations' };
@@ -67,10 +70,26 @@ describe('mcpdesc-converter tags', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('should set mcpdesc version to 0.7.0', () => {
+    it('emits a valid Draft 4 observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
+      dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
-      expect(doc.mcpdesc).toBe('0.7.0');
+
+      expect(doc).toMatchObject({
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json',
+        mcpdesc: '0.8.0',
+        protocolVersions: ['2025-06-18'],
+        instructions: 'Use tool_a for test operations.',
+        capabilities: [{ tools: {} }],
+      });
+      expect(doc.info).not.toHaveProperty('protocolVersion');
+      expect(doc).not.toHaveProperty('x-cisco-metadata');
+
+      const validation = validateMcpDescription(doc, {
+        specification: '0.8.0-draft.4',
+      });
+      expect(validation.diagnostics).toEqual([]);
+      expect(validation.valid).toBe(true);
     });
 
     it('should not include root tags when dump has none', () => {
@@ -128,6 +147,86 @@ describe('mcpdesc-converter tags', () => {
 
       const restored = mcpDescriptionToContractDump(doc);
       expect(restored.tools[0]).toHaveProperty('tags', ['search', 'documents']);
+    });
+  });
+
+  describe('Draft 4 protocol view projection', () => {
+    const multiVersionDocument = {
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json',
+      mcpdesc: '0.8.0',
+      info: { name: 'scoped-server', version: '1.0.0' },
+      protocolVersions: ['2025-11-25', '2026-07-28'],
+      tools: [
+        {
+          name: 'run_job',
+          description: 'Legacy behavior',
+          protocolVersions: ['2025-11-25'],
+          inputSchema: { type: 'object' },
+        },
+        {
+          name: 'run_job',
+          description: 'Modern behavior',
+          protocolVersions: ['2026-07-28'],
+          inputSchema: { type: 'object' },
+        },
+      ],
+    };
+
+    it('requires an explicit selection for a multi-version document', () => {
+      expect(() => parseAsContractDump(multiVersionDocument)).toThrow(
+        /select one with --protocol-version/
+      );
+    });
+
+    it('retains only declarations effective for the selected protocol revision', () => {
+      const dump = parseAsContractDump(multiVersionDocument, '2026-07-28');
+
+      expect(dump.serverInfo.protocolVersion).toBe('2026-07-28');
+      expect(dump.tools).toEqual([
+        expect.objectContaining({
+          name: 'run_job',
+          description: 'Modern behavior',
+        }),
+      ]);
+      expect(dump.tools[0]).not.toHaveProperty('protocolVersions');
+    });
+  });
+
+  describe('MCP Description 0.7.0 migration', () => {
+    const legacyDocument = {
+      mcpdesc: '0.7.0',
+      info: {
+        name: 'legacy-server',
+        version: '1.0.0',
+        protocolVersion: '2025-11-25',
+      },
+      transports: [{ type: 'stdio', command: 'legacy-server' }],
+      capabilities: { tools: { listChanged: true } },
+      tools: [{ name: 'search', inputSchema: { type: 'object' } }],
+    };
+
+    it('validates the legacy source and delegates migration to core', async () => {
+      const result = await migrateMcpDescription07ToDraft4(legacyDocument, 'legacy.json');
+
+      expect(result.document).toMatchObject({
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json',
+        mcpdesc: '0.8.0',
+        protocolVersions: ['2025-11-25'],
+        capabilities: [{ tools: { listChanged: true } }],
+      });
+      expect(result.document.info).not.toHaveProperty('protocolVersion');
+      expect(legacyDocument.info).toHaveProperty('protocolVersion', '2025-11-25');
+    });
+
+    it('rejects a legacy source that does not satisfy the frozen schema', async () => {
+      const invalid = {
+        ...legacyDocument,
+        info: { ...legacyDocument.info, name: '' },
+      };
+
+      await expect(migrateMcpDescription07ToDraft4(invalid, 'invalid.json')).rejects.toThrow(
+        /0\.7\.0 validation failed/
+      );
     });
   });
 });

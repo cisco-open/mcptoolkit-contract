@@ -142,37 +142,8 @@ Contains only Platform Identity tools:
 - `platform-identity_listSubscriptions`
 - `platform-identity_updateSubscription`
 
-Includes split metadata:
-```json
-{
-  "x-cisco-metadata": {
-    "version": "0.2.0",
-    "dump": {
-      "splitOperation": {
-        "splitConfig": {
-          "sourceFile": "test-federation-dump.json",
-          "category": "platform-identity",
-          "configFile": "split-config-basic.yaml"
-        },
-        "splitExecution": {
-          "originalCounts": {
-            "tools": 8,
-            "prompts": 0,
-            "resources": 0,
-            "resourceTemplates": 0
-          },
-          "filteredCounts": {
-            "tools": 3,
-            "prompts": 0,
-            "resources": 0,
-            "resourceTemplates": 0
-          }
-        }
-      }
-    }
-  }
-}
-```
+The output preserves document-wide content and any existing extensions from the
+source. It does not generate `x-cisco-metadata` or a split-operation record.
 
 ### `dump-secure-access-networks.json`
 
