@@ -202,10 +202,43 @@ categories:
       });
 
       for (const result of results) {
-        // Phase 1: prompts, resources, resourceTemplates should be empty
-        expect(result.dump.prompts).toEqual([]);
-        expect(result.dump.resources).toEqual([]);
-        expect(result.dump.resourceTemplates).toEqual([]);
+        expect(result.document.prompts).toBeUndefined();
+        expect(result.document.resources).toBeUndefined();
+        expect(result.document.resourceTemplates).toBeUndefined();
+      }
+    });
+
+    it('counts a scoped tool identity once and preserves all selected variants', async () => {
+      const mcpdescPath = resolve(__dirname, '../fixtures/dumps/multi-protocol.mcpdesc.json');
+      const configContent = `
+schemaVersion: https://developer.cisco.com/mcpcontract/schema/dump-split/1.0.0
+info:
+  version: "1.0.0"
+categories:
+  - name: "jobs"
+    outputFile: "jobs"
+    filters:
+      tools:
+        - type: "name-pattern"
+          pattern: "^run_job$"
+`;
+      const configPath = resolve(FIXTURES_DIR, 'split-config-scoped.yaml');
+      const { writeFile, unlink } = await import('node:fs/promises');
+      await writeFile(configPath, configContent);
+
+      try {
+        const { results, stats } = await splitter.split({ mcpdescPath, configPath });
+        const tools = results[0].document.tools as Array<Record<string, unknown>>;
+
+        expect(stats.totalTools).toBe(1);
+        expect(results[0].matchedTools).toBe(1);
+        expect(tools).toHaveLength(2);
+        expect(tools.map((tool) => tool.description)).toEqual([
+          'Legacy behavior',
+          'Modern behavior',
+        ]);
+      } finally {
+        await unlink(configPath);
       }
     });
   });
@@ -248,14 +281,13 @@ categories:
     it('should handle empty tools array', async () => {
       // Create an mcpdesc document with no tools
       const emptyDumpContent = {
-        mcpdesc: "0.7.0",
+        $schema: "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json",
+        mcpdesc: "0.8.0",
         info: {
           name: "empty-server",
-          version: "1.0.0",
-          protocolVersion: "2025-06-18"
+          version: "1.0.0"
         },
-        transports: [{ type: "sse" }],
-        capabilities: {}
+        protocolVersions: ["2025-06-18"]
       };
 
       const tmpMcpdescPath = resolve(FIXTURES_DIR, 'empty-dump.json');

@@ -197,57 +197,18 @@ Summary:
 ✓ Split completed successfully
 ```
 
-### Step 6: Verify Split Metadata
+### Step 6: Verify the Selected Declarations
 
-Each split dump includes complete audit trail metadata about its origin in `x-cisco-metadata.dump.splitOperation`:
+Each output is a valid MCP Description containing the selected tool identities:
 
 ```bash
-jq '.["x-cisco-metadata"].dump.splitOperation' split-dumps/dump-platform-identity.json
+jq '.tools[].name' split-dumps/dump-platform-identity.json
 ```
 
-**Output**:
-```json
-{
-  "toolName": "mcpcontract",
-  "toolVersion": "0.14.1",
-  "createdAt": "2025-12-15T20:41:32.771Z",
-  "splitConfig": {
-    "sourceFile": "federation-dump.json",
-    "category": "platform-identity",
-    "configFile": "split-config.yaml"
-  },
-  "splitExecution": {
-    "originalCounts": {
-      "tools": 150,
-      "prompts": 0,
-      "resources": 0,
-      "resourceTemplates": 0
-    },
-    "filteredCounts": {
-      "tools": 45,
-      "prompts": 0,
-      "resources": 0,
-      "resourceTemplates": 0
-    },
-    "filterRules": [
-      {
-        "capability": "tools",
-        "type": "name-pattern",
-        "pattern": "^platform-identity_"
-      }
-    ]
-  }
-}
-```
-
-This metadata provides:
-- **Tool identification**: Which tool performed the split and when
-- **Configuration**: Source dump, category, config file, and schema version
-- **Execution details**: What was filtered, resulting counts, and exact filter rules applied
-- **Complete audit trail**: Two-level provenance (original dump tool → split tool)
-- **Original metadata preserved**: Original description, toolName, toolVersion, and dumpExecution fields remain unchanged
-
-The split metadata lives in `dumpExecution` (not a separate field) because schema allows `additionalProperties: true`, making split outputs immediately valid without schema changes.
+Selection uses normative tool identity (`name`). If one identity has multiple
+protocol-scoped variants, all variants are retained. Existing document-wide
+content and extensions are preserved, but `split` does not generate
+`x-cisco-metadata` or modify an existing extension.
 
 ## Advanced Usage
 

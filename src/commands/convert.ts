@@ -14,6 +14,7 @@ import { formatJSON, formatYAML } from '../lib/formatters.js';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
+  migrateMcpDescription07ToRc1,
   isMcpDescDocument,
   isContractDump,
   type McpDescDocument,
@@ -36,7 +37,7 @@ export function convertCommand(): Command {
   const cmd = new Command('convert');
 
   cmd
-    .description('[DEPRECATED] Convert between the legacy capability-dump format and mcpdesc')
+    .description('[DEPRECATED] Migrate legacy capability dumps or mcpdesc 0.7.0 to current mcpdesc')
     .argument('[input]', 'Input file path (dump or mcpdesc, JSON or YAML)')
     .option('--to-format <format>', 'Target format: dump or mcpdesc (auto-detected from input if omitted)')
     .option('-o, --output <path>', 'Output file path (default: stdout)')
@@ -77,7 +78,7 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   // Deprecation notice (the legacy capability-dump format is being retired)
   console.error(
     '⚠\uFE0F  `mcpcontract convert` is deprecated and will be removed in a future release.\n' +
-    '   It remains available to migrate older capability dumps to the MCP description (mcpdesc) format.'
+    '   It remains available to migrate legacy capability dumps and mcpdesc 0.7.0 files.'
   );
 
   // Read and parse input
@@ -102,17 +103,19 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   }
 
   const detectedInput = inputIsMcpDesc ? 'mcpdesc' : 'dump';
+  const inputIsLegacyMcpDesc = inputIsMcpDesc && data.mcpdesc === '0.7.0';
 
   // Determine target format
   let targetFormat: TargetFormat;
   if (options.toFormat) {
     targetFormat = options.toFormat;
   } else {
-    // Auto: convert to the opposite format
-    targetFormat = detectedInput === 'mcpdesc' ? 'dump' : 'mcpdesc';
+    targetFormat = inputIsLegacyMcpDesc
+      ? 'mcpdesc'
+      : detectedInput === 'mcpdesc' ? 'dump' : 'mcpdesc';
   }
 
-  if (detectedInput === targetFormat) {
+  if (detectedInput === targetFormat && !inputIsLegacyMcpDesc) {
     throw new Error(`Input is already in ${targetFormat} format. Use --to-format to specify a different target.`);
   }
 
@@ -124,8 +127,23 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   // Convert
   let result: unknown;
   if (targetFormat === 'mcpdesc') {
-    const dump = data as unknown as ContractDump;
-    result = contractDumpToMcpDescription(dump);
+    if (inputIsLegacyMcpDesc) {
+      const migration = await migrateMcpDescription07ToRc1(
+        data as unknown as McpDescDocument,
+        inputPath
+      );
+      result = migration.document;
+      if (!options.quiet) {
+        for (const diagnostic of migration.diagnostics) {
+          if (diagnostic.severity === 'warning') {
+            console.error(`⚠ ${diagnostic.code}: ${diagnostic.message}`);
+          }
+        }
+      }
+    } else {
+      const dump = data as unknown as ContractDump;
+      result = contractDumpToMcpDescription(dump);
+    }
   } else {
     const doc = data as unknown as McpDescDocument;
     const dump = mcpDescriptionToContractDump(doc);

@@ -20,6 +20,7 @@ export interface DocumentCommandOptions {
   quiet?: boolean;
   showExtractionDetails?: boolean;
   markdownEngine?: MarkdownEngine;
+  protocolVersion?: string;
 }
 
 export function createDocumentCommand(): Command {
@@ -30,6 +31,7 @@ export function createDocumentCommand(): Command {
     .argument('[file]', 'Path to MCP description file')
     .option('-t, --template <name>', 'Template: mcpdesc-documentation, reference-documentation, card-view (or path to .hbs file)')
     .option('-r, --rendering <mode>', 'Rendering mode: full (detailed) or reference (concise)', 'full')
+    .option('--protocol-version <version>', 'Render one effective MCP protocol view')
     .option('-o, --output <path>', 'Output file path (prints to stdout if not specified)')
     .option('--type <type>', 'Input file type: mcpdesc, dump (legacy), or auto (auto-detect)', 'auto')
     .option('--list', 'List available built-in templates')
@@ -136,7 +138,7 @@ async function documentCommand(file: string | undefined, options: DocumentComman
     if (fileType === 'mcpdesc' || fileType === 'dump') {
       output = await renderer.renderMcpDescription(file, templateToUse, {
         showDumpInformation: options.showExtractionDetails || false,
-      });
+      }, options.protocolVersion);
     } else {
       throw new Error(`Invalid file type: ${fileType}`);
     }

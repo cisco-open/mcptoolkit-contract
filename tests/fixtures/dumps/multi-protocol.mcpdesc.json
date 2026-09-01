@@ -1,0 +1,34 @@
+{
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json",
+  "mcpdesc": "0.8.0",
+  "info": {
+    "name": "multi-protocol-test",
+    "version": "1.0.0"
+  },
+  "protocolVersions": [
+    "2025-11-25",
+    "2026-07-28"
+  ],
+  "tools": [
+    {
+      "name": "run_job",
+      "description": "Legacy behavior",
+      "protocolVersions": [
+        "2025-11-25"
+      ],
+      "inputSchema": {
+        "type": "object"
+      }
+    },
+    {
+      "name": "run_job",
+      "description": "Modern behavior",
+      "protocolVersions": [
+        "2026-07-28"
+      ],
+      "inputSchema": {
+        "type": "object"
+      }
+    }
+  ]
+}

@@ -11,7 +11,12 @@ import { readFile } from 'fs/promises';
 import { parse as yamlParse } from 'yaml';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { isMcpDescDocument, isContractDump } from './mcpdesc-converter.js';
+import {
+  isMcpDescDocument,
+  isContractDump,
+  projectMcpDescriptionView,
+  type McpDescDocument,
+} from './mcpdesc-converter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -541,7 +546,12 @@ export class Renderer {
    * Templates receive mcpdesc-native data. Legacy ContractDump inputs are
    * converted to mcpdesc automatically.
    */
-  async renderMcpDescription(filePath: string, templateName?: string, extraContext?: Record<string, any>): Promise<string> {
+  async renderMcpDescription(
+    filePath: string,
+    templateName?: string,
+    extraContext?: Record<string, any>,
+    protocolVersion?: string
+  ): Promise<string> {
     const fileContent = await readFile(filePath, 'utf-8');
     
     // Auto-detect format and parse
@@ -564,6 +574,13 @@ export class Renderer {
         );
       }
       throw new Error('Input is not an MCP description (mcpdesc) document');
+    }
+
+    if (data.mcpdesc === '0.8.0') {
+      data = projectMcpDescriptionView(
+        data as McpDescDocument,
+        protocolVersion
+      );
     }
 
     // Add _meta convenience alias for x-cisco-metadata (avoids bracket notation in templates)

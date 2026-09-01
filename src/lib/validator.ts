@@ -11,6 +11,11 @@ import { parse as yamlParse } from 'yaml';
 import AjvModule from 'ajv';
 import type { ValidateFunction, ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
+import {
+  supportedSpecifications,
+  validateMcpDescription,
+  type McpDescriptionSpecification,
+} from '@mcpdesc/validator';
 
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
@@ -54,6 +59,32 @@ export interface ValidationIssue {
   message: string;
   keyword?: string;
   params?: Record<string, unknown>;
+}
+
+function diagnosticPath(path: readonly (number | string)[]): string {
+  if (path.length === 0) return '/';
+  return `/${path
+    .map((segment) => String(segment).replace(/~/g, '~0').replace(/\//g, '~1'))
+    .join('/')}`;
+}
+
+function extractSpecification(data: unknown): McpDescriptionSpecification {
+  const document = data as Record<string, unknown>;
+  const schema = document.$schema;
+  if (typeof schema !== 'string') {
+    throw new Error(
+      'MCP Description 0.8.0 requires an exact supported $schema URI to identify its immutable specification snapshot'
+    );
+  }
+
+  const match = schema.match(
+    /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0-(?:draft|rc)\.\d+)\.json$/
+  );
+  const specification = match?.[1];
+  if (!specification || !supportedSpecifications.includes(specification as McpDescriptionSpecification)) {
+    throw new Error(`Unsupported MCP Description specification: ${schema}`);
+  }
+  return specification as McpDescriptionSpecification;
 }
 
 export class Validator {
@@ -193,24 +224,48 @@ export class Validator {
   ): Promise<ValidationResult> {
     // Auto-detect schema version from data
     const detectedVersion = this.extractSchemaVersion(data, schemaType);
+
+    if ((schemaType === 'mcpdesc' || schemaType === 'mcp-description') && detectedVersion === '0.8.0') {
+      const specification = extractSpecification(data);
+      const validation = validateMcpDescription(data, { specification });
+      const errors: ValidationIssue[] = [];
+      const warnings: ValidationIssue[] = [];
+
+      for (const diagnostic of validation.diagnostics) {
+        const issue: ValidationIssue = {
+          path: diagnosticPath(diagnostic.path),
+          message: diagnostic.message,
+          keyword: diagnostic.code,
+        };
+        if (diagnostic.severity === 'error') errors.push(issue);
+        else warnings.push(issue);
+      }
+
+      return {
+        valid: validation.valid,
+        file: fileName,
+        schemaType,
+        schemaVersion: specification,
+        errors,
+        warnings,
+      };
+    }
+
+    if (
+      (schemaType === 'mcpdesc' || schemaType === 'mcp-description') &&
+      detectedVersion &&
+      detectedVersion !== '0.7.0'
+    ) {
+      throw new Error(`Unsupported MCP Description version: ${detectedVersion}`);
+    }
+
     let usedVersion: string | undefined;
-    let versionFallback = false;
 
     // Try to load version-specific schema
     let validate: ValidateFunction;
     if (detectedVersion) {
-      try {
-        validate = await this.loadSchema(schemaType, detectedVersion);
-        usedVersion = detectedVersion;
-      } catch (err) {
-        // Version not found, fall back to latest
-        console.warn(`⚠️  Schema version ${detectedVersion} not found, using latest`);
-        validate = await this.loadSchema(schemaType);
-        versionFallback = true;
-        const latest = await this.getLatestVersions();
-        const dir = this.getSchemaDirectory(schemaType);
-        usedVersion = latest[dir] || latest[schemaType];
-      }
+      validate = await this.loadSchema(schemaType, detectedVersion);
+      usedVersion = detectedVersion;
     } else {
       // No version detected, use latest
       validate = await this.loadSchema(schemaType);
@@ -232,14 +287,6 @@ export class Validator {
 
     // Perform semantic validation
     const warnings = this.performSemanticValidation(data, schemaType);
-
-    // Add warning if version fallback occurred
-    if (versionFallback && detectedVersion) {
-      warnings.unshift({
-        path: '/version',
-        message: `File declares schema version ${detectedVersion} which is not available. Validated against ${usedVersion} instead. Consider regenerating with current CLI.`,
-      });
-    }
 
     return {
       valid,

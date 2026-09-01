@@ -16,6 +16,7 @@ export const diffCommand = new Command('diff')
   .description('Generate a structural diff between two MCP descriptions')
   .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
   .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
+  .option('--protocol-version <version>', 'Compare one effective MCP protocol view')
   .option('--output <file>', 'Structural diff output file (default: stdout)')
   .option('--detect-renames', 'Use similarity scoring to detect renames (not yet implemented)', false)
   .option('--quiet', 'Suppress informational messages', false)
@@ -28,6 +29,7 @@ ${helper.commandDescription(cmd)}
 Options:
   --from <file>                 Source version (MCP description, JSON/YAML) [required]
   --to <file>                   Target version (MCP description, JSON/YAML) [required]
+  --protocol-version <version>  Compare one effective MCP protocol view
   --output <file>               Structural diff output file (default: stdout)
   --detect-renames              Use similarity scoring to detect renames (default: false)
   --quiet                       Suppress informational messages (default: false)
@@ -49,7 +51,7 @@ EXAMPLES:
   })
   .action(async (options) => {
     try {
-      const { from: fromFile, to: toFile, output, detectRenames, quiet } = options;
+      const { from: fromFile, to: toFile, protocolVersion, output, detectRenames, quiet } = options;
 
       if (!quiet) {
         console.error(`🔍 Comparing ${fromFile} → ${toFile}...`);
@@ -106,8 +108,8 @@ EXAMPLES:
           process.exit(2);
         }
       }
-      fromData = parseAsContractDump(fromData);
-      toData = parseAsContractDump(toData);
+      fromData = parseAsContractDump(fromData, protocolVersion);
+      toData = parseAsContractDump(toData, protocolVersion);
 
       // Create differ and compare
       const differ = new Differ({ detectRenames });

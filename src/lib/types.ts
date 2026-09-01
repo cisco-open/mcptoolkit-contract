@@ -6,6 +6,8 @@
  * Type definitions for mcpcontract tool
  */
 
+import type { McpDescriptionDocument } from '@mcpdesc/core';
+
 // ============================================================================
 // Configuration Types
 // ============================================================================
@@ -341,6 +343,7 @@ export interface CLIOptions {
   skipCorsCheck?: boolean; // Skip CORS detection (for dump command)
   corsOrigin?: string;     // Origin header for CORS preflight testing (default: http://localhost:3000)
   pageSize?: number;       // Hint for pagination page size (for testing/discovery)
+  protocol?: 'legacy' | 'auto' | '2026-07-28'; // MCP protocol negotiation mode
   info?: string;           // Path to enrichment info file (for dump command)
 }
 
@@ -429,6 +432,7 @@ export interface SplitResult {
   outputFile: string;
   matchedTools: number;
   dump: ContractDump;
+  document: McpDescriptionDocument;
 }
 
 export interface SplitStats {

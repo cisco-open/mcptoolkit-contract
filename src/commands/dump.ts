@@ -16,12 +16,12 @@ import { ContractDumper } from '../lib/dumper.js';
 import { formatJSON, formatYAML, formatMarkdown } from '../lib/formatters.js';
 import {
   ConfigurationError,
-  UnsupportedProtocolVersionError,
   MCPProtocolError,
   type CLIOptions
 } from '../lib/types.js';
 import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } from '../lib/mcpdesc-converter.js';
 import { parse as yamlParse } from 'yaml';
+import { validateMcpDescription } from '@mcpdesc/validator';
 
 // ANSI color codes
 const GREEN = '\x1b[32m';
@@ -49,13 +49,7 @@ function verboseLog(message: string, options: CLIOptions): void {
  * Error handler
  */
 function handleError(error: unknown): void {
-  if (error instanceof UnsupportedProtocolVersionError) {
-    console.error('\n❌ ERROR: Unsupported MCP Protocol Version');
-    console.error(`   Received: ${error.receivedVersion}`);
-    console.error(`   Expected: ${error.expectedVersion}`);
-    console.error('\n   This tool only supports MCP protocol version 2025-06-18.');
-    console.error('   The server is using a different protocol version.');
-  } else if (error instanceof ConfigurationError) {
+  if (error instanceof ConfigurationError) {
     console.error('\n❌ Configuration Error:');
     console.error(`   ${error.message}`);
   } else if (error instanceof MCPProtocolError) {
@@ -93,6 +87,15 @@ function parseNumber(value: string): number {
     throw new ConfigurationError(`Expected a number value but received: ${value}`);
   }
   return parsed;
+}
+
+function parseProtocol(value: string): CLIOptions['protocol'] {
+  if (value === 'legacy' || value === 'auto' || value === '2026-07-28') {
+    return value;
+  }
+  throw new ConfigurationError(
+    `Invalid protocol mode: ${value}. Expected legacy, auto, or 2026-07-28`
+  );
 }
 
 function logImplicitAuthDefault(options: CLIOptions): void {
@@ -227,6 +230,19 @@ async function runDump(options: CLIOptions): Promise<void> {
     log('✓ Enrichment applied', options);
   }
 
+  const validation = validateMcpDescription(mcpdesc, {
+    specification: '0.8.0-rc.1',
+  });
+  if (!validation.valid) {
+    const diagnostics = validation.diagnostics
+      .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
+      .join('\n');
+    throw new MCPProtocolError(
+      `Captured server description is not valid MCP Description 0.8.0 RC.1:\n${diagnostics}`,
+      'INVALID_MCP_DESCRIPTION'
+    );
+  }
+
   // Format output
   let output: string;
   const format = options.format || 'json';
@@ -287,6 +303,7 @@ export function dumpCommand(): Command {
     .option('--compact', 'Compact JSON output (single line)', false)
     .option('-q, --quiet', 'Suppress progress messages', false)
     .option('-v, --verbose', 'Show detailed debugging information', false)
+    .option('--protocol <mode>', 'Protocol mode: legacy, auto, or 2026-07-28', parseProtocol, 'auto')
     .option('--auth <mode>', 'Authentication mode for HTTP/SSE: none, auto, or oauth (omitted => none)', 'none')
     .option('--oauth-scope <scope>', 'Additional OAuth scope (repeatable)', collectScopes, [])
     .option('--oauth-resource <uri>', 'Override OAuth resource value discovered from server')
@@ -353,6 +370,10 @@ OUTPUT OPTIONS:
                                 license, security, and other metadata to output
   -q, --quiet                   Suppress progress messages (default: false)
   -v, --verbose                 Show detailed debugging information (default: false)
+
+PROTOCOL OPTIONS:
+  --protocol <mode>             MCP protocol mode: "legacy", "auto", or "2026-07-28"
+                                (default: "auto")
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AUTHENTICATION OPTIONS (HTTP/SSE transports):

@@ -37,6 +37,7 @@ export class ContractDumper {
 
       // Initialize and verify protocol version
       const serverInfo = await this.client.initialize();
+      const protocolEra = this.client.getProtocolEra();
 
       // Get client capabilities
       const clientCapabilities = this.client.getClientCapabilities();
@@ -54,8 +55,10 @@ export class ContractDumper {
         corsSupport = await this.client.detectCorsSupport();
       }
 
-      // Test ping support and measure latency
-      const pingResult = await this.client.testPing();
+      // Ping is not part of the modern protocol era.
+      const pingResult = protocolEra === 'legacy'
+        ? await this.client.testPing()
+        : undefined;
 
       // Extract all capabilities and versions in parallel for efficiency
       // Use complete methods to get ALL items and track pagination
@@ -96,9 +99,11 @@ export class ContractDumper {
         dumpExecution.corsSupport = corsSupport;
       }
       // Include ping support test results
-      dumpExecution.pingSupported = pingResult.supported;
-      if (pingResult.latencyMs !== undefined) {
-        dumpExecution.pingLatencyMs = pingResult.latencyMs;
+      if (pingResult) {
+        dumpExecution.pingSupported = pingResult.supported;
+        if (pingResult.latencyMs !== undefined) {
+          dumpExecution.pingLatencyMs = pingResult.latencyMs;
+        }
       }
       
       // Include pagination detection results

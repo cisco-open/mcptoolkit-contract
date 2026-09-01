@@ -89,6 +89,12 @@ describe('Bash Completion', () => {
     expect(script).toContain('"streamable-http sse stdio"');
   });
 
+  it('should support effective protocol view completion', () => {
+    const script = generateCompletion();
+    expect(script).toContain('--protocol-version)');
+    expect(script).toContain('"2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"');
+  });
+
   it('should support enum value completion for --format', () => {
     const script = generateCompletion();
     expect(script).toContain('--format|-f)');
@@ -145,6 +151,7 @@ describe('Zsh Completion', () => {
     expect(script).toContain('_arguments');
     expect(script).toContain("'(-c --config)'{-c,--config}");
     expect(script).toContain("'(-o --output)'{-o,--output}");
+    expect(script).toContain("'--protocol-version[Effective MCP protocol view]");
   });
 });
 
@@ -172,6 +179,8 @@ describe('Fish Completion', () => {
     const script = generateCompletion();
     expect(script).toContain('complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s c -l config');
     expect(script).toContain('complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s t -l transport');
+    expect(script).toContain('complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l protocol-version');
+    expect(script).toContain('complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l protocol-version');
   });
 
   it('should include rules subcommand options', () => {

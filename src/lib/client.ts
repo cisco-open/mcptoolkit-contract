@@ -7,10 +7,12 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import {
+  Client,
+  SSEClientTransport,
+  StreamableHTTPClientTransport
+} from '@modelcontextprotocol/client';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { OAuthManager } from './oauth/manager.js';
 import {
   ServerConfig,
@@ -23,14 +25,11 @@ import {
   Root,
   ClientCapabilities,
   MCPProtocolError,
-  UnsupportedProtocolVersionError,
   CLIOptions,
   CorsSupport,
   CorsPreflight,
   PaginationResult
 } from './types.js';
-
-const SUPPORTED_PROTOCOL_VERSION = '2025-06-18';
 
 // Read version from package.json
 const packageJsonPath = new URL('../../package.json', import.meta.url).pathname;
@@ -51,6 +50,9 @@ export class MCPClient {
   constructor(config: ServerConfig, options: CLIOptions = {}) {
     this.config = config;
     this.options = options;
+    const protocolMode = options.protocol === '2026-07-28'
+      ? { pin: '2026-07-28' }
+      : options.protocol || 'auto';
     this.client = new Client(
       {
         name: 'mcpcontract',
@@ -62,6 +64,9 @@ export class MCPClient {
             listChanged: true
           },
           sampling: {}
+        },
+        versionNegotiation: {
+          mode: protocolMode
         }
       }
     );
@@ -306,58 +311,52 @@ export class MCPClient {
         console.error(`[VERBOSE] Server capabilities: ${JSON.stringify(Object.keys(serverCapabilities || {}))}`);
       }
       
-      if (!serverVersion || !serverCapabilities) {
-        throw new MCPProtocolError('Server did not provide required initialization data', 'INITIALIZATION_FAILED');
+      if (!serverCapabilities) {
+        throw new MCPProtocolError('Server did not provide capabilities', 'INITIALIZATION_FAILED');
       }
 
-      // The protocol version is always 2024-11-05 in the current SDK
-      // We need to check if there's a way to get the actual protocol version
-      const protocolVersion = SUPPORTED_PROTOCOL_VERSION;
+      const protocolVersion = this.client.getNegotiatedProtocolVersion();
+
+      if (!protocolVersion) {
+        throw new MCPProtocolError(
+          'Server did not negotiate an MCP protocol version',
+          'INITIALIZATION_FAILED'
+        );
+      }
       
       if (this.options.verbose) {
         console.error(`[VERBOSE] Protocol version: ${protocolVersion}`);
       }
       
-      // Verify protocol version
-      if (protocolVersion !== SUPPORTED_PROTOCOL_VERSION) {
-        throw new UnsupportedProtocolVersionError(
-          protocolVersion,
-          SUPPORTED_PROTOCOL_VERSION
-        );
-      }
-
       // For streamable-http, capture session header from raw response
       if (this.config.transport.type === 'streamable-http') {
         this.captureSessionHeaderName();
       }
 
       const serverInfo: ServerInfo = {
-        name: serverVersion.name,
-        version: serverVersion.version,
+        name: serverVersion?.name || this.config.name,
+        version: serverVersion?.version || 'unknown',
         protocolVersion: protocolVersion,
         capabilities: serverCapabilities as ServerCapabilities,
         instructions: instructions
       };
 
       // Optional MCP Implementation fields (2025-06-18+ / 2025-11-25+)
-      if (serverVersion.title) {
+      if (serverVersion?.title) {
         serverInfo.title = serverVersion.title;
       }
-      if (serverVersion.description) {
+      if (serverVersion?.description) {
         serverInfo.description = serverVersion.description;
       }
-      if (serverVersion.websiteUrl) {
+      if (serverVersion?.websiteUrl) {
         serverInfo.websiteUrl = serverVersion.websiteUrl;
       }
-      if (serverVersion.icons && serverVersion.icons.length > 0) {
+      if (serverVersion?.icons && serverVersion.icons.length > 0) {
         serverInfo.icons = serverVersion.icons;
       }
 
       return serverInfo;
     } catch (error) {
-      if (error instanceof UnsupportedProtocolVersionError) {
-        throw error;
-      }
       throw new MCPProtocolError(
         `Failed to initialize: ${(error as Error).message}`,
         'INITIALIZATION_FAILED',
@@ -406,6 +405,10 @@ export class MCPClient {
    */
   getOptions(): CLIOptions {
     return this.options;
+  }
+
+  getProtocolEra(): 'legacy' | 'modern' | undefined {
+    return this.client.getProtocolEra();
   }
 
   /**

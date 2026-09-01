@@ -1,6 +1,6 @@
 # {{info.name}}
 
-**Server Version:** {{info.version}}{{#if info.protocolVersion}} | **MCP Specifications:** {{info.protocolVersion}}{{/if}}
+**Server Version:** {{info.version}}{{#if protocolVersions}} | **MCP Specifications:** {{join protocolVersions ", "}}{{else}}{{#if info.protocolVersion}} | **MCP Specifications:** {{info.protocolVersion}}{{/if}}{{/if}}
 
 {{#if info.description}}
 {{{info.description}}}

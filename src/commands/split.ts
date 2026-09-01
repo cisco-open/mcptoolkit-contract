@@ -13,8 +13,7 @@ import { stringify as yamlStringify } from 'yaml';
 import { Splitter } from '../lib/splitter.js';
 import { Validator } from '../lib/validator.js';
 import { formatJSON } from '../lib/formatters.js';
-import { contractDumpToMcpDescription } from '../lib/mcpdesc-converter.js';
-import type { ContractDump, SplitResult } from '../lib/types.js';
+import type { SplitResult } from '../lib/types.js';
 
 interface SplitCommandOptions {
   config: string;
@@ -45,16 +44,13 @@ function getOutputFormat(dumpPath: string, options: SplitCommandOptions): 'json'
 
 /**
  * Format output data based on format and pretty options
- * Converts internal ContractDump to mcpdesc format before formatting.
  */
-function formatOutput(data: ContractDump, format: 'json' | 'yaml', pretty: boolean): string {
-  const mcpdesc = contractDumpToMcpDescription(data);
-
+function formatOutput(data: unknown, format: 'json' | 'yaml', pretty: boolean): string {
   if (format === 'yaml') {
-    return yamlStringify(mcpdesc, { indent: 2 });
+    return yamlStringify(data, { indent: 2 });
   }
   
-  return formatJSON(mcpdesc, pretty);
+  return formatJSON(data, pretty);
 }
 
 /**
@@ -70,7 +66,7 @@ async function writeResult(
   const extension = format === 'yaml' ? '.yaml' : '.json';
   const outputPath = join(outputDir, `${result.outputFile}${extension}`);
   
-  const content = formatOutput(result.dump, format, pretty);
+  const content = formatOutput(result.document, format, pretty);
   await writeFile(outputPath, content, 'utf-8');
   
   if (!quiet) {
@@ -162,7 +158,7 @@ export function splitCommand(): Command {
 
   cmd
     .description('Split large MCP description into focused subsets based on filtering rules')
-    .argument('<mcpdesc>', 'Input MCP description or dump file (JSON or YAML)')
+    .argument('<mcpdesc>', 'Input MCP description file (JSON or YAML)')
     .requiredOption('--config <path>', 'Split configuration file (JSON or YAML)')
     .option('--output-dir <path>', 'Output directory for split dumps', '.')
     .option('--format <format>', 'Output format (json or yaml, default: auto-detect from input)')
