@@ -14,7 +14,7 @@ import { formatJSON, formatYAML } from '../lib/formatters.js';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07ToDraft4,
+  migrateMcpDescription07ToRc1,
   isMcpDescDocument,
   isContractDump,
   type McpDescDocument,
@@ -128,7 +128,7 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   let result: unknown;
   if (targetFormat === 'mcpdesc') {
     if (inputIsLegacyMcpDesc) {
-      const migration = await migrateMcpDescription07ToDraft4(
+      const migration = await migrateMcpDescription07ToRc1(
         data as unknown as McpDescDocument,
         inputPath
       );

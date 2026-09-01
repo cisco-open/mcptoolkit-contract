@@ -335,7 +335,7 @@ mcpcontract dump --config mcp.json --protocol 2026-07-28 --output modern.json
 ## What You Get
 
 A dump file containing:
-- **$schema** and **mcpdesc** - Exact Draft 4 schema snapshot and format version
+- **$schema** and **mcpdesc** - Exact RC.1 schema snapshot and format version
 - **info** - Server name, version, and descriptive metadata
 - **protocolVersions** - Negotiated MCP protocol revision
 - **capabilities** - Protocol-scoped server capability declarations
@@ -347,7 +347,7 @@ A dump file containing:
 Example dump.json structure:
 \`\`\`json
 {
-  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json",
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json",
   "mcpdesc": "0.8.0",
   "info": {
     "name": "my-server",

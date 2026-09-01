@@ -41,8 +41,8 @@ The format is versioned independently of the CLI:
 
 - **mcpdesc**: `0.7.0` — `schemas/mcp-description/0.7.0.json`
   (`$id: https://developer.cisco.com/mcp-description/schema/0.7.0`)
-- **v2 emission snapshot**: `0.8.0-draft.4` —
-  `https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json`
+- **v2 emission snapshot**: `0.8.0-rc.1` —
+  `https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json`
 
 `schemas/latest.json` maps each schema type to its current version, and
 `schemas/cli-schema-compatibility.json` records which CLI versions emit which

@@ -25,7 +25,7 @@ import type {
 import {
   isMcpDescDocument,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07ToDraft4,
+  migrateMcpDescription07ToRc1,
   type McpDescDocument,
 } from './mcpdesc-converter.js';
 
@@ -73,7 +73,7 @@ export class Splitter {
 
     let document = parsed.value as unknown as McpDescDocument;
     if (document.mcpdesc === '0.7.0') {
-      document = (await migrateMcpDescription07ToDraft4(document, filePath)).document;
+      document = (await migrateMcpDescription07ToRc1(document, filePath)).document;
     } else if (document.mcpdesc !== '0.8.0') {
       throw new Error(`Unsupported MCP Description version: ${document.mcpdesc}`);
     }
@@ -88,7 +88,7 @@ export class Splitter {
 
   private selectDocument(toolNames: readonly string[]): McpDescriptionDocument {
     const selection = selectMcpDescriptionDeclarations(this.document, {
-      specification: '0.8.0-draft.4',
+      specification: '0.8.0-rc.1',
       selections: { tools: toolNames },
     });
     if (!selection.ok) {

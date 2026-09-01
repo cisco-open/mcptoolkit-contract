@@ -4,13 +4,13 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output targets MCP Description 0.8.0 Draft 4. Legacy v0.7 documents and
+ * New output targets MCP Description 0.8.0 RC.1. Legacy v0.7 documents and
  * x-cisco-metadata remain readable for migration.
  */
 
 import {
-  DRAFT_4_SCHEMA_URI,
-  migrateMcpDescription07ToDraft4 as migrateMcpDescription07ToDraft4Core,
+  RC_1_SCHEMA_URI,
+  migrateMcpDescription07ToRc1 as migrateMcpDescription07ToRc1Core,
   projectEffectiveProtocolView,
   type CoreDiagnostic,
 } from '@mcpdesc/core';
@@ -180,14 +180,14 @@ export interface XCiscoMetadataV1 {
 // ============================================================================
 
 const MCPDESC_VERSION = '0.8.0';
-const MCPDESC_SCHEMA = 'https://mcpdesc.org/schema/mcp-description/0.8.0-draft.4.json';
+const MCPDESC_SCHEMA = RC_1_SCHEMA_URI;
 
 // ============================================================================
 // ContractDump → mcpdesc
 // ============================================================================
 
 /**
- * Convert a captured ContractDump to one observed mcpdesc Draft 4 protocol view.
+ * Convert a captured ContractDump to one observed mcpdesc RC.1 protocol view.
  */
 export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocument {
   const doc: McpDescDocument = {
@@ -464,9 +464,9 @@ export interface McpDescriptionMigrationResult {
 
 /**
  * Validate a legacy MCP Description against its frozen schema, then migrate it
- * to the current Draft 4 snapshot using the shared core semantics.
+ * to the current RC.1 snapshot using the shared core semantics.
  */
-export async function migrateMcpDescription07ToDraft4(
+export async function migrateMcpDescription07ToRc1(
   document: McpDescDocument,
   sourceName: string = 'data'
 ): Promise<McpDescriptionMigrationResult> {
@@ -482,8 +482,8 @@ export async function migrateMcpDescription07ToDraft4(
     throw new Error(`MCP Description 0.7.0 validation failed: ${details}`);
   }
 
-  const migration = migrateMcpDescription07ToDraft4Core(document, {
-    specification: '0.8.0-draft.4',
+  const migration = migrateMcpDescription07ToRc1Core(document, {
+    specification: '0.8.0-rc.1',
     sourceValidated: true,
   });
   if (!migration.ok) {
@@ -528,9 +528,9 @@ export function projectMcpDescriptionView(
   document: McpDescDocument,
   requestedProtocolVersion?: string
 ): McpDescDocument {
-  if (document.$schema !== DRAFT_4_SCHEMA_URI) {
+  if (document.$schema !== RC_1_SCHEMA_URI) {
     throw new Error(
-      `MCP Description 0.8.0 processing requires $schema ${DRAFT_4_SCHEMA_URI}`
+      `MCP Description 0.8.0 processing requires $schema ${RC_1_SCHEMA_URI}`
     );
   }
 
@@ -552,7 +552,7 @@ export function projectMcpDescriptionView(
   }
 
   const projection = projectEffectiveProtocolView(document, {
-    specification: '0.8.0-draft.4',
+    specification: '0.8.0-rc.1',
     protocolVersion: selectedVersion as SupportedProtocolVersion,
   });
   if (!projection.ok) {

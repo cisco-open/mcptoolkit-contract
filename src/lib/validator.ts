@@ -77,9 +77,9 @@ function extractSpecification(data: unknown): McpDescriptionSpecification {
     );
   }
 
-    const match = schema.match(
-      /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0-draft\.\d+)\.json$/
-    );
+  const match = schema.match(
+    /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0-(?:draft|rc)\.\d+)\.json$/
+  );
   const specification = match?.[1];
   if (!specification || !supportedSpecifications.includes(specification as McpDescriptionSpecification)) {
     throw new Error(`Unsupported MCP Description specification: ${schema}`);

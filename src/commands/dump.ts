@@ -231,14 +231,14 @@ async function runDump(options: CLIOptions): Promise<void> {
   }
 
   const validation = validateMcpDescription(mcpdesc, {
-    specification: '0.8.0-draft.4',
+    specification: '0.8.0-rc.1',
   });
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
       .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
       .join('\n');
     throw new MCPProtocolError(
-      `Captured server description is not valid MCP Description 0.8.0 Draft 4:\n${diagnostics}`,
+      `Captured server description is not valid MCP Description 0.8.0 RC.1:\n${diagnostics}`,
       'INVALID_MCP_DESCRIPTION'
     );
   }

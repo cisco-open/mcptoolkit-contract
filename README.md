@@ -85,7 +85,7 @@ text, guides, examples, governance, and version history live under
 - **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
 - **Current stable schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
 
-The v2 CLI emits only MCP Description `0.8.0-draft.4`, using the exact immutable
+The v2 CLI emits only MCP Description `0.8.0-rc.1`, using the exact immutable
 schema URI. It retains v0.7 validation and migration support. New dumps do not
 include `x-cisco-metadata`.
 
