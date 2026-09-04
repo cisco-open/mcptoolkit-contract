@@ -261,6 +261,12 @@ mcpcontract dump --config mcp.json --output dump.json
 
 ## Common Patterns
 
+### Interactive Setup
+\`\`\`bash
+# Running without connection options also starts the wizard
+mcpcontract dump --wizard
+\`\`\`
+
 ### From MCP Config File (Recommended)
 \`\`\`bash
 # Using standard MCP configuration file
@@ -284,6 +290,15 @@ mcpcontract dump \\
   --transport streamable-http \\
   --url https://api.example.com/mcp \\
   -H "Authorization: Bearer $TOKEN" \\
+  --output dump.json
+\`\`\`
+
+### HTTP Transport with OAuth Discovery
+\`\`\`bash
+mcpcontract dump \\
+  --transport streamable-http \\
+  --url https://api.example.com/mcp \\
+  --auth auto \\
   --output dump.json
 \`\`\`
 
@@ -314,28 +329,57 @@ mcpcontract dump --config mcp.json --protocol legacy --output legacy.json
 mcpcontract dump --config mcp.json --protocol 2026-07-28 --output modern.json
 \`\`\`
 
-## Key Parameters
 
-### Required (choose one approach)
+## Parameters
+
+### Connection
+- \`--wizard\` - Launch guided setup; also starts when no connection options are supplied
 - \`--config <file>\` - MCP server configuration file (recommended)
-- \`--server-name <name>\` + \`--transport\` - Direct connection
+- \`--mcp-server <name>\` - Select one server when a config defines multiple servers
+- \`--server-name <name>\` - Override the name inferred from the URL or command
+- \`--transport <type>\` - \`streamable-http\` (or \`http\`), \`sse\`, or \`stdio\`
+- \`--url <url>\` - Server endpoint for streamable-http or SSE
+- \`--header <header>\` - HTTP header, repeatable, in \`Key: Value\` format
+- \`--command <cmd>\` - Server command for stdio
+- \`--args <args...>\` - Server arguments for stdio
+- \`--env <vars>\` - Stdio environment variables in \`KEY=VALUE,KEY2=VALUE2\` format
 
-### Optional
+Choose either \`--config\` (with \`--mcp-server\` when needed) or direct transport options. A direct network connection requires \`--transport\` and \`--url\`; stdio requires \`--transport stdio\` and \`--command\`.
+
+### Output and Diagnostics
 - \`--output <file>\` - Output file (default: stdout)
-- \`--format <type>\` - Output format: json, yaml, markdown (default: json)
-- \`--quiet\` - Suppress progress messages
-- \`--protocol <mode>\` - Negotiation mode: legacy, auto, or 2026-07-28 (default: auto)
-- \`-H, --header <header>\` - HTTP header for streamable-http/sse (repeatable, format: "Key: Value")
-- \`--command <cmd>\` - Server command (for stdio transport)
-- \`--args <args>\` - Server arguments (for stdio transport)
-- \`--url <url>\` - Server URL (for streamable-http/sse transport)
-- \`--env <vars>\` - Environment variables (for stdio transport, format: "KEY=VALUE,KEY2=VALUE2")
-- \`--oauth-callback-url <url>\` - Exact OAuth redirect URI; default loopback is \`http://127.0.0.1:6274/oauth/callback\`
+- \`--format <type>\` - json, yaml, or markdown (default: json)
+- \`--compact\` - Emit single-line JSON
+- \`--info <file>\` - Add contact, license, security, and other metadata from JSON/YAML
+- \`--quiet\` - Suppress progress messages on stderr
+- \`--verbose\` - Show detailed connection diagnostics
+- \`--protocol <mode>\` - legacy, auto, or 2026-07-28 (default: auto)
+- \`--skip-cors-check\` - Skip CORS detection for network transports
+- \`--cors-origin <origin>\` - Origin used for CORS preflight (default: \`http://localhost:3000\`)
+- \`--page-size <number>\` - Send a page-size hint to exercise pagination; servers may ignore it
+
+### OAuth
+- \`--auth none\` - Do not attempt authentication (default)
+- \`--auth auto\` - Probe OAuth metadata and fall back to unauthenticated access when unavailable
+- \`--auth oauth\` - Require OAuth discovery and authentication
+- \`--oauth-scope <scope>\` - Request an additional scope (repeatable)
+- \`--oauth-resource <uri>\` - Override the discovered resource parameter
+- \`--oauth-callback-port <port>\` - Local callback listener port (default: 6274)
+- \`--oauth-callback-url <url>\` - Exact redirect URI; non-loopback URLs must use HTTPS
+- \`--oauth-client-id <id>\` - Use a pre-registered client instead of dynamic registration
+- \`--oauth-client-secret <secret>\` - Authenticate a confidential pre-registered client
+
+OAuth requires browser interaction. The default redirect is \`http://127.0.0.1:6274/oauth/callback\`. If the implicit port is busy, dump retries a random loopback port up to three times. Providers requiring an exact redirect URI may need \`--oauth-callback-url\`; pair it with \`--oauth-callback-port\` when a tunnel forwards to a different local port.
+
+### Diagnostic Behavior
+- CORS detection runs for network transports by default. It checks preflight handling, CORS headers, and session-header exposure, then reports whether the server appears usable from a browser-based MCP client.
+- \`--cors-origin\` changes the Origin header used by the preflight check; \`--skip-cors-check\` disables the check.
+- \`--page-size\` sends a small page-size hint to exercise exhaustive pagination. The server may ignore the hint.
 
 ## What You Get
 
 A dump file containing:
-- **$schema** and **mcpdesc** - Exact RC.1 schema snapshot and format version
+- **$schema** and **mcpdesc** - Exact RC.2 schema snapshot and format version
 - **info** - Server name, version, and descriptive metadata
 - **protocolVersions** - Negotiated MCP protocol revision
 - **capabilities** - Protocol-scoped server capability declarations
@@ -347,7 +391,7 @@ A dump file containing:
 Example dump.json structure:
 \`\`\`json
 {
-  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json",
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json",
   "mcpdesc": "0.8.0",
   "info": {
     "name": "my-server",

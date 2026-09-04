@@ -70,13 +70,13 @@ describe('mcpdesc-converter', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('emits a valid RC.1 observed protocol view without vendor metadata', () => {
+    it('emits a valid RC.2 observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
       dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
 
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json',
         mcpdesc: '0.8.0',
         protocolVersions: ['2025-06-18'],
         instructions: 'Use tool_a for test operations.',
@@ -86,7 +86,7 @@ describe('mcpdesc-converter', () => {
       expect(doc).not.toHaveProperty('x-cisco-metadata');
 
       const validation = validateMcpDescription(doc, {
-        specification: '0.8.0-rc.1',
+        specification: '0.8.0-rc.2',
       });
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);

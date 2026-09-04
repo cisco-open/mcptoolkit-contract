@@ -187,7 +187,7 @@ async function runDump(options: CLIOptions): Promise<void> {
     const headerName = dump.dumpDetails.dumpExecution.sessionIdHeader;
     verboseLog(`Session ID header: ${headerName || 'not detected'}`, options);
   }
-  
+
   // Show CORS support info
   if (dump.dumpDetails.dumpExecution.corsSupport) {
     const cors = dump.dumpDetails.dumpExecution.corsSupport;
@@ -231,16 +231,23 @@ async function runDump(options: CLIOptions): Promise<void> {
   }
 
   const validation = validateMcpDescription(mcpdesc, {
-    specification: '0.8.0-rc.1',
+    specification: '0.8.0-rc.2',
   });
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
       .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
       .join('\n');
     throw new MCPProtocolError(
-      `Captured server description is not valid MCP Description 0.8.0 RC.1:\n${diagnostics}`,
+      `Captured server description is not valid MCP Description 0.8.0 RC.2:\n${diagnostics}`,
       'INVALID_MCP_DESCRIPTION'
     );
+  }
+  for (const diagnostic of validation.diagnostics) {
+    if (diagnostic.severity === 'warning') {
+      console.error(
+        `Warning [${diagnostic.code}] at ${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`
+      );
+    }
   }
 
   // Format output
@@ -287,7 +294,6 @@ export function dumpCommand(): Command {
   
   cmd
     .description('Extract capabilities from a live MCP server')
-    .addHelpText('before', '\n💡 Tip: Run "mcpcontract dump" (no args) or "mcpcontract dump --wizard" for interactive mode\n')
     .option('-w, --wizard', 'Launch interactive wizard mode')
     .option('-c, --config <path>', 'Path to MCP server config file (JSON/YAML)')
     .option('-s, --mcp-server <name>', 'Select specific server (only required when multiple servers defined)')
@@ -321,172 +327,50 @@ export function dumpCommand(): Command {
 
 ${helper.commandDescription(cmd)}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTERACTIVE MODE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  -w, --wizard                  Launch interactive wizard mode (guided setup)
+QUICK START
+  $ mcpcontract dump
+  $ mcpcontract dump --config mcp.json -o dump.json
+  $ mcpcontract dump --transport streamable-http --url https://api.example.com/mcp
+  $ mcpcontract dump --transport stdio --command npx --args -y @modelcontextprotocol/server-everything
 
-There are two methods to configure the MCP server connection:
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-METHOD 1: CONFIG FILE (Recommended):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONNECTION
+  -w, --wizard                  Launch the interactive setup (also used when no connection is given)
   -c, --config <path>           Path to MCP server config file (JSON/YAML)
-  -s, --mcp-server <name>       Select specific server (only required when
-                                multiple servers are defined in config file)
+  -s, --mcp-server <name>       Select a server when the config defines multiple servers
+  -n, --server-name <name>      Override the inferred server name
+  -t, --transport <type>        streamable-http (or http), sse, or stdio
+  -u, --url <url>               Server URL for streamable-http or SSE
+  -H, --header <header>         HTTP header, repeatable ("Key: Value")
+  --command <command>           Command to execute for stdio
+  --args <args...>              Command arguments for stdio
+  --env <env>                   Environment variables for stdio ("KEY=VALUE,KEY2=VALUE2")
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-METHOD 2A: COMMAND LINE - HTTP Transport:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  -n, --server-name <name>      Server name (optional, defaults to hostname from URL)
-  -t, --transport <type>        Transport type: "streamable-http" (or "http") (required)
-  -u, --url <url>               Server URL (required)
-  -H, --header <header>         HTTP header (repeatable, format: "Key: Value")
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-METHOD 2B: COMMAND LINE - SSE Transport:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  -n, --server-name <name>      Server name (optional, defaults to hostname from URL)
-  -t, --transport <type>        Transport type: "sse" (required)
-  -u, --url <url>               Server SSE endpoint URL (required)
-  -H, --header <header>         HTTP header (repeatable, format: "Key: Value")
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-METHOD 2C: COMMAND LINE - STDIO Transport:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  -n, --server-name <name>      Server name (optional, defaults to command name)
-  -t, --transport <type>        Transport type: "stdio" (required)
-  --command <command>           Command to execute (required)
-  --args <args...>              Command arguments (optional)
-  --env <env>                   Environment variables (optional, format: "KEY=VALUE,KEY2=VALUE2")
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OUTPUT OPTIONS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT
   -o, --output <path>           Output file path (default: stdout)
   -f, --format <format>         Output format: json, yaml, or markdown (default: "json")
-  --compact                     Compact JSON output (default: pretty-printed)
-  -i, --info <path>             Enrichment info file (JSON/YAML) — adds contact,
-                                license, security, and other metadata to output
-  -q, --quiet                   Suppress progress messages (default: false)
-  -v, --verbose                 Show detailed debugging information (default: false)
+  --compact                     Emit compact JSON
+  -i, --info <path>             Enrich output from a JSON/YAML metadata file
+  -q, --quiet                   Suppress progress messages
+  -v, --verbose                 Show detailed diagnostics
 
-PROTOCOL OPTIONS:
-  --protocol <mode>             MCP protocol mode: "legacy", "auto", or "2026-07-28"
-                                (default: "auto")
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AUTHENTICATION OPTIONS (HTTP/SSE transports):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --auth <mode>                 Authentication mode for HTTP/SSE: "none", "auto", or "oauth"
-                                If omitted, dump does not attempt authentication.
-                                Use "auto" to probe for OAuth discovery metadata first.
+PROTOCOL AND AUTHENTICATION
+  --protocol <mode>             legacy, auto, or 2026-07-28 (default: "auto")
+  --auth <mode>                 none, auto, or oauth (default: "none")
   --oauth-scope <scope>         Request additional OAuth scope (repeatable)
   --oauth-resource <uri>        Override discovered OAuth resource parameter
-  --oauth-callback-port <port>  Bind OAuth callback server to a specific port (default: 6274)
+  --oauth-callback-port <port>  Local OAuth callback port (default: 6274)
   --oauth-callback-url <url>    Override the full OAuth redirect URI
-                                (e.g. https://tunnel.example.com/oauth/callback for ngrok/hosted flows;
-                                non-loopback URLs must use HTTPS; pair with --oauth-callback-port
-                                to specify which local port the tunnel forwards to)
-  --oauth-client-id <id>        Pre-registered OAuth client ID (overrides default)
-  --oauth-client-secret <secret> Pre-registered OAuth client secret (for confidential clients)
-  
-  Note: OAuth authentication requires manual browser interaction. The CLI will display
-  an authorization URL that you must copy and paste into your browser. Some OAuth
-  providers (e.g., Figma) require pre-registration - register your application in
-  their developer portal to obtain client credentials.
-  Default loopback callback URI: http://127.0.0.1:6274/oauth/callback
-  If port 6274 is unavailable and you did not explicitly set --oauth-callback-port or
-  --oauth-callback-url, mcpcontract retries with a random local port up to 3 times.
-  If all retries fail, the command exits with an error and asks you to provide an
-  explicit callback URL with --oauth-callback-url.
+  --oauth-client-id <id>        Use a pre-registered OAuth client ID
+  --oauth-client-secret <secret> Use a confidential OAuth client secret
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CORS DETECTION OPTIONS (HTTP/SSE transports only):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --skip-cors-check             Skip CORS support detection (default: false)
-  --cors-origin <origin>        Origin header for CORS preflight testing
-                                (default: "http://localhost:3000")
-
-  Note: CORS detection checks if the server can be used from browser-based
-  MCP clients (like MCP Inspector). It tests:
-  - Session header exposure via Access-Control-Expose-Headers
-  - Preflight OPTIONS request handling
-  - CORS headers configuration
-  Results are included in dump under dumpDetails.dumpExecution.corsSupport
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PAGINATION TESTING OPTIONS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  --page-size <number>          Request specific page size for pagination testing
-                                (hint to server, not guaranteed)
-
-  Note: Forces small page sizes to test pagination behavior. Useful for:
-  - Testing pagination with servers that have few items
-  - Discovering if server supports pagination
-  - Validating exhaustive fetch logic during development
-  - Server may ignore this hint (behavior depends on implementation)
-  Results are included in dump under dumpDetails.dumpExecution.paginationSupport
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HELP:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIAGNOSTICS
+  --skip-cors-check             Skip browser CORS support detection
+  --cors-origin <origin>        Origin used for CORS testing (default: "http://localhost:3000")
+  --page-size <number>          Page-size hint for pagination testing
   -h, --help                    Display help for command
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXAMPLES:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # Method 1: Config file with single server
-  $ mcpcontract dump --config ~/.config/mcp/servers.json
-
-  # Method 1: Config file with multiple servers (must specify which one)
-  $ mcpcontract dump --config servers.json --mcp-server my-api
-
-  # Method 2a: Command line - HTTP transport (with explicit name)
-  $ mcpcontract dump \\
-      --server-name "My API Server" \\
-      --transport streamable-http \\
-      --url "https://api.example.com/mcp" \\
-      -H "Authorization: Bearer TOKEN"
-
-  # Method 2a: Command line - HTTP transport (name auto-generated from URL)
-  $ mcpcontract dump \\
-      --transport streamable-http \\
-      --url "https://api.example.com/mcp" \\
-      -H "Authorization: Bearer TOKEN" \\
-      -H "X-API-Key: secret123"
-
-  # Method 2b: Command line - SSE transport (Server-Sent Events)
-  $ mcpcontract dump \\
-      --transport sse \\
-      --url "http://localhost:3000/sse"
-
-  # Method 2c: Command line - STDIO transport (name auto-generated from command)
-  $ mcpcontract dump \\
-      --transport stdio \\
-      --command "npx" \\
-      --args "-y" "@modelcontextprotocol/server-everything"
-
-  # Interactive wizard (no arguments or --wizard flag)
-  $ mcpcontract dump
-  $ mcpcontract dump --wizard
-  # Both launch the interactive wizard to guide you through the process
-
-  # Save to file with formatting
-  $ mcpcontract dump --config config.json -o dump.yaml --format yaml
-  
-  # Pipe to other tools (use --quiet to suppress progress messages)
-  $ mcpcontract dump --config config.json --quiet | jq '.tools | length'
-
-  # Test pagination with small page size (forces pagination for testing)
-  $ mcpcontract dump --config config.json --page-size 5 --verbose
-
-  # OAuth via tunnel with an explicit callback path
-  $ mcpcontract dump \
-      --transport streamable-http \
-      --url "https://api.example.com/mcp" \
-      --auth oauth \
-      --oauth-callback-url "https://abc.ngrok.io/oauth/callback"
+For advanced workflows and behavior details:
+  mcpcontract agents --command dump
 `;
       }
     })

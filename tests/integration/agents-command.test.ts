@@ -80,7 +80,7 @@ describe('Agents Command Integration Tests', () => {
       const result = execSync(`${CLI_PATH} agents --command dump`).toString();
       
       // Single command should be focused, not include other commands
-      expect(result.length).toBeLessThan(5000);
+      expect(result.length).toBeLessThan(7500);
       expect(result.length).toBeGreaterThan(1500);
       
       // Should NOT contain other command names in headers
@@ -183,6 +183,50 @@ describe('Agents Command Integration Tests', () => {
       expect(result).toContain('--all');
       expect(result).toContain('Output all commands in single document');
     });
+
+    it('should keep dump terminal help concise and point to the detailed guide', () => {
+      const result = execSync(`${CLI_PATH} dump --help`).toString();
+
+      expect(result.split('\n').length).toBeLessThan(60);
+      expect(result).toContain('QUICK START');
+      expect(result).toContain('PROTOCOL AND AUTHENTICATION');
+      expect(result).toContain('mcpcontract agents --command dump');
+    });
+
+    it('should document every dump option in the agent guide', () => {
+      const result = execSync(`${CLI_PATH} agents --command dump`).toString();
+      const dumpOptions = [
+        '--wizard',
+        '--config',
+        '--mcp-server',
+        '--server-name',
+        '--transport',
+        '--url',
+        '--header',
+        '--command',
+        '--args',
+        '--env',
+        '--output',
+        '--format',
+        '--compact',
+        '--info',
+        '--quiet',
+        '--verbose',
+        '--protocol',
+        '--auth',
+        '--oauth-scope',
+        '--oauth-resource',
+        '--oauth-callback-port',
+        '--oauth-callback-url',
+        '--oauth-client-id',
+        '--oauth-client-secret',
+        '--skip-cors-check',
+        '--cors-origin',
+        '--page-size',
+      ];
+
+      dumpOptions.forEach(option => expect(result).toContain(option));
+    });
   });
 
   describe('Token Efficiency Validation', () => {
@@ -200,15 +244,15 @@ describe('Agents Command Integration Tests', () => {
       expect(overviewTokens).toBeGreaterThan(800);
       expect(overviewTokens).toBeLessThan(2000);
       
-      // Single command should be around 500-1,000 tokens
+      // Single command should remain below 2,000 tokens
       expect(singleTokens).toBeGreaterThan(400);
-      expect(singleTokens).toBeLessThan(1500);
+      expect(singleTokens).toBeLessThan(2000);
       
-      // All should be around 7,000-10,000 tokens
+      // Complete reference should remain below 11,000 tokens
       expect(allTokens).toBeGreaterThan(7000);
-      expect(allTokens).toBeLessThan(10000);
+      expect(allTokens).toBeLessThan(11000);
       
-      // Efficiency: single command should be 10-15x smaller than --all
+      // The focused changelog guide should remain 10-15x smaller than --all
       const efficiencyRatio = allTokens / singleTokens;
       expect(efficiencyRatio).toBeGreaterThan(10);
       expect(efficiencyRatio).toBeLessThan(15);

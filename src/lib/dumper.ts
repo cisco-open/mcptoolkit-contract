@@ -78,16 +78,8 @@ export class ContractDumper {
       if (sessionIdSupported !== undefined) {
         dumpExecution.sessionIdSupported = sessionIdSupported;
         
-        // sessionIdHeader is REQUIRED when sessionIdSupported is true
         if (sessionIdSupported) {
-          if (!sessionIdHeader) {
-            // Fail-fast: cannot proceed without header name
-            throw new Error(
-              'Session ID is supported but header name could not be determined. ' +
-              'HTTP response header inspection failed. Run with --verbose for details.'
-            );
-          }
-          dumpExecution.sessionIdHeader = sessionIdHeader;
+          dumpExecution.sessionIdHeader = sessionIdHeader || 'Mcp-Session-Id';
         }
       }
       // Include client capabilities sent during initialization
