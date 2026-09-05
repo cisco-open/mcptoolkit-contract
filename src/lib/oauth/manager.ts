@@ -620,7 +620,7 @@ export class OAuthManager {
       }
     }
 
-    this.log(
+    this.warn(
       `OAuth callback port ${DEFAULT_OAUTH_CALLBACK_PORT} is already in use. Trying a random local callback port instead.`,
       true
     );
@@ -1081,7 +1081,13 @@ export class OAuthManager {
 
   private log(message: string, force = false): void {
     if (!this.options.quiet || force) {
-      console.error(message);
+      console.error(`[LOG] ${message}`);
+    }
+  }
+
+  private warn(message: string, force = false): void {
+    if (!this.options.quiet || force) {
+      console.error(`[WARN] ${message}`);
     }
   }
 }

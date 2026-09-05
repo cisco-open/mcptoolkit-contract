@@ -245,7 +245,7 @@ async function runDump(options: CLIOptions): Promise<void> {
   for (const diagnostic of validation.diagnostics) {
     if (diagnostic.severity === 'warning') {
       console.error(
-        `Warning [${diagnostic.code}] at ${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`
+        `[WARN] [${diagnostic.code}] at ${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`
       );
     }
   }

@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dump diagnostics now use consistent `[LOG]`, `[WARN]`, and `[VERBOSE]`
+  prefixes, and servers without prompts no longer emit an SDK debug trace.
 - Stateful Streamable HTTP dumps now fall back to the canonical
   \`Mcp-Session-Id\` header name when raw response-header inspection is
   unavailable, instead of failing after capability extraction.
