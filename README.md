@@ -3,21 +3,25 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-2.0.0--rc.2-orange.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-2.0.0--rc.3-orange.svg)](CHANGELOG.md)
 [![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
-[![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
+[![mcpdesc: 0.8](https://img.shields.io/badge/mcpdesc-0.8-blue.svg)](https://mcpdesc.org)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
 - **MCP Description specification:** [spec](spec/) — this repository is the canonical home of the `mcpdesc` format
 - **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
+The current CLI targets MCP Description v0.8. For tooling that emits MCP
+Description v0.7, use the maintained
+[`v1/main` branch](https://github.com/cisco-open/mcptoolkit-contract/tree/v1/main)
+and the latest 1.x release.
 
 ## 🚀 Quick Start
 
 ```bash
-# Install from npm (recommended)
-npm install -g @cisco_open/mcptoolkit-contract
+# Install the current 2.x CLI from npm
+npm install -g @cisco_open/mcptoolkit-contract@next
 
 # Verify installation
 mcpcontract --version
@@ -83,11 +87,13 @@ text, guides, examples, governance, and version history live under
 - **Start here:** [spec/README.md](spec/README.md) — overview and quick example
 - **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
 - **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
-- **Current stable schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+- **Bundled legacy schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
 
-The v2 CLI emits only MCP Description `0.8.0-rc.2`, using the exact immutable
-schema URI. It retains v0.7 validation and migration support. New dumps do not
-include `x-cisco-metadata`.
+The v2 CLI emits MCP Description v0.8 using an exact immutable schema URI. It
+retains v0.7 validation and migration support, but users who need new v0.7 dumps
+should use the maintained
+[`v1/main` branch](https://github.com/cisco-open/mcptoolkit-contract/tree/v1/main).
+New v0.8 dumps do not include `x-cisco-metadata`.
 
 The format is versioned **independently of this CLI**. `mcpcontract` targets a
 specific `mcpdesc` version and is kept in sync as the specification advances,

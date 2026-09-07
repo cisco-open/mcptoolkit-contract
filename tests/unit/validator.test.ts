@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 
 import { Validator } from '../../src/lib/validator.js';
 
-const rc1Document = {
-  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json',
+const rc3Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.3.json',
   mcpdesc: '0.8.0',
   info: { name: 'validator-test', version: '1.0.0' },
   protocolVersions: ['2026-07-28'],
@@ -17,18 +17,18 @@ const rc2Document = {
 };
 
 describe('Validator mcpdesc dispatch', () => {
-  it('uses the shared RC.1 structural and semantic validator', async () => {
+  it('uses the shared RC.3 structural and semantic validator', async () => {
     const validator = new Validator();
     const result = await validator.validateData(
       {
-        ...rc1Document,
+        ...rc3Document,
         capabilities: [{ logging: {} }],
       },
       'mcpdesc',
     );
 
     expect(result.valid).toBe(true);
-    expect(result.schemaVersion).toBe('0.8.0-rc.1');
+    expect(result.schemaVersion).toBe('0.8.0-rc.3');
     expect(result.warnings).toContainEqual(
       expect.objectContaining({ keyword: 'logging-deprecated-in-2026' }),
     );
@@ -106,8 +106,8 @@ describe('Validator mcpdesc dispatch', () => {
       await expect(
         validator.validateData(
           {
-            ...rc1Document,
-            $schema: 'https://example.com/mcp-description/0.8.0-rc.1.json',
+            ...rc3Document,
+            $schema: 'https://example.com/mcp-description/0.8.0-rc.3.json',
           },
           'mcpdesc'
         )
