@@ -30,6 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Documented MCP Description v0.8 as the current CLI target and established
+  `v1/main` as the maintenance line for v0.7-era output.
+
+### Security
+
+- Updated transitive `browserslist` and `fast-uri` dependencies to patched
+  versions.
+
 ## [2.0.0-rc.2] - 2026-09-07
 
 ### Changed
