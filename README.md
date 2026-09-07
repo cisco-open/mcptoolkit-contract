@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-1.2.3-brightgreen.svg)](CHANGELOG.md)
+[![Status: release](https://img.shields.io/badge/status-1.2.4-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=20.x](https://img.shields.io/badge/Node.js-%3E%3D20.x-brightgreen.svg)](https://nodejs.org/)
 [![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
 
@@ -12,6 +12,10 @@ The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you cre
 - **MCP Description specification:** [spec](spec/) — this repository is the canonical home of the `mcpdesc` format
 - **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
+> **Maintenance branch:** This 1.x line supports MCP Description through v0.7
+> and receives maintenance fixes. For MCP Description v0.8 and later, use the
+> current [`main` branch](https://github.com/cisco-open/mcptoolkit-contract/tree/main)
+> and the latest 2.x release.
 
 ## 🚀 Quick Start
 

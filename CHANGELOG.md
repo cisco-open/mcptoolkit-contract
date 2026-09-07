@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[1.2.4] - 2026-09-07](#124---2026-09-07)
 - [[1.2.3] - 2026-08-20](#123---2026-08-20)
 - [[1.2.2] - 2026-08-17](#122---2026-08-17)
 - [[1.2.1] - 2026-08-17](#121---2026-08-17)
@@ -27,6 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [1.2.4] - 2026-09-07
+
+### Changed
+
+- Established `v1/main` as the maintenance branch for MCP Description v0.7 and
+  directed users who need v0.8 or later to `main` and the 2.x release line.
+
+### Security
+
+- Updated transitive `browserslist`, `fast-uri`, and `qs` dependencies to
+  patched versions.
 
 ## [1.2.3] - 2026-08-20
 
