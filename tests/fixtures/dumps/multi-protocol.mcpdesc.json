@@ -1,5 +1,5 @@
 {
-  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json",
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json",
   "mcpdesc": "0.8.0",
   "info": {
     "name": "multi-protocol-test",

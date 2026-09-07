@@ -4,15 +4,17 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output targets MCP Description 0.8.0 RC.1. Legacy v0.7 documents and
+ * New output targets MCP Description 0.8.0 RC.2. Legacy v0.7 documents and
  * x-cisco-metadata remain readable for migration.
  */
 
 import {
   RC_1_SCHEMA_URI,
+  RC_2_SCHEMA_URI,
   migrateMcpDescription07ToRc1 as migrateMcpDescription07ToRc1Core,
   projectEffectiveProtocolView,
   type CoreDiagnostic,
+  type SupportedCoreSpecification,
 } from '@mcpdesc/core';
 import {
   supportedProtocolVersions,
@@ -180,16 +182,33 @@ export interface XCiscoMetadataV1 {
 // ============================================================================
 
 const MCPDESC_VERSION = '0.8.0';
-const MCPDESC_SCHEMA = RC_1_SCHEMA_URI;
+const MCPDESC_SCHEMA = RC_2_SCHEMA_URI;
+const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
+  'completions',
+  'experimental',
+  'extensions',
+  'logging',
+  'prompts',
+  'resources',
+  'tasks',
+  'tools',
+]);
+
+export interface ContractDumpConversionOptions {
+  onUnsupportedServerCapabilities?: (capabilities: string[]) => void;
+}
 
 // ============================================================================
 // ContractDump → mcpdesc
 // ============================================================================
 
 /**
- * Convert a captured ContractDump to one observed mcpdesc RC.1 protocol view.
+ * Convert a captured ContractDump to one observed mcpdesc RC.2 protocol view.
  */
-export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocument {
+export function contractDumpToMcpDescription(
+  dump: ContractDump,
+  options: ContractDumpConversionOptions = {},
+): McpDescDocument {
   const doc: McpDescDocument = {
     $schema: MCPDESC_SCHEMA,
     mcpdesc: MCPDESC_VERSION,
@@ -202,9 +221,21 @@ export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocumen
     doc.instructions = dump.serverInfo.instructions;
   }
 
-  // Server capabilities — include if present
-  if (dump.serverInfo.capabilities && Object.keys(dump.serverInfo.capabilities).length > 0) {
-    doc.capabilities = [dump.serverInfo.capabilities as Record<string, unknown>];
+  const representableCapabilities: Record<string, unknown> = {};
+  const unsupportedCapabilities: string[] = [];
+  for (const [name, value] of Object.entries(dump.serverInfo.capabilities ?? {})) {
+    if (REPRESENTABLE_SERVER_CAPABILITIES.has(name)) {
+      representableCapabilities[name] = value;
+    } else {
+      unsupportedCapabilities.push(name);
+    }
+  }
+
+  if (unsupportedCapabilities.length > 0) {
+    options.onUnsupportedServerCapabilities?.(unsupportedCapabilities.sort());
+  }
+  if (Object.keys(representableCapabilities).length > 0) {
+    doc.capabilities = [representableCapabilities];
   }
 
   // Capability arrays — only include non-empty ones
@@ -528,9 +559,14 @@ export function projectMcpDescriptionView(
   document: McpDescDocument,
   requestedProtocolVersion?: string
 ): McpDescDocument {
-  if (document.$schema !== RC_1_SCHEMA_URI) {
+  let specification: SupportedCoreSpecification;
+  if (document.$schema === RC_2_SCHEMA_URI) {
+    specification = '0.8.0-rc.2';
+  } else if (document.$schema === RC_1_SCHEMA_URI) {
+    specification = '0.8.0-rc.1';
+  } else {
     throw new Error(
-      `MCP Description 0.8.0 processing requires $schema ${RC_1_SCHEMA_URI}`
+      `MCP Description 0.8.0 processing requires $schema ${RC_1_SCHEMA_URI} or ${RC_2_SCHEMA_URI}`
     );
   }
 
@@ -552,7 +588,7 @@ export function projectMcpDescriptionView(
   }
 
   const projection = projectEffectiveProtocolView(document, {
-    specification: '0.8.0-rc.1',
+    specification,
     protocolVersion: selectedVersion as SupportedProtocolVersion,
   });
   if (!projection.ok) {

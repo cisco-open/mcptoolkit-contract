@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.0-rc.2] - 2026-09-07](#200-rc2---2026-09-07)
 - [[2.0.0-rc.1] - 2026-09-01](#200-rc1---2026-09-01)
 - [[1.2.3] - 2026-08-20](#123---2026-08-20)
 - [[1.2.2] - 2026-08-17](#122---2026-08-17)
@@ -28,6 +29,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.0.0-rc.2] - 2026-09-07
+
+### Changed
+
+- `dump` now warns about server capabilities that MCP Description cannot
+  represent and omits them instead of generating an invalid document.
+- Updated new dumps to MCP Description `0.8.0-rc.2` with
+  `@mcpdesc/core` 0.8.0 and `@mcpdesc/validator` 0.9.0. Validation now warns
+  when servers advertise extension negotiation before MCP `2026-07-28`.
+- Simplified \`dump --help\` into a concise grouped reference and expanded
+  \`agents --command dump\` as the detailed guide for advanced connection,
+  OAuth, CORS, and pagination behavior.
+
+### Fixed
+
+- Dump diagnostics now use consistent `[LOG]`, `[WARN]`, and `[VERBOSE]`
+  prefixes, and servers without prompts no longer emit an SDK debug trace.
+- Stateful Streamable HTTP dumps now fall back to the canonical
+  \`Mcp-Session-Id\` header name when raw response-header inspection is
+  unavailable, instead of failing after capability extraction.
 
 ## [2.0.0-rc.1] - 2026-09-01
 
@@ -60,6 +82,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI and npm publication now run only on supported Node.js releases, package
   creation starts from a clean build, and release tags must exactly match the
   reviewed package version.
+
+### Changed
+
+- Upgraded `@mcpdesc/core` to 0.2.0 and delegated Draft 4 declaration selection
+  and MCP Description 0.7.0 migration to its shared semantic operations.
+- `split` now preserves all protocol-scoped variants of selected tool identities
+  and document-wide content without generating split metadata.
+- The deprecated `convert` command now validates and migrates mcpdesc 0.7.0
+  documents to MCP Description 0.8.0 Draft 4.
 
 ## [1.2.3] - 2026-08-20
 

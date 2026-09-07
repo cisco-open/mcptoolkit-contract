@@ -945,6 +945,18 @@ export class MCPClient {
     let pagesRetrieved = 0;
     const maxPages = 1000;
 
+    if (!this.client.getServerCapabilities()?.prompts) {
+      if (this.options.verbose && !this.options.quiet) {
+        console.error('[VERBOSE] Server does not advertise prompts capability; skipping prompts/list');
+      }
+      return {
+        items: [],
+        paginationDetected: false,
+        pagesRetrieved: 0,
+        totalItems: 0
+      };
+    }
+
     try {
       do {
         const params: any = {

@@ -95,7 +95,10 @@ describe('OAuthManager callback handling', () => {
       expect(redirectUri.pathname).toBe(DEFAULT_OAUTH_CALLBACK_PATH);
       expect(redirectUri.port).not.toBe(String(DEFAULT_OAUTH_CALLBACK_PORT));
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`OAuth callback port ${DEFAULT_OAUTH_CALLBACK_PORT} is already in use`)
+        expect.stringContaining(`[WARN] OAuth callback port ${DEFAULT_OAUTH_CALLBACK_PORT} is already in use`)
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[LOG] Using fallback OAuth callback URI')
       );
     } finally {
       await prepared.listener.close();

@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-2.0.0--rc.1-orange.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-2.0.0--rc.2-orange.svg)](CHANGELOG.md)
 [![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
 [![mcpdesc](https://img.shields.io/endpoint?url=https://mcpdesc.org/badge/0.7.0.json)](https://mcpdesc.org)
 
@@ -85,7 +85,7 @@ text, guides, examples, governance, and version history live under
 - **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
 - **Current stable schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
 
-The v2 CLI emits only MCP Description `0.8.0-rc.1`, using the exact immutable
+The v2 CLI emits only MCP Description `0.8.0-rc.2`, using the exact immutable
 schema URI. It retains v0.7 validation and migration support. New dumps do not
 include `x-cisco-metadata`.
 

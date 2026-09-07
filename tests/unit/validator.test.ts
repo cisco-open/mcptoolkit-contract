@@ -9,6 +9,13 @@ const rc1Document = {
   protocolVersions: ['2026-07-28'],
 };
 
+const rc2Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json',
+  mcpdesc: '0.8.0',
+  info: { name: 'validator-test', version: '1.0.0' },
+  protocolVersions: ['2025-11-25'],
+};
+
 describe('Validator mcpdesc dispatch', () => {
   it('uses the shared RC.1 structural and semantic validator', async () => {
     const validator = new Validator();
@@ -24,6 +31,23 @@ describe('Validator mcpdesc dispatch', () => {
     expect(result.schemaVersion).toBe('0.8.0-rc.1');
     expect(result.warnings).toContainEqual(
       expect.objectContaining({ keyword: 'logging-deprecated-in-2026' }),
+    );
+  });
+
+  it('warns when extension negotiation is declared before MCP 2026', async () => {
+    const validator = new Validator();
+    const result = await validator.validateData(
+      {
+        ...rc2Document,
+        capabilities: [{ extensions: { 'io.modelcontextprotocol/tasks': {} } }],
+      },
+      'mcpdesc',
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.schemaVersion).toBe('0.8.0-rc.2');
+    expect(result.warnings).toContainEqual(
+      expect.objectContaining({ keyword: 'extensions-not-supported-by-version' }),
     );
   });
 

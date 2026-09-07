@@ -6,7 +6,7 @@
  * Unit tests for mcpdesc-converter — tag handling
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
@@ -70,13 +70,13 @@ describe('mcpdesc-converter', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('emits a valid RC.1 observed protocol view without vendor metadata', () => {
+    it('emits a valid RC.2 observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
       dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
 
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json',
         mcpdesc: '0.8.0',
         protocolVersions: ['2025-06-18'],
         instructions: 'Use tool_a for test operations.',
@@ -86,10 +86,32 @@ describe('mcpdesc-converter', () => {
       expect(doc).not.toHaveProperty('x-cisco-metadata');
 
       const validation = validateMcpDescription(doc, {
-        specification: '0.8.0-rc.1',
+        specification: '0.8.0-rc.2',
       });
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
+    });
+
+    it('reports and omits server capabilities that MCP Description cannot represent', () => {
+      const dump = minimalDump();
+      dump.serverInfo.capabilities = {
+        tools: {},
+        extensions: { 'io.modelcontextprotocol/ui': {} },
+        futureCapability: {},
+        protocolVersions: ['2026-07-28'],
+      } as typeof dump.serverInfo.capabilities;
+      const onUnsupportedServerCapabilities = jest.fn();
+
+      const doc = contractDumpToMcpDescription(dump, { onUnsupportedServerCapabilities });
+
+      expect(doc.capabilities).toEqual([{
+        tools: {},
+        extensions: { 'io.modelcontextprotocol/ui': {} },
+      }]);
+      expect(onUnsupportedServerCapabilities).toHaveBeenCalledWith([
+        'futureCapability',
+        'protocolVersions',
+      ]);
     });
 
     it('should not include root tags when dump has none', () => {
