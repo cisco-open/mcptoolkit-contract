@@ -46,6 +46,7 @@ export interface ServerConfig {
 
 export interface ServerCapabilities {
   experimental?: Record<string, unknown>;
+  extensions?: Record<string, unknown>;
   logging?: Record<string, unknown>;
   prompts?: {
     listChanged?: boolean;

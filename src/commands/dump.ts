@@ -210,7 +210,14 @@ async function runDump(options: CLIOptions): Promise<void> {
   }
 
   // Convert to mcpdesc format
-  const mcpdesc = contractDumpToMcpDescription(dump);
+  const mcpdesc = contractDumpToMcpDescription(dump, {
+    onUnsupportedServerCapabilities: (capabilities) => {
+      console.error(
+        `[WARN] Server capabilities not representable in MCP Description were omitted: ${capabilities.join(', ')}. ` +
+        'Use experimental or extensions when the capability belongs to one of those MCP mechanisms.'
+      );
+    },
+  });
 
   // Apply enrichment from --info file if provided
   if (options.info) {

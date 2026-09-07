@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `dump` now warns about server capabilities that MCP Description cannot
+  represent and omits them instead of generating an invalid document.
 - Updated new dumps to MCP Description `0.8.0-rc.2` with
   `@mcpdesc/core` 0.8.0 and `@mcpdesc/validator` 0.9.0. Validation now warns
   when servers advertise extension negotiation before MCP `2026-07-28`.

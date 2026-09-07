@@ -6,7 +6,7 @@
  * Unit tests for mcpdesc-converter — tag handling
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
@@ -90,6 +90,28 @@ describe('mcpdesc-converter', () => {
       });
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
+    });
+
+    it('reports and omits server capabilities that MCP Description cannot represent', () => {
+      const dump = minimalDump();
+      dump.serverInfo.capabilities = {
+        tools: {},
+        extensions: { 'io.modelcontextprotocol/ui': {} },
+        futureCapability: {},
+        protocolVersions: ['2026-07-28'],
+      } as typeof dump.serverInfo.capabilities;
+      const onUnsupportedServerCapabilities = jest.fn();
+
+      const doc = contractDumpToMcpDescription(dump, { onUnsupportedServerCapabilities });
+
+      expect(doc.capabilities).toEqual([{
+        tools: {},
+        extensions: { 'io.modelcontextprotocol/ui': {} },
+      }]);
+      expect(onUnsupportedServerCapabilities).toHaveBeenCalledWith([
+        'futureCapability',
+        'protocolVersions',
+      ]);
     });
 
     it('should not include root tags when dump has none', () => {

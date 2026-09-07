@@ -183,6 +183,20 @@ export interface XCiscoMetadataV1 {
 
 const MCPDESC_VERSION = '0.8.0';
 const MCPDESC_SCHEMA = RC_2_SCHEMA_URI;
+const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
+  'completions',
+  'experimental',
+  'extensions',
+  'logging',
+  'prompts',
+  'resources',
+  'tasks',
+  'tools',
+]);
+
+export interface ContractDumpConversionOptions {
+  onUnsupportedServerCapabilities?: (capabilities: string[]) => void;
+}
 
 // ============================================================================
 // ContractDump → mcpdesc
@@ -191,7 +205,10 @@ const MCPDESC_SCHEMA = RC_2_SCHEMA_URI;
 /**
  * Convert a captured ContractDump to one observed mcpdesc RC.2 protocol view.
  */
-export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocument {
+export function contractDumpToMcpDescription(
+  dump: ContractDump,
+  options: ContractDumpConversionOptions = {},
+): McpDescDocument {
   const doc: McpDescDocument = {
     $schema: MCPDESC_SCHEMA,
     mcpdesc: MCPDESC_VERSION,
@@ -204,9 +221,21 @@ export function contractDumpToMcpDescription(dump: ContractDump): McpDescDocumen
     doc.instructions = dump.serverInfo.instructions;
   }
 
-  // Server capabilities — include if present
-  if (dump.serverInfo.capabilities && Object.keys(dump.serverInfo.capabilities).length > 0) {
-    doc.capabilities = [dump.serverInfo.capabilities as Record<string, unknown>];
+  const representableCapabilities: Record<string, unknown> = {};
+  const unsupportedCapabilities: string[] = [];
+  for (const [name, value] of Object.entries(dump.serverInfo.capabilities ?? {})) {
+    if (REPRESENTABLE_SERVER_CAPABILITIES.has(name)) {
+      representableCapabilities[name] = value;
+    } else {
+      unsupportedCapabilities.push(name);
+    }
+  }
+
+  if (unsupportedCapabilities.length > 0) {
+    options.onUnsupportedServerCapabilities?.(unsupportedCapabilities.sort());
+  }
+  if (Object.keys(representableCapabilities).length > 0) {
+    doc.capabilities = [representableCapabilities];
   }
 
   // Capability arrays — only include non-empty ones
