@@ -20,8 +20,8 @@ and the latest 1.x release.
 ## 🚀 Quick Start
 
 ```bash
-# Install from npm (recommended)
-npm install -g @cisco_open/mcptoolkit-contract
+# Install the current 2.x CLI from npm
+npm install -g @cisco_open/mcptoolkit-contract@next
 
 # Verify installation
 mcpcontract --version
