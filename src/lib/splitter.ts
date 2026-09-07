@@ -10,8 +10,8 @@ import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { parse as yamlParse } from 'yaml';
 import {
-  RC_1_SCHEMA_URI,
   RC_2_SCHEMA_URI,
+  RC_3_SCHEMA_URI,
   parseMcpDescriptionSource,
   selectMcpDescriptionDeclarations,
   type McpDescriptionDocument,
@@ -28,7 +28,7 @@ import type {
 import {
   isMcpDescDocument,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07ToRc1,
+  migrateMcpDescription07ToRc3,
   type McpDescDocument,
 } from './mcpdesc-converter.js';
 
@@ -76,7 +76,7 @@ export class Splitter {
 
     let document = parsed.value as unknown as McpDescDocument;
     if (document.mcpdesc === '0.7.0') {
-      document = (await migrateMcpDescription07ToRc1(document, filePath)).document;
+      document = (await migrateMcpDescription07ToRc3(document, filePath)).document;
     } else if (document.mcpdesc !== '0.8.0') {
       throw new Error(`Unsupported MCP Description version: ${document.mcpdesc}`);
     }
@@ -91,10 +91,10 @@ export class Splitter {
 
   private selectDocument(toolNames: readonly string[]): McpDescriptionDocument {
     let specification: SupportedCoreSpecification;
-    if (this.document.$schema === RC_2_SCHEMA_URI) {
+    if (this.document.$schema === RC_3_SCHEMA_URI) {
+      specification = '0.8.0-rc.3';
+    } else if (this.document.$schema === RC_2_SCHEMA_URI) {
       specification = '0.8.0-rc.2';
-    } else if (this.document.$schema === RC_1_SCHEMA_URI) {
-      specification = '0.8.0-rc.1';
     } else {
       throw new Error(`Unsupported MCP Description schema: ${String(this.document.$schema)}`);
     }

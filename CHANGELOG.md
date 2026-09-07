@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.0-rc.3] - 2026-09-07](#200-rc3---2026-09-07)
 - [[2.0.0-rc.2] - 2026-09-07](#200-rc2---2026-09-07)
 - [[2.0.0-rc.1] - 2026-09-01](#200-rc1---2026-09-01)
 - [[1.2.3] - 2026-08-20](#123---2026-08-20)
@@ -30,10 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0-rc.3] - 2026-09-07
+
 ### Changed
 
 - Documented MCP Description v0.8 as the current CLI target and established
   `v1/main` as the maintenance line for v0.7-era output.
+- Updated new dumps and v0.7 migrations to MCP Description `0.8.0-rc.3` with
+  `@mcpdesc/core` 0.9.1 and `@mcpdesc/validator` 0.10.1. RC.2 documents remain
+  supported for validation, projection, and splitting.
 
 ### Security
 

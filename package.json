@@ -1,6 +1,6 @@
 {
   "name": "@cisco_open/mcptoolkit-contract",
-  "version": "2.0.0-rc.2",
+  "version": "2.0.0-rc.3",
   "description": "CLI toolkit for MCP server contract management: dumps capabilities, generates changelogs and renders documentation",
   "type": "module",
   "main": "./build/index.js",
@@ -47,8 +47,8 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",
-    "@mcpdesc/core": "0.8.0",
-    "@mcpdesc/validator": "0.9.0",
+    "@mcpdesc/core": "0.9.1",
+    "@mcpdesc/validator": "0.10.1",
     "@modelcontextprotocol/client": "2.0.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",

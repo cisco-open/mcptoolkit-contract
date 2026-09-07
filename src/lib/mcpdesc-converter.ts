@@ -4,14 +4,14 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output targets MCP Description 0.8.0 RC.2. Legacy v0.7 documents and
+ * New output targets MCP Description 0.8.0 RC.3. Legacy v0.7 documents and
  * x-cisco-metadata remain readable for migration.
  */
 
 import {
-  RC_1_SCHEMA_URI,
   RC_2_SCHEMA_URI,
-  migrateMcpDescription07ToRc1 as migrateMcpDescription07ToRc1Core,
+  RC_3_SCHEMA_URI,
+  migrateMcpDescription07ToRc3 as migrateMcpDescription07ToRc3Core,
   projectEffectiveProtocolView,
   type CoreDiagnostic,
   type SupportedCoreSpecification,
@@ -182,7 +182,7 @@ export interface XCiscoMetadataV1 {
 // ============================================================================
 
 const MCPDESC_VERSION = '0.8.0';
-const MCPDESC_SCHEMA = RC_2_SCHEMA_URI;
+const MCPDESC_SCHEMA = RC_3_SCHEMA_URI;
 const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
   'completions',
   'experimental',
@@ -203,7 +203,7 @@ export interface ContractDumpConversionOptions {
 // ============================================================================
 
 /**
- * Convert a captured ContractDump to one observed mcpdesc RC.2 protocol view.
+ * Convert a captured ContractDump to one observed mcpdesc RC.3 protocol view.
  */
 export function contractDumpToMcpDescription(
   dump: ContractDump,
@@ -495,9 +495,9 @@ export interface McpDescriptionMigrationResult {
 
 /**
  * Validate a legacy MCP Description against its frozen schema, then migrate it
- * to the current RC.1 snapshot using the shared core semantics.
+ * to the current RC.3 snapshot using the shared core semantics.
  */
-export async function migrateMcpDescription07ToRc1(
+export async function migrateMcpDescription07ToRc3(
   document: McpDescDocument,
   sourceName: string = 'data'
 ): Promise<McpDescriptionMigrationResult> {
@@ -513,8 +513,8 @@ export async function migrateMcpDescription07ToRc1(
     throw new Error(`MCP Description 0.7.0 validation failed: ${details}`);
   }
 
-  const migration = migrateMcpDescription07ToRc1Core(document, {
-    specification: '0.8.0-rc.1',
+  const migration = migrateMcpDescription07ToRc3Core(document, {
+    specification: '0.8.0-rc.3',
     sourceValidated: true,
   });
   if (!migration.ok) {
@@ -560,13 +560,13 @@ export function projectMcpDescriptionView(
   requestedProtocolVersion?: string
 ): McpDescDocument {
   let specification: SupportedCoreSpecification;
-  if (document.$schema === RC_2_SCHEMA_URI) {
+  if (document.$schema === RC_3_SCHEMA_URI) {
+    specification = '0.8.0-rc.3';
+  } else if (document.$schema === RC_2_SCHEMA_URI) {
     specification = '0.8.0-rc.2';
-  } else if (document.$schema === RC_1_SCHEMA_URI) {
-    specification = '0.8.0-rc.1';
   } else {
     throw new Error(
-      `MCP Description 0.8.0 processing requires $schema ${RC_1_SCHEMA_URI} or ${RC_2_SCHEMA_URI}`
+      `MCP Description 0.8.0 processing requires $schema ${RC_2_SCHEMA_URI} or ${RC_3_SCHEMA_URI}`
     );
   }
 
