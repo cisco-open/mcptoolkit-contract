@@ -3,7 +3,7 @@
   "description": "Maps CLI versions to compatible schema versions - append new entries on release",
   "compatibility": [
     {
-      "cliVersion": "2.0.0-rc.4",
+      "cliVersion": "2.0.0",
       "releaseDate": "2026-09-09",
       "schemas": {
         "mcp-description": "0.8.0",

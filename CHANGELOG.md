@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
-- [[2.0.0-rc.4] - 2026-09-09](#200-rc4---2026-09-09)
+- [[2.0.0] - 2026-09-09](#200---2026-09-09)
 - [[2.0.0-rc.2] - 2026-09-07](#200-rc2---2026-09-07)
 - [[2.0.0-rc.1] - 2026-09-01](#200-rc1---2026-09-01)
 - [[1.2.3] - 2026-08-20](#123---2026-08-20)
@@ -31,12 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0-rc.4] - 2026-09-09
+## [2.0.0] - 2026-09-09
 
 ### Changed
 
-- Updated to `@mcpdesc/core` 0.11.0-rc.1 and `@mcpdesc/validator`
-  0.12.0-rc.1; new dumps, validation, projection, splitting, and migration now
+- Updated to `@mcpdesc/core` 0.11.0 and `@mcpdesc/validator` 0.12.0; new
+  dumps, validation, projection, splitting, and migration now
   target MCP Description `0.8.0` and its canonical schema URI.
 
 ## [2.0.0-rc.2] - 2026-09-07
