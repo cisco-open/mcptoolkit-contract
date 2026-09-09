@@ -41,17 +41,16 @@ The format is versioned independently of the CLI:
 
 - **mcpdesc**: `0.7.0` — `schemas/mcp-description/0.7.0.json`
   (`$id: https://developer.cisco.com/mcp-description/schema/0.7.0`)
-- **v2 emission snapshot**: `0.8.0-rc.1` —
-  `https://mcpdesc.org/schema/mcp-description/0.8.0-rc.1.json`
+- **v2 emission version**: `0.8.0` —
+  `https://mcpdesc.org/schema/mcp-description/0.8.0.json`
 
 `schemas/latest.json` maps each schema type to its current version, and
 `schemas/cli-schema-compatibility.json` records which CLI versions emit which
 schema versions.
 
-> The normative specification for the `mcpdesc` format — including its full
-> version history — is maintained in this repository under
-> [`spec/`](../../../spec/). The `schemas/mcp-description/` directory holds the
-> versioned JSON Schemas (0.1.0–0.7.0) referenced by that specification.
+> The bundled `schemas/mcp-description/` directory retains versions 0.1.0–0.7.0
+> for legacy validation and migration. The v2 CLI uses `@mcpdesc/validator` for
+> v0.8 validation.
 
 ## Full field reference
 

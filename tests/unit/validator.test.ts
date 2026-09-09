@@ -2,33 +2,26 @@ import { describe, expect, it } from '@jest/globals';
 
 import { Validator } from '../../src/lib/validator.js';
 
-const rc3Document = {
-  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.3.json',
+const v08Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
   mcpdesc: '0.8.0',
   info: { name: 'validator-test', version: '1.0.0' },
   protocolVersions: ['2026-07-28'],
 };
 
-const rc2Document = {
-  $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json',
-  mcpdesc: '0.8.0',
-  info: { name: 'validator-test', version: '1.0.0' },
-  protocolVersions: ['2025-11-25'],
-};
-
 describe('Validator mcpdesc dispatch', () => {
-  it('uses the shared RC.3 structural and semantic validator', async () => {
+  it('uses the shared v0.8 structural and semantic validator', async () => {
     const validator = new Validator();
     const result = await validator.validateData(
       {
-        ...rc3Document,
+        ...v08Document,
         capabilities: [{ logging: {} }],
       },
       'mcpdesc',
     );
 
     expect(result.valid).toBe(true);
-    expect(result.schemaVersion).toBe('0.8.0-rc.3');
+    expect(result.schemaVersion).toBe('0.8.0');
     expect(result.warnings).toContainEqual(
       expect.objectContaining({ keyword: 'logging-deprecated-in-2026' }),
     );
@@ -38,14 +31,15 @@ describe('Validator mcpdesc dispatch', () => {
     const validator = new Validator();
     const result = await validator.validateData(
       {
-        ...rc2Document,
+        ...v08Document,
+        protocolVersions: ['2025-11-25'],
         capabilities: [{ extensions: { 'io.modelcontextprotocol/tasks': {} } }],
       },
       'mcpdesc',
     );
 
     expect(result.valid).toBe(true);
-    expect(result.schemaVersion).toBe('0.8.0-rc.2');
+    expect(result.schemaVersion).toBe('0.8.0');
     expect(result.warnings).toContainEqual(
       expect.objectContaining({ keyword: 'extensions-not-supported-by-version' }),
     );
@@ -106,8 +100,8 @@ describe('Validator mcpdesc dispatch', () => {
       await expect(
         validator.validateData(
           {
-            ...rc3Document,
-            $schema: 'https://example.com/mcp-description/0.8.0-rc.3.json',
+            ...v08Document,
+            $schema: 'https://example.com/mcp-description/0.8.0.json',
           },
           'mcpdesc'
         )
