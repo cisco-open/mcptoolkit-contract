@@ -9,7 +9,7 @@
 
 Dumps created before v0.25.0 used a Cisco-specific *capability dump* schema
 (top-level `version` / `dumpDetails` / `serverInfo`). Later releases emitted
-mcpdesc 0.7.0. `mcpcontract dump` now emits [mcpdesc](schemas.md) 0.8.0 RC.1
+mcpdesc 0.7.0. `mcpcontract dump` now emits [mcpdesc](schemas.md) 0.8.0
 directly. Use `convert` only to bring either legacy format forward.
 
 ## Usage
@@ -21,7 +21,7 @@ mcpcontract convert legacy-dump.json
 # Write to a file (JSON or YAML)
 mcpcontract convert legacy-dump.json -o server.mcpdesc.yaml -f yaml
 
-# Migrate a validated mcpdesc 0.7.0 document to RC.1
+# Migrate a validated mcpdesc 0.7.0 document to v0.8
 mcpcontract convert server-0.7.yaml -o server.mcpdesc.yaml
 ```
 

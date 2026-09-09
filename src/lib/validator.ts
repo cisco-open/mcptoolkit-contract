@@ -78,7 +78,7 @@ function extractSpecification(data: unknown): McpDescriptionSpecification {
   }
 
   const match = schema.match(
-    /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0-(?:draft|rc)\.\d+)\.json$/
+    /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0)\.json$/
   );
   const specification = match?.[1];
   if (!specification || !supportedSpecifications.includes(specification as McpDescriptionSpecification)) {

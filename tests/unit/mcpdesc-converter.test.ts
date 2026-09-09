@@ -11,7 +11,7 @@ import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07ToRc3,
+  migrateMcpDescription07To08,
   parseAsContractDump,
   applyEnrichment,
   McpDescTag,
@@ -71,13 +71,13 @@ describe('mcpdesc-converter', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('emits a valid RC.3 observed protocol view without vendor metadata', () => {
+    it('emits a valid v0.8 observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
       dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
 
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.3.json',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
         mcpdesc: '0.8.0',
         protocolVersions: ['2025-06-18'],
         instructions: 'Use tool_a for test operations.',
@@ -87,7 +87,7 @@ describe('mcpdesc-converter', () => {
       expect(doc).not.toHaveProperty('x-cisco-metadata');
 
       const validation = validateMcpDescription(doc, {
-        specification: '0.8.0-rc.3',
+        specification: '0.8.0',
       });
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
@@ -173,9 +173,9 @@ describe('mcpdesc-converter', () => {
     });
   });
 
-  describe('RC.2 protocol view projection', () => {
+  describe('v0.8 protocol view projection', () => {
     const multiVersionDocument = {
-      $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.2.json',
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
       mcpdesc: '0.8.0',
       info: { name: 'scoped-server', version: '1.0.0' },
       protocolVersions: ['2025-11-25', '2026-07-28'],
@@ -229,10 +229,10 @@ describe('mcpdesc-converter', () => {
     };
 
     it('validates the legacy source and delegates migration to core', async () => {
-      const result = await migrateMcpDescription07ToRc3(legacyDocument, 'legacy.json');
+      const result = await migrateMcpDescription07To08(legacyDocument, 'legacy.json');
 
       expect(result.document).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0-rc.3.json',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
         mcpdesc: '0.8.0',
         protocolVersions: ['2025-11-25'],
         capabilities: [{ tools: { listChanged: true } }],
@@ -247,7 +247,7 @@ describe('mcpdesc-converter', () => {
         info: { ...legacyDocument.info, name: '' },
       };
 
-      await expect(migrateMcpDescription07ToRc3(invalid, 'invalid.json')).rejects.toThrow(
+      await expect(migrateMcpDescription07To08(invalid, 'invalid.json')).rejects.toThrow(
         /0\.7\.0 validation failed/
       );
     });
