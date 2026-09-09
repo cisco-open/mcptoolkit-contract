@@ -20,8 +20,8 @@ and the latest 1.x release.
 ## 🚀 Quick Start
 
 ```bash
-# Install the current 2.x CLI from npm
-npm install -g @cisco_open/mcptoolkit-contract@next
+# Install the latest mcpcontract CLI v2 from npm
+npm install -g @cisco_open/mcptoolkit-contract
 
 # Verify installation
 mcpcontract --version
@@ -351,6 +351,3 @@ npm run test:coverage
 ## License
 
 This software is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
-
-
-
