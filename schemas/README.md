@@ -2,11 +2,13 @@
 
 JSON Schema definitions used by `mcpcontract` for validation and documentation generation.
 
-The `mcp-description/` schemas are the normative, versioned schemas for the
-**MCP Description (`mcpdesc`) format**, whose specification lives in
-[`../spec/`](../spec/). This repository is the canonical source of truth for the
-format; other tools vendor a single schema version from here and upgrade as the
-format advances.
+The `mcp-description/` directory retains MCP Description (`mcpdesc`) schemas
+through v0.7 for legacy validation and migration. The current specification and
+versioned schemas are published at [mcpdesc.org](https://mcpdesc.org/format/)
+and maintained in the canonical
+[`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
+repository. The v2 CLI consumes v0.8 through `@mcpdesc/validator`; do not add or
+modify v0.8+ specification schemas here.
 
 ## Schema types
 
@@ -25,7 +27,7 @@ Legacy single-file aliases in this directory (e.g. `diff-schema.json`, `split-co
 
 - `latest.json` — maps each schema type to its current latest version
 - `cli-schema-compatibility.json` — records which CLI version ships with which schema versions (append on each release)
-- The `mcp-description/` directory retains the **full version history** (0.1.0–0.7.0) as the format's normative record; other schema types keep only the latest, plus older versions when older documents may still be validated
+- The `mcp-description/` directory retains the **legacy version history** (0.1.0–0.7.0) for validation and migration; the canonical repository owns the normative record
 
 ## ADL MCP Server Profile (reserved)
 

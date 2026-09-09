@@ -51,11 +51,11 @@ and error), and the single next action requiring the user's confirmation.
 
 ## Project-specific notes
 
-- This repo is the source of truth for the `mcpdesc` specification. If a release
-  touches any schema, treat it as a **specification change** and complete the
-  Schema Version Management steps in
-  [AGENTS.md](../../AGENTS.md#release-process) (spec front-matter/sections/
-  examples, `spec/CHANGELOG.md`, new `schemas/<type>/<version>.json`,
-  `schemas/latest.json`, `schemas/cli-schema-compatibility.json`) as part of the
-  release PR — before running `npm run prerelease`.
-- A breaking change to the CLI **or** to a schema is a MAJOR version bump.
+- The `mcpdesc` specification is developped and maintained at
+  [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification).
+  Adopt only released format and `@mcpdesc/*` versions; do not edit v0.8+
+  specification text or schemas in this repo. Follow the MCP Description
+  Version Adoption steps in [AGENTS.md](../../AGENTS.md#release-process) before
+  running `npm run prerelease`.
+- A breaking CLI change is a MAJOR CLI version bump. Specification versioning is
+  decided and released independently by the specification project.

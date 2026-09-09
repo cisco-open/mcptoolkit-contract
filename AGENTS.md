@@ -59,7 +59,7 @@ mcpcontract/
 ├── schemas/                  # JSON schemas (see schemas/README.md)
 │   ├── latest.json          # Version mapping (which schema versions are current)
 │   ├── cli-schema-compatibility.json  # CLI-schema compatibility matrix
-│   ├── mcp-description/     # mcpdesc schema — full history 0.1.0–0.7.0 (spec source of truth)
+│   ├── mcp-description/     # Archived mcpdesc schemas 0.1.0–0.7.0
 │   ├── dump-extension/      # x-cisco-metadata extension — latest: 0.2.0
 │   ├── diff/                # Structural diff — 1.0.0
 │   ├── diff-breaking/       # Breaking-change analysis — 2.0.0
@@ -114,50 +114,39 @@ mcpcontract/
         └── design/           # architecture.md, design-decisions.md, workflow-examples.md
 ```
 
-## MCP Description Specification (Source of Truth)
+## MCP Description Specification Ownership
 
-This repository is the **canonical home of the MCP Description (`mcpdesc`)
-format**, not just the `mcpcontract` CLI. Treat the specification as a
-first-class artifact of this repo:
+The MCP Description (`mcpdesc`) specification is published at
+[mcpdesc.org](https://mcpdesc.org/format/) and developed in the canonical
+[`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
+repository. Specification text, governance, proposals, and v0.8+ schemas belong
+there, not in this CLI repository.
 
-- **Normative spec + docs:** [`spec/`](spec/) — section-by-section spec
-  (`spec/sections/`), the assembled document (`spec/mcp-description.md`), guides
-  (`spec/guides/`), examples (`spec/examples/`), governance
-  (`spec/GOVERNANCE.md`), and the format's own changelog (`spec/CHANGELOG.md`).
-- **Versioned JSON Schemas:** [`schemas/mcp-description/`](schemas/mcp-description/)
-  — the full history (0.1.0–0.7.0). These are the schemas the CLI validates
-  against and that downstream tools vendor.
+This repository retains the local [`spec/`](spec/) tree and
+[`schemas/mcp-description/`](schemas/mcp-description/) versions 0.1.0–0.7.0 as
+historical material for legacy validation and migration. Do not extend those
+trees with new specification versions.
 
 ### Why it matters
 
-The `mcpdesc` format is consumed beyond this repo. Companion tools
-(`mcptoolkit-editor`, `mcptoolkit-mock`, `mcptoolkit-test`) each vendor a single
-schema version copied from here and upgrade when the format advances. Because
-this repo is the source of truth, schema changes are **specification changes**:
-they must be deliberate, documented, and governed by
-[`spec/GOVERNANCE.md`](spec/GOVERNANCE.md) — never an incidental side effect of a
-CLI fix.
+The `mcpdesc` format is consumed beyond this repo. Specification changes must be
+proposed and released upstream before this CLI adopts them. A CLI fix must not
+silently redefine the format or patch a bundled historical schema.
 
 ### Keeping mcpcontract in sync with the spec
 
-`mcpcontract` targets a specific `mcpdesc` version (see `schemas/latest.json` and
-the `mcpdesc` field emitted by `dump`). When the specification advances:
+`mcpcontract` targets a specific `mcpdesc` version through `@mcpdesc/core` and
+`@mcpdesc/validator`. When the specification advances:
 
-- **Track new spec releases.** Update the CLI to emit and validate the new
-  version, and refresh templates and docs that reference format fields.
+- **Track upstream spec releases.** Update the `@mcpdesc/*` dependencies and the
+  CLI to emit and validate the released version, then refresh tests, templates,
+  docs, and `schemas/cli-schema-compatibility.json`.
 - **Preserve backward compatibility whenever possible.** Keep older schema
   versions in `schemas/mcp-description/` so `validate` and `diff` still accept
-  documents authored against them. The validator auto-detects a document's
-  `mcpdesc` version and loads the matching schema (see
-  `src/lib/validator.ts` → `extractSchemaVersion`/`loadSchema`). Only drop a
-  version when continued support is genuinely infeasible, and call it out in the
-  CHANGELOG.
-- **Do not silently diverge.** The file in `schemas/mcp-description/` *is* the
-  spec's schema. Do not hand-edit it to work around a CLI bug without a
-  corresponding spec change, version bump, and `spec/CHANGELOG.md` entry.
-
-The mechanical steps for cutting a new schema version are in the
-[Release Process](#release-process) section (step 3, Schema Version Management).
+  legacy documents authored against them. Only drop support when continued
+  maintenance is genuinely infeasible, and call it out in the CHANGELOG.
+- **Do not silently diverge.** Report format defects upstream. Adopt a fixed,
+  released schema or validator version rather than editing the format locally.
 
 ## Adding a New Command
 
@@ -366,59 +355,22 @@ When implementing features or fixes:
    - `### Fixed` - Bug fixes
    - `### Security` - Security fixes
 
-3. **Schema Version Management** (when schema changes):
+3. **MCP Description Version Adoption** (when the CLI changes its target):
 
-   A schema change is a **specification change** first (see
-   [MCP Description Specification (Source of Truth)](#mcp-description-specification-source-of-truth)).
-   Update the normative spec alongside the schema:
-   - Bump the version in `spec/sections/00-front-matter.md` and
-     `spec/mcp-description.md` (title, `version`, date).
-   - Apply the change to the relevant `spec/sections/*.md` and update
-     `spec/examples/` if field shapes changed.
-   - Add a `spec/CHANGELOG.md` entry describing the format change and its
-     backward-compatibility impact.
+   The specification change must already be released from
+   [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification).
+   Do not create or modify v0.8+ specification text or schemas in this repo.
+   - Update `@mcpdesc/core` and `@mcpdesc/validator` to released versions.
+   - Update emitted version and schema URI expectations, fixtures, templates,
+     and user documentation.
+   - Add the CLI-to-format mapping to `schemas/cli-schema-compatibility.json`.
+   - Retain the local v0.1.0–v0.7.0 schemas unless legacy support is explicitly
+     removed and documented in `CHANGELOG.md`.
 
-   **Check if schema changed:**
-   ```bash
-   # Compare current schema with latest versioned schema
-   git diff HEAD schemas/mcp-description/$(cat schemas/latest.json | jq -r '."mcp-description"').json
-   ```
-   
-   **If schema changed, bump schema version:**
-   ```bash
-   # 1. Update $id in schema file (e.g., schemas/mcp-description/0.8.0.json)
-   #    Change: "https://developer.cisco.com/mcp-description/schema/0.7.0"
-   #    To:     "https://developer.cisco.com/mcp-description/schema/0.8.0"
-   
-   # 2. Update the const in the mcpdesc/version property to match new $id
-   
-   # 3. Save as new version file (copy the previous latest)
-   cp schemas/mcp-description/0.7.0.json schemas/mcp-description/0.8.0.json
-   
-   # 4. Update schemas/latest.json to point to new version
-   # Change "mcp-description": "0.7.0" to "mcp-description": "0.8.0"
-   
-   # 5. Update schemas/cli-schema-compatibility.json
-   # Add new entry at the top of compatibility array:
-   {
-     "cliVersion": "0.X.Y",
-     "releaseDate": "2026-01-XX",
-     "schemas": {
-       "mcp-description": "0.8.0",
-       "diff": "1.0.0",
-       "breaking": "2.0.0",
-       "split": "1.0.0"
-     },
-     "notes": "Brief description of changes"
-   }
-   ```
-   
-   **Schema Version Guidelines:**
-   - Historical schemas stored in `schemas/<type>/<version>.json` (e.g., `schemas/mcp-description/0.7.0.json`)
-   - `schemas/latest.json` maps schema types to latest versions
-   - `schemas/cli-schema-compatibility.json` tracks which CLI versions work with which schemas
-   - **Retain the full `mcp-description` version history** — do not delete older versions. The validator auto-detects a document's `mcpdesc` version and validates it against the matching schema, so older documents keep working (backward compatibility).
-   - Only drop support for a schema version when it is genuinely infeasible to maintain, and document the removal in `CHANGELOG.md` (CLI) and `spec/CHANGELOG.md` (format).
+   CLI-owned schemas such as diff, breaking analysis, and split configuration
+   remain versioned under `schemas/`; update their versioned file,
+   `schemas/latest.json`, compatibility mapping, and CLI CHANGELOG when they
+   change.
 
 4. **Test thoroughly** before committing:
    ```bash
@@ -578,7 +530,7 @@ tools:
 
 ## References
 
-- **MCP Description Specification**: [`spec/`](spec/) - Canonical source of truth for the `mcpdesc` format (normative text, examples, governance, and format CHANGELOG). Versioned JSON Schemas live in `schemas/mcp-description/`.
+- **MCP Description Specification**: [mcpdesc.org](https://mcpdesc.org/format/) - published format documentation; canonical development and governance live in [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification). The local `spec/` and `schemas/mcp-description/` trees are archived v0.7-era material.
 - **Design Documentation**: `docs/maintainers/design/` - Initial architecture and design decisions
 - **Enhancement Specifications**: `docs/maintainers/implementation/` - Specs for new features and commands
 - **Testing Guide**: `tests/README.md`

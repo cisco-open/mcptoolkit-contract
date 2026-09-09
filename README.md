@@ -9,7 +9,7 @@ The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you cre
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
-- **MCP Description specification:** [spec](spec/) — this repository is the canonical home of the `mcpdesc` format
+- **MCP Description specification:** [mcpdesc.org](https://mcpdesc.org/format/) — format documentation and the current specification
 - **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
 The current CLI targets MCP Description v0.8. For tooling that emits MCP
@@ -79,15 +79,16 @@ MCP server offers (tools, resources, prompts, transports, security), much like
 OpenAPI does for REST APIs. Every `dump`, `diff`, `document`, and `breaking`
 operation is built on this format.
 
-**This repository is the canonical home of the specification.** The normative
-text, guides, examples, governance, and version history live under
-[`spec/`](spec/); the versioned JSON Schemas live under
-[`schemas/mcp-description/`](schemas/mcp-description/).
+The current specification is published at
+[mcpdesc.org](https://mcpdesc.org/format/) and developed and maintained in the
+canonical
+[`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
+repository.
 
-- **Start here:** [spec/README.md](spec/README.md) — overview and quick example
-- **Read the full spec:** [spec/mcp-description.md](spec/mcp-description.md)
-- **How the format evolves:** [spec/GOVERNANCE.md](spec/GOVERNANCE.md) and [spec/CHANGELOG.md](spec/CHANGELOG.md)
-- **Bundled legacy schema:** `mcpdesc` 0.7.0 — [schemas/mcp-description/0.7.0.json](schemas/mcp-description/0.7.0.json)
+- **Read the v0.8 specification:** [mcpdesc.org/docs/specification/0.8.0](https://mcpdesc.org/docs/specification/0.8.0/)
+- **Contribute to the format:** [mcpdesc/mcpdesc-specification](https://github.com/mcpdesc/mcpdesc-specification)
+- **Browse versioned schemas:** [schemas/mcp-description](https://github.com/mcpdesc/mcpdesc-specification/tree/main/schemas/mcp-description)
+- **Bundled legacy material:** the local [`spec/`](spec/) tree and `mcpdesc` 0.7.0 [schema](schemas/mcp-description/0.7.0.json) are retained for compatibility and migration
 
 The v2 CLI emits MCP Description v0.8 using an exact immutable schema URI. It
 retains v0.7 validation and migration support, but users who need new v0.7 dumps
@@ -98,10 +99,8 @@ New v0.8 dumps do not include `x-cisco-metadata`.
 The format is versioned **independently of this CLI**. `mcpcontract` targets a
 specific `mcpdesc` version and is kept in sync as the specification advances,
 preserving backward compatibility with documents authored against older
-versions wherever possible (the full schema history is retained, and `validate`
-auto-detects each document's version). Companion tools — `mcpeditor`, `mcpmock`,
-and `mcptest` — consume the same format by vendoring a single schema version
-from here.
+versions wherever possible. Companion tools — `mcpeditor`, `mcpmock`, and
+`mcptest` — consume the same independently maintained format.
 
 
 ## 📖 Commands
@@ -301,7 +300,7 @@ mcpcontract/
 │   ├── commands/        # Commander subcommands (thin argument-parsing layer)
 │   ├── lib/             # Core logic (dumper, differ, rules-engine, splitter, …)
 │   └── index.ts         # CLI entry point
-├── spec/                # MCP Description (mcpdesc) specification — canonical source of truth
+├── spec/                # Archived MCP Description v0.7 specification material
 ├── schemas/             # JSON schemas (versioned: mcp-description/, diff/, …)
 ├── rules/               # Compatibility rules (YAML) + documentation catalog
 ├── templates/           # Handlebars templates (dumps, changelogs)

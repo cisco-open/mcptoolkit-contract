@@ -2,12 +2,12 @@
 
 A portable, machine-readable contract format for [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers.
 
-> This directory is the **canonical source of truth** for the MCP Description
-> (`mcpdesc`) format. It is maintained inside the
-> [`mcptoolkit-contract`](../README.md) repository, which also provides the
-> reference tooling (`mcpcontract`). Implementations vendor a single schema
-> version from [`../schemas/mcp-description/`](../schemas/mcp-description/) and
-> upgrade when the format advances.
+> **Archived v0.7 material.** The current MCP Description specification is
+> published at [mcpdesc.org](https://mcpdesc.org/format/) and maintained in the
+> canonical
+> [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
+> repository. This directory is retained for historical reference and v0.7
+> compatibility; do not make current specification changes here.
 
 ## Overview
 
@@ -19,8 +19,8 @@ Think of it as **OpenAPI for MCP servers**: a static contract that enables disco
 
 | Field | Value |
 |-------|-------|
-| Current version | **0.7.0** |
-| Status | **Draft** |
+| Archived version | **0.7.0** |
+| Status | **Superseded by 0.8.0** |
 | Schema | [`../schemas/mcp-description/0.7.0.json`](../schemas/mcp-description/0.7.0.json) |
 
 ## Quick Example
@@ -71,7 +71,8 @@ Versioned JSON Schemas live at the repository root under
 
 - **Read the spec**: [mcp-description.md](mcp-description.md)
 - **Explore examples**: [examples/](examples/)
-- **Try the schema**: [../schemas/mcp-description/0.7.0.json](../schemas/mcp-description/0.7.0.json) (latest — see [../schemas/latest.json](../schemas/latest.json))
+- **Try the archived schema**: [../schemas/mcp-description/0.7.0.json](../schemas/mcp-description/0.7.0.json)
+- **Read the current specification**: [mcpdesc.org/docs/specification/0.8.0](https://mcpdesc.org/docs/specification/0.8.0/)
 - **Write your first description**: [guides/getting-started.md](guides/getting-started.md)
 
 ## Key Features

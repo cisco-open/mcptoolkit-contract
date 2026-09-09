@@ -367,12 +367,14 @@ during final review.
 ### Added
 
 - **Embedded the MCP Description (`mcpdesc`) specification** under [`spec/`](spec/),
-  making this repository the canonical source of truth for the format: normative
-  text, section-by-section spec, guides, examples, governance, and the format's
-  own CHANGELOG. The full versioned schema history (0.1.0–0.7.0) now lives in
-  `schemas/mcp-description/`. Consuming tools vendor a single schema version and
-  upgrade as the format advances. Licensed under Apache-2.0, consistent with the
-  rest of the project.
+  making this repository the canonical source of truth for the v0.7-era format
+  at the time: normative text, section-by-section spec, guides, examples,
+  governance, and the format's own CHANGELOG. Beginning with v0.8, canonical
+  ownership moved to
+  [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification).
+  The full versioned schema history (0.1.0–0.7.0) now lives in
+  `schemas/mcp-description/`. Licensed under Apache-2.0, consistent with the rest
+  of the project.
 - **`scripts/changelog.sh`** — a non-gating human shortcut that runs
   `diff` → `breaking` → `changelog` in one invocation
   (`scripts/changelog.sh <from> <to> [output]`).
