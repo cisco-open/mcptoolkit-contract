@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.2] - 2026-09-15](#202---2026-09-15)
 - [[2.0.1] - 2026-09-09](#201---2026-09-09)
 - [[2.0.0] - 2026-09-09](#200---2026-09-09)
 - [[2.0.0-rc.2] - 2026-09-07](#200-rc2---2026-09-07)
@@ -31,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.0.2] - 2026-09-15
+
+### Fixed
+
+- The dump wizard now launches the generated command without a shell, removing
+  Node.js `[DEP0190]` warnings and preserving user-supplied arguments without
+  shell interpretation.
 
 ## [2.0.1] - 2026-09-09
 

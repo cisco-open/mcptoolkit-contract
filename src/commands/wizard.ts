@@ -17,7 +17,7 @@ const YELLOW = '\x1b[33m';
 const RESET = '\x1b[0m';
 const BOLD = '\x1b[1m';
 
-interface WizardAnswers {
+export interface WizardAnswers {
   transport: 'stdio' | 'http' | 'sse';
   serverName: string;
   format: 'json' | 'yaml';
@@ -181,7 +181,7 @@ export async function runWizardInteractive(): Promise<void> {
   console.log(`${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n`);
   
   const cmdArgs = buildCommandArgs(answers);
-  const commandLine = `mcpcontract dump ${cmdArgs.join(' ')}`;
+  const commandLine = formatCommand(cmdArgs);
   
   console.log(`${BOLD}Generated Command:${RESET}`);
   console.log(`${YELLOW}${commandLine}${RESET}\n`);
@@ -206,44 +206,72 @@ export async function runWizardInteractive(): Promise<void> {
 /**
  * Build command arguments from wizard answers
  */
-function buildCommandArgs(answers: WizardAnswers): string[] {
+export function buildCommandArgs(answers: WizardAnswers): string[] {
   const args: string[] = [
-    '--server-name', `"${answers.serverName}"`,
+    '--server-name', answers.serverName,
     '--transport', answers.transport === 'http' ? 'streamable-http' : answers.transport,
     '--verbose'
   ];
   
   if (answers.transport === 'stdio') {
-    args.push('--command', `"${answers.command}"`);
+    args.push('--command', answers.command ?? '');
     
     if (answers.args) {
       // Split args properly - support both comma and space separation
       const argParts = answers.args.split(/[\s,]+/).filter(a => a.length > 0);
       if (argParts.length > 0) {
         args.push('--args');
-        argParts.forEach(arg => args.push(`"${arg}"`));
+        args.push(...argParts);
       }
     }
     
     if (answers.env) {
-      args.push('--env', `"${answers.env}"`);
+      args.push('--env', answers.env);
     }
   } else {
-    args.push('--url', `"${answers.url}"`);
+    args.push('--url', answers.url ?? '');
     args.push('--auth', answers.auth || 'none');
     
     if (answers.headers) {
       const headerList = answers.headers.split('|||');
       headerList.forEach(header => {
-        args.push('-H', `"${header}"`);
+        args.push('-H', header);
       });
     }
   }
   
   args.push('--format', answers.format);
-  args.push('--output', `"${answers.output}"`);
+  args.push('--output', answers.output);
   
   return args;
+}
+
+export function formatCommand(args: string[]): string {
+  const quote = (arg: string): string => {
+    if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(arg)) {
+      return arg;
+    }
+
+    return `'${arg.replace(/'/g, `'\\''`)}'`;
+  };
+
+  return ['mcpcontract', 'dump', ...args].map(quote).join(' ');
+}
+
+export function buildCommandInvocation(
+  args: string[],
+  cliPath = process.argv[1],
+  nodePath = process.execPath
+): { command: string; args: string[]; options: { stdio: 'inherit' } } {
+  if (!cliPath) {
+    throw new Error('Unable to determine the mcpcontract executable path');
+  }
+
+  return {
+    command: nodePath,
+    args: [cliPath, 'dump', ...args],
+    options: { stdio: 'inherit' }
+  };
 }
 
 /**
@@ -251,14 +279,8 @@ function buildCommandArgs(answers: WizardAnswers): string[] {
  */
 async function executeCommand(args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Get the path to the mcpcontract binary
-    const cliPath = process.argv[1]; // Path to current executable
-    
-    // Spawn the dump command
-    const child = spawn(cliPath, ['dump', ...args], {
-      stdio: 'inherit',
-      shell: true
-    });
+    const invocation = buildCommandInvocation(args);
+    const child = spawn(invocation.command, invocation.args, invocation.options);
     
     child.on('close', (code) => {
       if (code === 0) {
