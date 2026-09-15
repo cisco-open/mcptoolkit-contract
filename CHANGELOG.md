@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.1] - 2026-09-09](#201---2026-09-09)
 - [[2.0.0] - 2026-09-09](#200---2026-09-09)
 - [[2.0.0-rc.2] - 2026-09-07](#200-rc2---2026-09-07)
 - [[2.0.0-rc.1] - 2026-09-01](#200-rc1---2026-09-01)
@@ -30,6 +31,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.0.1] - 2026-09-09
+
+### Changed
+
+- Updated MCP Description documentation to direct readers to
+  [mcpdesc.org](https://mcpdesc.org/format/) and contributors to the canonical
+  [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
+  repository. The bundled v0.7 specification and schemas are now clearly marked
+  as historical compatibility material.
+- Corrected the npm installation command to use the published
+  `@cisco_open/mcptoolkit-contract` package name.
+
+### Security
+
+- Updated the transitive development dependency override for `js-yaml` to
+  `^4.3.2`, resolving GHSA-2883-xcg3-v3hh / CVE-2026-84375 (unbounded CPU use
+  when parsing empty merge sources).
 
 ## [2.0.0] - 2026-09-09
 
