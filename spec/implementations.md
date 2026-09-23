@@ -17,6 +17,7 @@ The following companion tools are published under the [`@cisco_open`](https://ww
 | **mcpeditor** | A web-based editor for MCP Description documents | [@cisco_open/mcptoolkit-editor](https://www.npmjs.com/package/@cisco_open/mcptoolkit-editor) |
 | **mcpmock** | Run mock servers from MCP Description documents | [@cisco_open/mcptoolkit-mock](https://www.npmjs.com/package/@cisco_open/mcptoolkit-mock) |
 | **mcptest** | Automated testing framework for Model Context Protocol (MCP) servers | [@cisco_open/mcptoolkit-test](https://www.npmjs.com/package/@cisco_open/mcptoolkit-test) |
+| **ArgWitness** | Offline regression-witness checker for MCP Description tool input schemas; compares saved versions and emits a concrete old-valid/new-invalid argument when one can be established | [GenRamzi/argwitness](https://github.com/GenRamzi/argwitness) |
 
 ## Validators
 
