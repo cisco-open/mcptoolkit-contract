@@ -49,7 +49,7 @@
     "@inquirer/prompts": "^8.5.2",
     "@mcpdesc/core": "0.11.0",
     "@mcpdesc/validator": "0.12.0",
-    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/client": "2.1.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "commander": "^15.0.0",
