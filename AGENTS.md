@@ -22,6 +22,8 @@ Quick reference for AI agents and developers extending this CLI tool.
 - Create release merge commits locally with `git merge --no-ff`, then push them
   with `git`. Do not use a GitHub-generated merge commit, because it may select
   a different account email.
+- npm publication uses Trusted Publishing through GitHub Actions OIDC. Do not
+  add token-based npm authentication or a publish-token environment variable.
 - A failed npm publish must be fixed forward with a new version. Never move or
   delete a pushed release tag.
 

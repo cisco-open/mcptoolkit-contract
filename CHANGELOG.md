@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reissued the MCP Description validator integration from 2.0.3 as a
   fix-forward release after that version failed during npm publication.
+- Switched the npm publish workflow from the obsolete `NPM_TOKEN` path to npm
+  Trusted Publishing with GitHub Actions OIDC.
 - Documented that release branches, commits, merges, tags, and pushes must use
   `git` with the `stsfartz@cisco.com` identity rather than GitHub CLI release
   mutations or GitHub-generated merge commits.
