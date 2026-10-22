@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.0.4] - 2026-10-22](#204---2026-10-22)
 - [[2.0.3] - 2026-10-22](#203---2026-10-22)
 - [[2.0.2] - 2026-09-15](#202---2026-09-15)
 - [[2.0.1] - 2026-09-09](#201---2026-09-09)
@@ -33,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.0.4] - 2026-10-22
+
+### Changed
+
+- Reissued the MCP Description validator integration from 2.0.3 as a
+  fix-forward release after that version failed during npm publication.
+- Documented that release branches, commits, merges, tags, and pushes must use
+  `git` with the `stsfartz@cisco.com` identity rather than GitHub CLI release
+  mutations or GitHub-generated merge commits.
 
 ## [2.0.3] - 2026-10-22
 

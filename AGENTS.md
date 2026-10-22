@@ -12,6 +12,19 @@ Quick reference for AI agents and developers extending this CLI tool.
 
 **Version Management**: Follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). All changes must be documented in [CHANGELOG.md](CHANGELOG.md) before release.
 
+## Git and Release Operations
+
+- Use `git` for branch, merge, tag, and push operations. Do not use the GitHub
+  CLI (`gh`) to mutate repository or release state.
+- Before creating a release commit, verify `git config user.email` is
+  `stsfartz@cisco.com`. Release commits must use that identity and include the
+  DCO sign-off produced by `git commit -s`.
+- Create release merge commits locally with `git merge --no-ff`, then push them
+  with `git`. Do not use a GitHub-generated merge commit, because it may select
+  a different account email.
+- A failed npm publish must be fixed forward with a new version. Never move or
+  delete a pushed release tag.
+
 **Commands**: 
 - `dump` - Extract capabilities from live MCP server
 - `split` - Split large dumps into focused subsets by filtering rules
