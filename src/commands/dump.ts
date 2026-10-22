@@ -237,9 +237,7 @@ async function runDump(options: CLIOptions): Promise<void> {
     log('✓ Enrichment applied', options);
   }
 
-  const validation = validateMcpDescription(mcpdesc, {
-    specification: '0.8.0',
-  });
+  const validation = validateMcpDescription(mcpdesc);
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
       .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)

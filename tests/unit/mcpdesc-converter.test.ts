@@ -86,11 +86,11 @@ describe('mcpdesc-converter', () => {
       expect(doc.info).not.toHaveProperty('protocolVersion');
       expect(doc).not.toHaveProperty('x-cisco-metadata');
 
-      const validation = validateMcpDescription(doc, {
-        specification: '0.8.0',
-      });
+      const validation = validateMcpDescription(doc);
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
+      expect(validation.selector).toBe('0.8.0-rev.20261021');
+      expect(validation.defaulted).toBe(true);
     });
 
     it('reports and omits server capabilities that MCP Description cannot represent', () => {
