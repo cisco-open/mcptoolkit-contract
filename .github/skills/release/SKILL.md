@@ -132,6 +132,14 @@ version and repeat the flow.
 
 ## Project-specific release steps
 
+- **Use Git, not GitHub CLI, for release mutations.** Do not use `gh` to merge,
+  tag, push, or otherwise change release state. Verify `git config user.email`
+  is `stsfartz@cisco.com` before committing, create the reviewed merge commit
+  locally with `git merge --no-ff`, and push it with `git` so the release commit
+  identity remains the Cisco address.
+- **npm authentication uses OIDC.** Publication relies on npm Trusted
+  Publishing and the workflow's `id-token: write` permission. Do not add an npm
+  publish token or token environment variable.
 - **Semantic versioning is CLI-only.** The `mcpdesc` specification is no longer
   maintained in this repository; versioning follows CLI change impact only. A
   breaking change to the CLI is MAJOR; new commands/features are MINOR; bug

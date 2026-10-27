@@ -2,7 +2,7 @@
   "source": "github:ObjectIsAdvantag/oss-scaffold",
   "version": "0.2.1",
   "profile": "node-cli",
-  "npmAuth": "token",
+  "npmAuth": "oidc",
   "overrides": [
     ".github/workflows/ci.yml",
     ".github/workflows/publish.yml",
