@@ -11,7 +11,14 @@ import { parse as yamlParse } from 'yaml';
 import AjvModule from 'ajv';
 import type { ValidateFunction, ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
-import { validateMcpDescription } from '@mcpdesc/validator';
+import {
+  supportedSpecifications,
+  validateMcpDescription,
+  type McpDescriptionDiagnostic,
+  type McpDescriptionRuleResult,
+  type McpDescriptionSelector,
+} from '@mcpdesc/validator';
+import { ACTIVE_MCPDESC_VERSION, ACTIVE_MCPDESC_SELECTOR } from './mcpdesc-target.js';
 
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
@@ -48,6 +55,10 @@ export interface ValidationResult {
   schemaVersion?: string;
   errors: ValidationIssue[];
   warnings: ValidationIssue[];
+  selector?: McpDescriptionSelector;
+  defaulted?: boolean;
+  diagnostics?: McpDescriptionDiagnostic[];
+  ruleResults?: readonly McpDescriptionRuleResult[];
 }
 
 export interface ValidationIssue {
@@ -55,6 +66,8 @@ export interface ValidationIssue {
   message: string;
   keyword?: string;
   params?: Record<string, unknown>;
+  rule?: string;
+  protocolVersions?: readonly string[];
 }
 
 function diagnosticPath(path: readonly (number | string)[]): string {
@@ -169,7 +182,8 @@ export class Validator {
    */
   async validateFile(
     filePath: string,
-    schemaType: SchemaType
+    schemaType: SchemaType,
+    selector?: McpDescriptionSelector
   ): Promise<ValidationResult> {
     // Load and parse file
     const fileContent = await readFile(filePath, 'utf-8');
@@ -188,7 +202,7 @@ export class Validator {
       }
     }
 
-    return this.validateData(data, schemaType, filePath);
+    return this.validateData(data, schemaType, filePath, selector);
   }
 
   /**
@@ -197,21 +211,34 @@ export class Validator {
   async validateData(
     data: unknown,
     schemaType: SchemaType,
-    fileName: string = 'data'
+    fileName: string = 'data',
+    requestedSelector?: McpDescriptionSelector
   ): Promise<ValidationResult> {
     // Auto-detect schema version from data
     const detectedVersion = this.extractSchemaVersion(data, schemaType);
 
-    if ((schemaType === 'mcpdesc' || schemaType === 'mcp-description') && detectedVersion === '0.8.0') {
-      const validation = validateMcpDescription(data);
+    if (
+      (schemaType === 'mcpdesc' || schemaType === 'mcp-description') &&
+      (detectedVersion === '0.8.0' || detectedVersion === '0.9.0')
+    ) {
+      const inferredSelector = detectedVersion === ACTIVE_MCPDESC_VERSION
+        ? ACTIVE_MCPDESC_SELECTOR
+        : undefined;
+      const selector = requestedSelector ?? inferredSelector;
+      if (selector && !supportedSpecifications.includes(selector)) {
+        throw new Error(`Unsupported MCP Description selector: ${selector}`);
+      }
+      const validation = validateMcpDescription(data, selector ? { selector } : undefined);
       const errors: ValidationIssue[] = [];
       const warnings: ValidationIssue[] = [];
 
       for (const diagnostic of validation.diagnostics) {
         const issue: ValidationIssue = {
           path: diagnosticPath(diagnostic.path),
-          message: diagnostic.message,
+          message: diagnostic.message ?? diagnostic.code ?? diagnostic.rule ?? 'Validation issue',
           keyword: diagnostic.code,
+          rule: diagnostic.rule,
+          protocolVersions: diagnostic.protocolVersions,
         };
         if (diagnostic.severity === 'error') errors.push(issue);
         else warnings.push(issue);
@@ -224,6 +251,10 @@ export class Validator {
         schemaVersion: detectedVersion,
         errors,
         warnings,
+        selector: validation.selector ?? undefined,
+        defaulted: validation.defaulted,
+        diagnostics: validation.diagnostics,
+        ruleResults: validation.results,
       };
     }
 

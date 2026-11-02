@@ -550,7 +550,8 @@ export class Renderer {
     filePath: string,
     templateName?: string,
     extraContext?: Record<string, any>,
-    protocolVersion?: string
+    protocolVersion?: string,
+    selector?: string
   ): Promise<string> {
     const fileContent = await readFile(filePath, 'utf-8');
     
@@ -576,12 +577,11 @@ export class Renderer {
       throw new Error('Input is not an MCP description (mcpdesc) document');
     }
 
-    if (data.mcpdesc === '0.8.0') {
-      data = projectMcpDescriptionView(
-        data as McpDescDocument,
-        protocolVersion
-      );
-    }
+    data = projectMcpDescriptionView(
+      data as McpDescDocument,
+      protocolVersion,
+      selector as import('@mcpdesc/core').SupportedCoreSpecification | undefined,
+    );
 
     // Add _meta convenience alias for x-cisco-metadata (avoids bracket notation in templates)
     if (data['x-cisco-metadata']) {

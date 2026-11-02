@@ -8,10 +8,12 @@
 
 import { Command } from 'commander';
 import { writeFile, readFile } from 'node:fs/promises';
+import { supportedSpecifications, type McpDescriptionSelector } from '@mcpdesc/validator';
 import { Validator, ValidationError, detectSchemaType, type SchemaType, type ValidationResult } from '../lib/validator.js';
 
 interface ValidateCommandOptions {
   schema?: SchemaType;
+  selector?: string;
   strict?: boolean;
   format?: 'text' | 'json';
   output?: string;
@@ -35,13 +37,16 @@ export function validateCommand(): Command {
 
   cmd
   .description('Validate an MCP description, diff, or split configuration against their specification schemas')
-  .argument('[file]', 'Path to file to validate (omit when using --show-compatibility)')
+  .usage('[options] <file>')
+  .argument('[file]', 'Path to file to validate (required unless using --show-compatibility)')
   .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), diff, diff-breaking, or dump-split')
+    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-draft.4')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
     .option('--show-compatibility', 'Display schema-CLI compatibility matrix and exit')
     .option('--display <mode>', 'Display mode for compatibility: short (changes only) or full (all versions)', 'short')
+    .addHelpText('after', '\nWithout an input file: mcpcontract validate --show-compatibility')
     .action(async (file: string | undefined, options: ValidateCommandOptions) => {
       try {
         // Handle compatibility display
@@ -61,10 +66,14 @@ export function validateCommand(): Command {
       } catch (error) {
         if (error instanceof ValidationError) {
           console.error(`\n❌ Validation Failed`);
-          if (options.format === 'text') {
-            printValidationResult(error.result, options.strict || false);
+          const output = options.format === 'text'
+            ? formatTextOutput(error.result, options.strict || false)
+            : JSON.stringify(error.result, null, 2);
+          if (options.output) {
+            await writeFile(options.output, output, 'utf-8');
+            console.error(`Validation report written to: ${options.output}`);
           } else {
-            console.log(JSON.stringify(error.result, null, 2));
+            console.log(output);
           }
           process.exit(1);
         } else if (error instanceof Error) {
@@ -91,7 +100,6 @@ async function validateFile(filePath: string, options: ValidateCommandOptions): 
       `Invalid schema type: ${options.schema}. Must be one of: ${validSchemaTypes.join(', ')}`
     );
   }
-
   // Auto-detect schema type if not provided
   let schemaType = options.schema;
   if (!schemaType) {
@@ -117,11 +125,24 @@ async function validateFile(filePath: string, options: ValidateCommandOptions): 
     console.error(`Auto-detected schema type: ${schemaType}`);
   }
 
+  if (options.selector) {
+    if (schemaType !== 'mcpdesc' && schemaType !== 'mcp-description') {
+      throw new Error('--selector can only be used when validating an MCP Description');
+    }
+    if (!supportedSpecifications.includes(options.selector as McpDescriptionSelector)) {
+      throw new Error(`Unsupported MCP Description selector: ${options.selector}`);
+    }
+  }
+
   // Create validator
   const validator = new Validator();
 
   // Validate file
-  const result = await validator.validateFile(filePath, schemaType);
+  const result = await validator.validateFile(
+    filePath,
+    schemaType,
+    options.selector as McpDescriptionSelector | undefined,
+  );
 
   // Check if validation failed
   const hasErrors = result.errors.length > 0;
@@ -173,6 +194,9 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
   if (result.schemaVersion) {
     lines.push(`- Schema Version: ${result.schemaVersion}`);
   }
+  if (result.selector) {
+    lines.push(`- Validation Selector: ${result.selector}${result.defaulted ? ' (defaulted)' : ''}`);
+  }
   lines.push(`- Errors: ${result.errors.length}`);
   lines.push(`- Warnings: ${result.warnings.length}`);
   if (strict && result.warnings.length > 0) {
@@ -188,6 +212,12 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
       if (error.keyword) {
         lines.push(`     (${error.keyword})`);
       }
+      if (error.rule) {
+        lines.push(`     Rule: ${error.rule}`);
+      }
+      if (error.protocolVersions?.length) {
+        lines.push(`     MCP versions: ${error.protocolVersions.join(', ')}`);
+      }
       lines.push('');
     }
   }
@@ -197,8 +227,23 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
     for (const warning of result.warnings) {
       lines.push(`   ${warning.path}`);
       lines.push(`   → ${warning.message}`);
+      if (warning.rule) {
+        lines.push(`     Rule: ${warning.rule}`);
+      }
+      if (warning.protocolVersions?.length) {
+        lines.push(`     MCP versions: ${warning.protocolVersions.join(', ')}`);
+      }
       lines.push('');
     }
+  }
+
+  if (result.ruleResults) {
+    const counts = new Map<string, number>();
+    for (const ruleResult of result.ruleResults) {
+      counts.set(ruleResult.status, (counts.get(ruleResult.status) ?? 0) + 1);
+    }
+    lines.push(`Rule results: ${[...counts].map(([status, count]) => `${status}=${count}`).join(', ') || 'none'}`);
+    lines.push('');
   }
 
   if (result.errors.length === 0 && result.warnings.length === 0) {
@@ -207,7 +252,6 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
 
   return lines.join('\n');
 }
-
 /**
  * Filter compatibility data to show only versions with schema changes
  */
@@ -316,11 +360,4 @@ function formatCompatibilityTable(data: CompatibilityData, displayMode: string):
   lines.push('- Validation accepts any historical schema version');
   
   return lines.join('\n');
-}
-
-/**
- * Print validation result to console
- */
-function printValidationResult(result: ValidationResult, strict: boolean): void {
-  console.log(formatTextOutput(result, strict));
 }

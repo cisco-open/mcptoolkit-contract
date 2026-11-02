@@ -36,9 +36,11 @@ function groupByCapabilityName(changes: any[]): Array<{ name: string; changes: a
 
 export const compareCommand = new Command('compare')
   .description('Human-readable comparison report: diff + breaking analysis + changelog in one step')
+  .usage('--from <file> --to <file> [options]')
   .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
   .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
-  .option('--protocol-version <version>', 'Compare one effective MCP protocol view')
+  .option('--protocol-version <version>', 'Compare one effective MCP protocol view (required for multi-version input)')
+  .option('--selector <selector>', 'Pin the MCP Description selector')
   .option('--output <file>', 'Write the changelog to a file instead of stdout')
   .option('--rules <file>', 'Custom compatibility rules YAML file (default: built-in breaking-changes.yaml)')
   .option('--format <type>', 'Changelog format: release (default), compact', 'release')
@@ -64,6 +66,8 @@ INPUT FILES (Required):
   --from <file>                 Source version (MCP description, JSON/YAML)
   --to <file>                   Target version (MCP description, JSON/YAML)
   --protocol-version <version>  Compare one effective MCP protocol view
+                                (required for multi-version input)
+  --selector <selector>         Pin the MCP Description selector
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT OPTIONS:
@@ -130,6 +134,7 @@ EXAMPLES:
       from: fromFile,
       to: toFile,
       protocolVersion,
+      selector,
       output,
       rules: customRules,
       format,
@@ -194,8 +199,13 @@ EXAMPLES:
         process.exit(2);
       }
     }
-    fromData = parseAsContractDump(fromData, protocolVersion);
-    toData = parseAsContractDump(toData, protocolVersion);
+    try {
+      fromData = parseAsContractDump(fromData, protocolVersion, selector);
+      toData = parseAsContractDump(toData, protocolVersion, selector);
+    } catch (error) {
+      console.error(`Error: ${(error as Error).message}`);
+      process.exit(2);
+    }
 
     // ── Step 2: Structural diff ───────────────────────────────────────────
     const differ = new Differ({ detectRenames: false });

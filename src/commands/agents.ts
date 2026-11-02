@@ -58,20 +58,14 @@ mcpcontract agents --all
 mcpcontract agents --command changelog
 
 # Gets: ~639 tokens of focused help with examples
-# AI responds with exact commands from the guide
-\`\`\`
-
-### Pattern 2: User Wants Complete Workflow
-\`\`\`bash
 # User: "Show me the full version upgrade process"
-# AI runs:
 mcpcontract agents --workflows
 
 # Gets: All workflows with step-by-step examples
 # AI walks user through Version Upgrade Check workflow
 \`\`\`
 
-### Pattern 3: User Needs Parameter Details
+### Pattern 2: User Needs Parameter Details
 \`\`\`bash
 # User: "What parameters does breaking take?"
 # AI runs:
@@ -84,7 +78,7 @@ mcpcontract agents --command breaking
 ## Key Parameters
 
 - \`--command <name>\` - Get help for specific command
-  - Available: dump, split, validate, diff, breaking, changelog, compare, document, rules, completion
+  - Available: dump, split, convert, project, migrate, validate, diff, breaking, changelog, compare, document, rules, completion
 - \`--workflows\` - Show all end-to-end workflows
 - \`--all\` - Output complete reference in single document
 
@@ -95,6 +89,15 @@ mcpcontract agents --command breaking
 
 **split** - Split large MCP descriptions into focused subsets
 → Use when: You have a large federation MCP description and need to organize it by category
+
+**convert** - Convert legacy capability dumps to active MCP Description
+→ Use when: Importing an old capability dump rather than upgrading an mcpdesc document
+
+**project** - Export an effective protocol view or native MCP declaration
+→ Use when: You need a version-specific MCP Description document or MCP-native declaration
+
+**migrate** - Upgrade supported historical MCP Description versions to the active target
+→ Use when: Preparing a document for the 0.9.0 Draft 4 rules
 
 **validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
@@ -391,8 +394,8 @@ A dump file containing:
 Example dump.json structure:
 \`\`\`json
 {
-  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0.json",
-  "mcpdesc": "0.8.0",
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json",
+  "mcpdesc": "0.9.0",
   "info": {
     "name": "my-server",
     "version": "1.0.0"
@@ -1462,6 +1465,67 @@ After setup, tab completion works for:
 - Generate for correct shell type
 `;
 
+const PROJECT_GUIDE = `# project - Project MCP Descriptions
+
+## Purpose
+Export an Effective Protocol View or a native MCP value for one protocol revision.
+
+## When to Use
+Export protocol-specific declarations from an active-format document.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract project server.yaml --view effective --protocol-version 2026-07-28 --output server-2026.yaml
+mcpcontract project server.yaml --view native --kind tool --identifier search --protocol-version 2026-07-28
+\`\`\`
+
+## Common Patterns
+- Effective views retain MCP Description metadata and select declarations for one protocol revision.
+- Native projection returns MCP declarations without MCP Description-only fields.
+- Processing targets 0.9.0 Draft 4, including schema-less 0.9.0 inputs. Upgrade older documents with migrate first.
+`;
+
+const CONVERT_GUIDE = `# convert - Convert Legacy Capability Dumps
+
+## Purpose
+Import legacy dumps as active mcpdesc.
+
+## When to Use
+For legacy dumps; use migrate for mcpdesc.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract convert legacy.json --output server.yaml
+\`\`\`
+
+## Common Patterns
+One-way, supported, document-only stdout. No output on blockers.
+`;
+
+const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
+
+## Purpose
+Upgrade 0.7.0 through 0.8.0 to the active draft.
+
+## When to Use
+Before processing historical mcpdesc.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract migrate historical.yaml --output current.yaml --report migration.json
+mcpcontract migrate historical.yaml --to-version 0.8.0 --output intermediate.yaml
+\`\`\`
+
+## Common Patterns
+Blockers stop output. Use \`--fixes file.json\` for reviewed fixes and \`--patch\` for JSON Patch output.
+
+\`\`\`json
+{ "fixes": [{ "fix": "remove-property", "path": ["tools", 0, "annotations", "customFlag"] }] }
+\`\`\`
+
+Fix paths address intermediate 0.8.0. Reports list steps; patches address the original source (root replacement for chains). No guessed values or automatic removals.
+`;
+
 // ============================================================================
 // COMMAND IMPLEMENTATION
 // ============================================================================
@@ -1471,7 +1535,7 @@ export function agentsCommand(): Command {
   
   cmd
     .description('Agent-optimized help (for Copilot, Claude, ChatGPT, etc.)')
-    .option('--command <name>', 'Get help for specific command (dump, validate, diff, breaking, changelog, document, rules, completion)')
+    .option('--command <name>', 'Get help for a specific command')
     .option('--workflows', 'Show all end-to-end workflows')
     .option('--all', 'Output all commands in single document (~7K tokens)')
     .action((options?: { command?: string; workflows?: boolean; all?: boolean }) => {
@@ -1486,6 +1550,9 @@ export function agentsCommand(): Command {
         const allGuides = [
           DUMP_GUIDE,
           SPLIT_GUIDE,
+          CONVERT_GUIDE,
+          PROJECT_GUIDE,
+          MIGRATE_GUIDE,
           VALIDATE_GUIDE,
           DIFF_GUIDE,
           BREAKING_GUIDE,
@@ -1523,6 +1590,9 @@ export function agentsCommand(): Command {
         const guides: Record<string, string> = {
           dump: DUMP_GUIDE,
           split: SPLIT_GUIDE,
+          convert: CONVERT_GUIDE,
+          project: PROJECT_GUIDE,
+          migrate: MIGRATE_GUIDE,
           validate: VALIDATE_GUIDE,
           diff: DIFF_GUIDE,
           breaking: BREAKING_GUIDE,
@@ -1541,7 +1611,7 @@ export function agentsCommand(): Command {
           console.error('');
           console.error('Available commands:');
           console.error('  dump, split, validate, diff, breaking,');
-          console.error('  changelog, compare, document, rules, completion');
+          console.error('  changelog, compare, document, rules, completion, project, migrate');
           console.error('');
           console.error('Usage: mcpcontract agents --command <name>');
           console.error('       mcpcontract agents --workflows');

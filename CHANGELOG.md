@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.1.0-rc.1] - 2026-11-01](#210-rc1---2026-11-01)
 - [[2.0.5] - 2026-10-27](#205---2026-10-27)
 - [[2.0.4] - 2026-10-27](#204---2026-10-27)
 - [[2.0.3] - 2026-10-22](#203---2026-10-22)
@@ -35,6 +36,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.1.0-rc.1] - 2026-11-02
+
+### Added
+
+- Added MCP Description `0.9.0` Draft 4 capture and validation using
+  `@mcpdesc/core` `0.13.0-rc.4` and `@mcpdesc/validator` `0.14.0-rc.4`.
+- Added `project` for exporting Effective Protocol Views and native MCP
+  declarations, plus `migrate` for reviewed, chained `0.7.0` to `0.8.0` to `0.9.0`
+  upgrades with reports, explicit fixes, and original-input JSON Patch output.
+- Added rule identities and per-rule results to validation reports; failed
+  reports can now be saved with `--output`.
+
+### Changed
+
+- **Processing policy change:** `dump`, `project`, `document`, `diff`, `compare`,
+  and `split` target `0.9.0-draft.4` only. Schema-less 0.9.0 documents use this
+  pinned selector; historical processing uses CLI 1.2.4 for 0.7.0 or 2.0.5 for
+  0.8.0. Historical validation and migration remain supported.
+- `convert` is no longer deprecated and now only converts legacy capability
+  dumps to active mcpdesc. MCP Description upgrades belong to `migrate`;
+  reverse dump export is removed.
+- `migrate` defaults to the active target; `--to-version 0.8.0` can explicitly
+  stop a 0.7.0 upgrade at its intermediate format. No command silently upgrades
+  a processing input.
+
+### Fixed
+
+- Simplified the main help command list by omitting repetitive `[options]`
+  markers; individual command help retains its full usage.
+- Aligned top-level and command help usage to show required input files and
+  options explicitly, while preserving file-free informational modes and
+  genuinely optional arguments such as the completion shell.
+- Corrected help for legacy dump handling, output serialization inference,
+  unimplemented rename detection, protocol selection, native projection,
+  migration fixes files, and nested rules commands.
 
 ## [2.0.5] - 2026-10-27
 

@@ -3,24 +3,54 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-2.0.5-brightgreen.svg)](CHANGELOG.md)
+[![Status: pre-release](https://img.shields.io/badge/status-2.1.0--rc.1-orange.svg)](CHANGELOG.md)
 [![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
-[![mcpdesc: 0.8](https://img.shields.io/badge/mcpdesc-0.8-blue.svg)](https://mcpdesc.org)
+[![mcpdesc: 0.9.0 Draft 4](https://img.shields.io/badge/mcpdesc-0.9.0--draft.4-blue.svg)](https://mcpdesc.org)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
 - **MCP Description specification:** [mcpdesc.org](https://mcpdesc.org/format/) — format documentation and the current specification
 - **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
-The current CLI targets MCP Description v0.8. For tooling that emits MCP
-Description v0.7, use the maintained
-[`v1/main` branch](https://github.com/cisco-open/mcptoolkit-contract/tree/v1/main)
-and the latest 1.x release.
+This CLI targets **MCP Description 0.9.0 Community Working Draft 4** by default.
+For older documents, migrate to the active format or use the corresponding CLI
+release below.
+
+## MCP Description Compatibility
+
+| MCP Description Version | Latest Matching CLI | Status |
+| --- | --- | --- |
+| `0.7.0` | [`1.2.4`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/1.2.4) | Historical format; 1.x maintenance line |
+| `0.8.0` | [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) | Stable format; 2.0.x line |
+| `0.9.0-draft.4` | `2.1.0-rc.1` | This development version, not yet published |
+
+Install an exact historical CLI without changing your global installation:
+
+```bash
+npx --package @cisco_open/mcptoolkit-contract@1.2.4 mcpcontract --help
+npx --package @cisco_open/mcptoolkit-contract@2.0.5 mcpcontract --help
+```
+
+Each CLI release pins its active format and validation snapshot; it never fetches
+new rules at runtime. `dump`, `project`, `document`, `diff`, `compare`, and `split`
+use the active format only. `validate` retains historical validation, and
+`migrate` accepts supported historical versions and chains upgrades to the active
+target. Unsupported input versions produce guidance rather than implicit upgrades.
+Commands such as `breaking` and `changelog` continue to consume their own diff schemas.
+
+Changing a CLI release's active processing target is a CLI compatibility change,
+not an automatic consequence of a specification release. Pin the matching CLI
+version in automation; migrating a document is an explicit, reviewed operation.
+
+Draft 4 documents declare `mcpdesc: "0.9.0"`; their optional `$schema` identifies
+`0.9.0-draft.4`. Omitting `$schema` uses this CLI's pinned active target. Earlier
+draft identities are not silently reinterpreted. When a future CLI adopts stable
+`0.9.0`, that release will target stable rules instead, and this table will be updated.
 
 ## 🚀 Quick Start
 
 ```bash
-# Install the latest mcpcontract CLI v2 from npm
+# Install the current stable CLI (0.8.0 support; see the compatibility table)
 npm install -g @cisco_open/mcptoolkit-contract
 
 # Verify installation
@@ -90,16 +120,15 @@ repository.
 - **Browse versioned schemas:** [schemas/mcp-description](https://github.com/mcpdesc/mcpdesc-specification/tree/main/schemas/mcp-description)
 - **Bundled legacy material:** the local [`spec/`](spec/) tree and `mcpdesc` 0.7.0 [schema](schemas/mcp-description/0.7.0.json) are retained for compatibility and migration
 
-The v2 CLI emits MCP Description v0.8 using an exact immutable schema URI. It
-retains v0.7 validation and migration support, but users who need new v0.7 dumps
-should use the maintained
-[`v1/main` branch](https://github.com/cisco-open/mcptoolkit-contract/tree/v1/main).
-New v0.8 dumps do not include `x-cisco-metadata`.
+This development CLI emits MCP Description 0.9.0 with the exact Draft 4 schema
+URI. Legacy 0.7.0 and 0.8.0 documents can be validated or upgraded using `migrate`.
+Use the matching historical CLI for processing those formats without upgrading.
+New dumps do not include `x-cisco-metadata`.
 
 The format is versioned **independently of this CLI**. `mcpcontract` targets a
 specific `mcpdesc` version and is kept in sync as the specification advances,
-preserving backward compatibility with documents authored against older
-versions wherever possible. Companion tools — `mcpeditor`, `mcpmock`, and
+providing explicit migration paths for supported older documents.
+Companion tools — `mcpeditor`, `mcpmock`, and
 `mcptest` — consume the same independently maintained format.
 
 
@@ -147,6 +176,47 @@ mcpcontract document dump.yaml --template mcpdesc-documentation --output README.
 # Authored multi-version descriptions require one effective view
 mcpcontract document spec.yaml --protocol-version 2026-07-28 --output README.md
 ```
+
+### ✅ project - Export a protocol-specific view
+
+Export an Effective Protocol View as an MCP Description document, or project a
+native MCP declaration for one protocol revision.
+
+```bash
+mcpcontract project spec.yaml --view effective \
+  --protocol-version 2026-07-28 --output spec-2026.yaml
+mcpcontract project spec.yaml --view native --kind tool --identifier search \
+  --protocol-version 2026-07-28
+```
+
+### ✅ convert - Convert a legacy capability dump
+
+Convert the old capability-dump format to the active MCP Description format.
+This command is not deprecated. It does not accept mcpdesc inputs or export
+legacy dumps; use `migrate` to upgrade an existing mcpdesc document.
+
+```bash
+mcpcontract convert legacy-dump.json --output server.yaml
+```
+
+### ✅ migrate - Upgrade MCP Description versions
+
+The default target is 0.9.0 Draft 4. A 0.7.0 document is upgraded through 0.8.0
+before the 0.9.0 conversion. Review blockers and apply only explicitly requested fixes.
+
+```bash
+mcpcontract migrate spec-0.7.yaml \
+  --report migration.json --output spec-0.9.yaml
+# Stop at the intermediate historical version when needed
+mcpcontract migrate spec-0.7.yaml --to-version 0.8.0 --output spec-0.8.yaml
+```
+
+Draft 4 is a working draft and may change incompatibly. `migrate` never guesses
+URI values, rounds numbers, or removes properties unless a fix is supplied.
+Reports list each upgrade step. `--patch patch.json` always applies to the
+original input document; chained upgrades use an RFC 6902 root replacement.
+Fix paths refer to the 0.8.0 document at the 0.8-to-0.9 step. Failed migrations
+can write a diagnostic report, but never a partial final document or patch.
 
 ### ✅ diff - Compare two releases of an MCP server
 
@@ -288,6 +358,7 @@ Check a document is compliant with the MCP Description specification.
 ```bash
 # Validate an MCP description
 mcpcontract validate dump.yaml --schema mcpdesc --strict
+mcpcontract validate draft.yaml --selector 0.9.0-draft.4 --format json
 ```
 
 ## 🏗️ Project Structure

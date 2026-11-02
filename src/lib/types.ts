@@ -345,6 +345,7 @@ export interface CLIOptions {
   corsOrigin?: string;     // Origin header for CORS preflight testing (default: http://localhost:3000)
   pageSize?: number;       // Hint for pagination page size (for testing/discovery)
   protocol?: 'legacy' | 'auto' | '2026-07-28'; // MCP protocol negotiation mode
+  selector?: string;       // Exact MCP Description validation/output selector
   info?: string;           // Path to enrichment info file (for dump command)
 }
 

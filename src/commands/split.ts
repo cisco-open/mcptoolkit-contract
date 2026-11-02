@@ -23,6 +23,7 @@ interface SplitCommandOptions {
   dryRun?: boolean;
   validate?: boolean;
   quiet?: boolean;
+  selector?: string;
 }
 
 /**
@@ -158,8 +159,10 @@ export function splitCommand(): Command {
 
   cmd
     .description('Split large MCP description into focused subsets based on filtering rules')
+    .usage('--config <path> [options] <mcpdesc>')
     .argument('<mcpdesc>', 'Input MCP description file (JSON or YAML)')
     .requiredOption('--config <path>', 'Split configuration file (JSON or YAML)')
+    .option('--selector <selector>', 'Pin the MCP Description selector')
     .option('--output-dir <path>', 'Output directory for split dumps', '.')
     .option('--format <format>', 'Output format (json or yaml, default: auto-detect from input)')
     .option('--pretty', 'Pretty-print JSON output', true)
@@ -200,6 +203,7 @@ export function splitCommand(): Command {
           mcpdescPath: mcpdescPath,
           configPath: options.config,
           includeUnmatched: true,
+          selector: options.selector,
         });
 
         if (!options.quiet) {
