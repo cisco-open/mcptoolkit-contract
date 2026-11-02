@@ -45,19 +45,30 @@ describe('Validator mcpdesc dispatch', () => {
     );
   });
 
-  it('rejects an ambiguous v0.8 document without an immutable selector', async () => {
+  it('uses the maintained v0.8 default without a schema URI', async () => {
     const validator = new Validator();
+    const result = await validator.validateData(
+      {
+        mcpdesc: '0.8.0',
+        info: { name: 'defaulted', version: '1.0.0' },
+        protocolVersions: ['2025-11-25'],
+        tools: [{
+          name: 'get-header-params',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              region: { type: 'string', 'x-mcp-header': 'Region' },
+            },
+            required: ['region'],
+          },
+        }],
+      },
+      'mcpdesc',
+    );
 
-    await expect(
-      validator.validateData(
-        {
-          mcpdesc: '0.8.0',
-          info: { name: 'ambiguous', version: '1.0.0' },
-          protocolVersions: ['2026-07-28'],
-        },
-        'mcpdesc',
-      ),
-    ).rejects.toThrow('exact supported $schema URI');
+    expect(result.valid).toBe(true);
+    expect(result.schemaVersion).toBe('0.8.0');
+    expect(result.errors).toEqual([]);
   });
 
   it('retains local validation for legacy v0.7 documents', async () => {
@@ -95,16 +106,19 @@ describe('Validator mcpdesc dispatch', () => {
     ).rejects.toThrow('Unsupported MCP Description version');
   });
 
-    it('rejects a supported selector on a non-canonical schema origin', async () => {
-      const validator = new Validator();
-      await expect(
-        validator.validateData(
-          {
-            ...v08Document,
-            $schema: 'https://example.com/mcp-description/0.8.0.json',
-          },
-          'mcpdesc'
-        )
-      ).rejects.toThrow(/Unsupported MCP Description specification/);
-    });
+  it('rejects a non-canonical schema identity', async () => {
+    const validator = new Validator();
+    const result = await validator.validateData(
+      {
+        ...v08Document,
+        $schema: 'https://example.com/mcp-description/0.8.0.json',
+      },
+      'mcpdesc',
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ keyword: 'unknown-schema-identity' }),
+    );
+  });
 });

@@ -11,11 +11,7 @@ import { parse as yamlParse } from 'yaml';
 import AjvModule from 'ajv';
 import type { ValidateFunction, ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
-import {
-  supportedSpecifications,
-  validateMcpDescription,
-  type McpDescriptionSpecification,
-} from '@mcpdesc/validator';
+import { validateMcpDescription } from '@mcpdesc/validator';
 
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
@@ -66,25 +62,6 @@ function diagnosticPath(path: readonly (number | string)[]): string {
   return `/${path
     .map((segment) => String(segment).replace(/~/g, '~0').replace(/\//g, '~1'))
     .join('/')}`;
-}
-
-function extractSpecification(data: unknown): McpDescriptionSpecification {
-  const document = data as Record<string, unknown>;
-  const schema = document.$schema;
-  if (typeof schema !== 'string') {
-    throw new Error(
-      'MCP Description 0.8.0 requires an exact supported $schema URI to identify its immutable specification snapshot'
-    );
-  }
-
-  const match = schema.match(
-    /^https:\/\/mcpdesc\.org\/schema\/mcp-description\/(0\.8\.0)\.json$/
-  );
-  const specification = match?.[1];
-  if (!specification || !supportedSpecifications.includes(specification as McpDescriptionSpecification)) {
-    throw new Error(`Unsupported MCP Description specification: ${schema}`);
-  }
-  return specification as McpDescriptionSpecification;
 }
 
 export class Validator {
@@ -226,8 +203,7 @@ export class Validator {
     const detectedVersion = this.extractSchemaVersion(data, schemaType);
 
     if ((schemaType === 'mcpdesc' || schemaType === 'mcp-description') && detectedVersion === '0.8.0') {
-      const specification = extractSpecification(data);
-      const validation = validateMcpDescription(data, { specification });
+      const validation = validateMcpDescription(data);
       const errors: ValidationIssue[] = [];
       const warnings: ValidationIssue[] = [];
 
@@ -245,7 +221,7 @@ export class Validator {
         valid: validation.valid,
         file: fileName,
         schemaType,
-        schemaVersion: specification,
+        schemaVersion: detectedVersion,
         errors,
         warnings,
       };
