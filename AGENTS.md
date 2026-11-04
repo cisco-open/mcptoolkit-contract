@@ -30,7 +30,9 @@ Quick reference for AI agents and developers extending this CLI tool.
 **Commands**: 
 - `dump` - Extract capabilities from live MCP server
 - `split` - Split large dumps into focused subsets by filtering rules
-- `convert` - **[DEPRECATED]** Convert between the legacy capability-dump format and mcpdesc YAML (bidirectional); retained only to migrate older dumps
+- `convert` - Convert legacy capability dumps to the active MCP Description format (one-way)
+- `project` - Export an effective protocol view or native MCP declaration
+- `migrate` - Upgrade historical MCP Description documents through reviewed steps to the active target
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
 - `diff` - Compare dumps and generate structural diff
@@ -49,7 +51,9 @@ mcpcontract/
 │   ├── commands/             # Command implementations
 │   │   ├── dump.ts          # ✅ Extract server capabilities
 │   │   ├── split.ts         # ✅ Split large dumps (Phase 1: tools)
-│   │   ├── convert.ts       # ✅ Convert between dump and mcpdesc formats
+│   │   ├── convert.ts       # ✅ Import legacy capability dumps as active mcpdesc
+│   │   ├── project.ts       # ✅ Export effective/native protocol views
+│   │   ├── migrate.ts       # ✅ Reviewed MCP Description version conversion
 │   │   ├── validate.ts      # ✅ Validate against schemas
 │   │   ├── document.ts      # ✅ Generate documentation
 │   │   ├── diff.ts          # ✅ Compare dumps, generate structural diff
@@ -130,6 +134,14 @@ mcpcontract/
 ```
 
 ## MCP Description Specification Ownership
+
+The active target is centralized in `src/lib/mcpdesc-target.ts`: currently
+format `0.9.0`, selector `0.9.0-draft.4`. Capture and processing commands use
+only that target. Historical `validate` and `migrate` paths are deliberate
+exceptions; processing never silently upgrades input. Use CLI `1.2.4` for
+0.7.0 processing or CLI `2.0.5` for 0.8.0. `convert` accepts legacy dumps only;
+`migrate` handles 0.7.0 -> 0.8.0 -> the active target. Update the README's
+version table whenever the active target or a historical CLI mapping changes.
 
 The MCP Description (`mcpdesc`) specification is published at
 [mcpdesc.org](https://mcpdesc.org/format/) and developed in the canonical

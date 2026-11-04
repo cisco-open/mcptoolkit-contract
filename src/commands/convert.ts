@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Convert command - Convert between dump and mcpdesc formats
+ * Convert command - Import legacy capability dumps as active mcpdesc
  */
 
 import { Command } from 'commander';
@@ -13,15 +13,13 @@ import { extname } from 'node:path';
 import { formatJSON, formatYAML } from '../lib/formatters.js';
 import {
   contractDumpToMcpDescription,
-  mcpDescriptionToContractDump,
-  migrateMcpDescription07To08,
   isMcpDescDocument,
   isContractDump,
-  type McpDescDocument,
 } from '../lib/mcpdesc-converter.js';
 import type { ContractDump } from '../lib/types.js';
+import { migrateMcpDescription } from '../lib/mcpdesc-migration.js';
 
-type TargetFormat = 'dump' | 'mcpdesc';
+type TargetFormat = 'mcpdesc';
 type OutputFormat = 'json' | 'yaml';
 
 interface ConvertCommandOptions {
@@ -37,14 +35,16 @@ export function convertCommand(): Command {
   const cmd = new Command('convert');
 
   cmd
-    .description('[DEPRECATED] Migrate legacy capability dumps or mcpdesc 0.7.0 to current mcpdesc')
-    .argument('[input]', 'Input file path (dump or mcpdesc, JSON or YAML)')
-    .option('--to-format <format>', 'Target format: dump or mcpdesc (auto-detected from input if omitted)')
+    .description('Convert a legacy capability dump to the active MCP Description format')
+    .usage('[options] <input>')
+    .argument('[input]', 'Legacy capability dump file (JSON or YAML; required unless using --guide)')
+    .option('--to-format <format>', 'Target format: mcpdesc (default)')
     .option('-o, --output <path>', 'Output file path (default: stdout)')
-    .option('-f, --format <format>', 'Output serialization: json or yaml (default: match input file extension)')
+    .option('-f, --format <format>', 'Output serialization: json or yaml (default: infer from output path, then input path)')
     .option('--compact', 'Compact JSON output (no indentation)', false)
     .option('-q, --quiet', 'Suppress progress messages', false)
     .option('--guide', 'Print the dump-to-mcpdesc conversion guide (for AI coding assistants)')
+    .addHelpText('after', '\nWithout an input file: mcpcontract convert --guide')
     .action(async (inputPath: string | undefined, options: ConvertCommandOptions) => {
       try {
         if (options.guide) {
@@ -66,20 +66,17 @@ export function convertCommand(): Command {
 }
 
 async function printGuide(): Promise<void> {
-  const guidePath = new URL('../../docs/dump-to-mcpdesc.md', import.meta.url).pathname;
-  const content = await readFile(guidePath, 'utf-8');
-  process.stdout.write(content);
-  if (!content.endsWith('\n')) {
-    process.stdout.write('\n');
-  }
+  console.log('Convert legacy dumps: mcpcontract convert legacy.json --output server.yaml\n' +
+    'Upgrade MCP Description documents: mcpcontract migrate server.yaml --output upgraded.yaml');
 }
 
 async function runConvert(inputPath: string, options: ConvertCommandOptions): Promise<void> {
-  // Deprecation notice (the legacy capability-dump format is being retired)
-  console.error(
-    '⚠\uFE0F  `mcpcontract convert` is deprecated and will be removed in a future release.\n' +
-    '   It remains available to migrate legacy capability dumps and mcpdesc 0.7.0 files.'
-  );
+  if (options.toFormat && options.toFormat !== 'mcpdesc') {
+    throw new Error('convert supports only legacy dump to mcpdesc conversion; reverse conversion is no longer supported');
+  }
+  if (options.format && options.format !== 'json' && options.format !== 'yaml') {
+    throw new Error('--format must be json or yaml');
+  }
 
   // Read and parse input
   const content = await readFile(inputPath, 'utf-8');
@@ -95,60 +92,34 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   }
 
   // Detect input format
-  const inputIsMcpDesc = isMcpDescDocument(data);
-  const inputIsDump = isContractDump(data);
-
-  if (!inputIsMcpDesc && !inputIsDump) {
-    throw new Error('Unrecognized input format — expected mcpdesc document or capability dump');
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('Expected a legacy capability dump object');
   }
-
-  const detectedInput = inputIsMcpDesc ? 'mcpdesc' : 'dump';
-  const inputIsLegacyMcpDesc = inputIsMcpDesc && data.mcpdesc === '0.7.0';
-
-  // Determine target format
-  let targetFormat: TargetFormat;
-  if (options.toFormat) {
-    targetFormat = options.toFormat;
-  } else {
-    targetFormat = inputIsLegacyMcpDesc
-      ? 'mcpdesc'
-      : detectedInput === 'mcpdesc' ? 'dump' : 'mcpdesc';
+  if (isMcpDescDocument(data)) {
+    throw new Error('Input is already an MCP Description. Use mcpcontract migrate <input> to upgrade its version');
   }
-
-  if (detectedInput === targetFormat && !inputIsLegacyMcpDesc) {
-    throw new Error(`Input is already in ${targetFormat} format. Use --to-format to specify a different target.`);
+  if (!isContractDump(data)) {
+    throw new Error('Unrecognized input format: expected a legacy capability dump');
   }
 
   if (!options.quiet) {
-    console.log(`🔄 Converting ${detectedInput} → ${targetFormat}`);
-    console.log(`   Input: ${inputPath}`);
+    console.error(`Converting legacy dump: ${inputPath}`);
   }
 
-  // Convert
-  let result: unknown;
-  if (targetFormat === 'mcpdesc') {
-    if (inputIsLegacyMcpDesc) {
-      const migration = await migrateMcpDescription07To08(
-        data as unknown as McpDescDocument,
-        inputPath
-      );
-      result = migration.document;
-      if (!options.quiet) {
-        for (const diagnostic of migration.diagnostics) {
-          if (diagnostic.severity === 'warning') {
-            console.error(`⚠ ${diagnostic.code}: ${diagnostic.message}`);
-          }
-        }
-      }
-    } else {
-      const dump = data as unknown as ContractDump;
-      result = contractDumpToMcpDescription(dump);
-    }
-  } else {
-    const doc = data as unknown as McpDescDocument;
-    const dump = mcpDescriptionToContractDump(doc);
-    result = dump;
+  const intermediate = contractDumpToMcpDescription(data as unknown as ContractDump, {
+    selector: '0.8.0',
+    onUnsupportedServerCapabilities: (names) => {
+      console.error(`Warning: capabilities not representable in mcpdesc were omitted: ${names.join(', ')}`);
+    },
+  });
+  const migration = await migrateMcpDescription(intermediate);
+  for (const diagnostic of migration.diagnostics) {
+    console.error(`${diagnostic.severity}: ${diagnostic.message ?? diagnostic.code ?? diagnostic.rule}`);
   }
+  if (!migration.ok) {
+    throw new Error(`Conversion ${migration.status}. Review the diagnostics; no output document was written`);
+  }
+  const result = migration.value;
 
   // Determine output serialization format
   const outputFormat: OutputFormat = options.format || inferSerializationFormat(inputPath, options.output);
@@ -165,8 +136,7 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   if (options.output) {
     await writeFile(options.output, outputContent, 'utf-8');
     if (!options.quiet) {
-      console.log(`   Output: ${options.output} (${outputFormat})`);
-      console.log('✅ Conversion complete');
+      console.error(`Output: ${options.output} (${outputFormat})`);
     }
   } else {
     process.stdout.write(outputContent);

@@ -28,7 +28,7 @@ describe('Agents Command Integration Tests', () => {
     it('should include all command descriptions', () => {
       const result = execSync(`${CLI_PATH} agents`).toString();
       
-      const commands = ['dump', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+      const commands = ['dump', 'convert', 'project', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
       commands.forEach(cmd => {
         expect(result).toContain(`**${cmd}**`);
       });
@@ -58,7 +58,7 @@ describe('Agents Command Integration Tests', () => {
   });
 
   describe('Command-Specific Help', () => {
-    const commands = ['dump', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+    const commands = ['dump', 'convert', 'project', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
 
     commands.forEach(cmd => {
       it(`should output ${cmd} command guide`, () => {
@@ -167,11 +167,80 @@ describe('Agents Command Integration Tests', () => {
   });
 
   describe('Help Integration', () => {
+    it.each([
+      ['dump', '[options]'],
+      ['split', '--config <path> [options] <mcpdesc>'],
+      ['project', '[options] <input>'],
+      ['migrate', '[options] <input>'],
+      ['diff', '--from <file> --to <file> [options]'],
+      ['breaking', '--diff <file> [options]'],
+      ['changelog', '--diff <file> --output <file> [options]'],
+      ['compare', '--from <file> --to <file> [options]'],
+      ['rules', '[subcommand] [options]'],
+      ['completion', '[options] [shell]'],
+      ['agents', '[options]'],
+    ])('should simplify the main listing while preserving %s command usage', (command, usage) => {
+      const mainHelp = execSync(`${CLI_PATH} --help`).toString();
+      const help = execSync(`${CLI_PATH} ${command} --help`).toString();
+
+      expect(mainHelp).toContain(`${command} ${usage.replace('[options]', '').trim().replace(/\s+/g, ' ')}`.trim());
+      expect(help).toContain(`Usage: mcpcontract ${command} ${usage}`);
+      expect(help).toContain('-h, --help');
+    });
+
+    it.each([
+      ['list', '[options]'],
+      ['list-catalogs', '[options]'],
+      ['show', '[options] <rule>'],
+      ['examples', '[options] <rule>'],
+      ['validate', '[options]'],
+      ['export', '[options]'],
+    ])('should show accurate help for rules %s', (command, usage) => {
+      const help = execSync(`${CLI_PATH} rules ${command} --help`).toString();
+
+      expect(help).toContain(`Usage: mcpcontract rules ${command} ${usage}`.trim());
+      expect(help).toContain('-h, --help');
+      if (command === 'list-catalogs') {
+        expect(help).not.toContain('--catalog');
+        expect(help).not.toContain('--rules');
+      }
+    });
+
+    it('should disclose unimplemented rename detection', () => {
+      const help = execSync(`${CLI_PATH} diff --help`).toString();
+
+      expect(help).toContain('Rename detection (not yet implemented)');
+    });
+
+    it.each([
+      ['convert', 'input', '--guide'],
+      ['document', 'file', '--list'],
+      ['validate', 'file', '--show-compatibility'],
+    ])('should show the required %s input and preserve its file-free mode', (command, argument, mode) => {
+      const mainHelp = execSync(`${CLI_PATH} --help`).toString();
+      const help = execSync(`${CLI_PATH} ${command} --help`).toString();
+
+      expect(mainHelp).toContain(`${command} <${argument}>`);
+      expect(help).toContain(`Usage: mcpcontract ${command} [options] <${argument}>`);
+      expect(help.replace(/\s+/g, ' ')).toContain(`required unless using ${mode}`);
+      expect(help).toContain(`Without an input file: mcpcontract ${command} ${mode}`);
+      expect(execSync(`${CLI_PATH} ${command} ${mode}`).toString().length).toBeGreaterThan(0);
+      expect(() => execSync(`${CLI_PATH} ${command}`, { stdio: 'pipe' })).toThrow();
+    });
+
     it('should show agents command in main help', () => {
       const result = execSync(`${CLI_PATH} --help`).toString();
       
       expect(result).toContain('agents');
       expect(result).toContain('Agent-optimized help');
+    });
+
+    it('should omit option placeholders only from the main command list', () => {
+      const help = execSync(`${CLI_PATH} --help`).toString();
+      expect(help).toContain('Usage: mcpcontract [command] [options]');
+      expect(help.split('Commands:')[1]).not.toContain('[options]');
+      const rulesHelp = execSync(`${CLI_PATH} rules --help`).toString();
+      expect(rulesHelp).toContain('show [options] <rule>');
     });
 
     it('should show help for agents command', () => {
@@ -252,10 +321,10 @@ describe('Agents Command Integration Tests', () => {
       expect(allTokens).toBeGreaterThan(7000);
       expect(allTokens).toBeLessThan(11000);
       
-      // The focused changelog guide should remain 10-15x smaller than --all
+      // The focused changelog guide should remain substantially smaller than --all
       const efficiencyRatio = allTokens / singleTokens;
       expect(efficiencyRatio).toBeGreaterThan(10);
-      expect(efficiencyRatio).toBeLessThan(15);
+      expect(efficiencyRatio).toBeLessThan(16);
     });
   });
 

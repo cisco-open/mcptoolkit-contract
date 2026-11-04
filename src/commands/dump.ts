@@ -22,6 +22,7 @@ import {
 import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } from '../lib/mcpdesc-converter.js';
 import { parse as yamlParse } from 'yaml';
 import { validateMcpDescription } from '@mcpdesc/validator';
+import { requireActiveSelector } from '../lib/mcpdesc-target.js';
 
 // ANSI color codes
 const GREEN = '\x1b[32m';
@@ -113,6 +114,7 @@ function logImplicitAuthDefault(options: CLIOptions): void {
 /** * Main dump execution
  */
 async function runDump(options: CLIOptions): Promise<void> {
+  const selector = requireActiveSelector(options.selector);
   // Show helpful message about --quiet flag when outputting to stdout
   if (!options.output && !options.quiet) {
     log('Tip: Use --quiet flag to suppress these messages when piping output', options);
@@ -211,6 +213,7 @@ async function runDump(options: CLIOptions): Promise<void> {
 
   // Convert to mcpdesc format
   const mcpdesc = contractDumpToMcpDescription(dump, {
+    selector,
     onUnsupportedServerCapabilities: (capabilities) => {
       console.error(
         `[WARN] Server capabilities not representable in MCP Description were omitted: ${capabilities.join(', ')}. ` +
@@ -237,13 +240,16 @@ async function runDump(options: CLIOptions): Promise<void> {
     log('✓ Enrichment applied', options);
   }
 
-  const validation = validateMcpDescription(mcpdesc);
+  const validation = validateMcpDescription(
+    mcpdesc,
+    { selector },
+  );
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
       .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
       .join('\n');
     throw new MCPProtocolError(
-      `Captured server description is not valid MCP Description 0.8.0:\n${diagnostics}`,
+      `Captured server description is not valid MCP Description ${mcpdesc.mcpdesc}:\n${diagnostics}`,
       'INVALID_MCP_DESCRIPTION'
     );
   }
@@ -325,6 +331,7 @@ export function dumpCommand(): Command {
     .option('--skip-cors-check', 'Skip CORS support detection for HTTP/SSE transports', false)
     .option('--cors-origin <origin>', 'Origin header for CORS preflight testing (default: http://localhost:3000)', 'http://localhost:3000')
     .option('--page-size <number>', 'Request specific page size for pagination (hint to server, not guaranteed)', parseNumber)
+    .option('--selector <selector>', 'Pin the active MCP Description target (0.9.0-draft.4)')
     .option('-i, --info <path>', 'Enrichment info file (JSON/YAML) — adds contact, license, security, and other metadata')
     .configureHelp({
       formatHelp: (cmd, helper) => {
@@ -372,6 +379,7 @@ DIAGNOSTICS
   --skip-cors-check             Skip browser CORS support detection
   --cors-origin <origin>        Origin used for CORS testing (default: "http://localhost:3000")
   --page-size <number>          Page-size hint for pagination testing
+  --selector <selector>         MCP Description selector (default: 0.9.0-draft.4)
   -h, --help                    Display help for command
 
 For advanced workflows and behavior details:

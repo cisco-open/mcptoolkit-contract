@@ -13,6 +13,7 @@ import { RulesEngine } from '../lib/rules-engine.js';
 
 export const breakingCommand = new Command('breaking')
   .description('Spot non-backward compatible changes from a structural diff')
+  .usage('--diff <file> [options]')
   .requiredOption('--diff <file>', 'Structural diff file from \'diff\' command')
   .option('--rules <file>', 'Custom compatibility rules YAML file (default: built-in breaking-changes.yaml)', undefined)
   .option('--output <file>', 'Diff-breaking output file (default: stdout)')

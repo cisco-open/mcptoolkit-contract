@@ -13,6 +13,7 @@ import {
   mcpDescriptionToContractDump,
   migrateMcpDescription07To08,
   parseAsContractDump,
+  projectMcpDescriptionView,
   applyEnrichment,
   McpDescTag,
   type McpDescDocument,
@@ -71,14 +72,14 @@ describe('mcpdesc-converter', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('emits a valid v0.8 observed protocol view without vendor metadata', () => {
+    it('emits the active observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
       dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
 
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
-        mcpdesc: '0.8.0',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+        mcpdesc: '0.9.0',
         protocolVersions: ['2025-06-18'],
         instructions: 'Use tool_a for test operations.',
         capabilities: [{ tools: {} }],
@@ -86,11 +87,11 @@ describe('mcpdesc-converter', () => {
       expect(doc.info).not.toHaveProperty('protocolVersion');
       expect(doc).not.toHaveProperty('x-cisco-metadata');
 
-      const validation = validateMcpDescription(doc);
+      const validation = validateMcpDescription(doc, { selector: '0.9.0-draft.4' });
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
-      expect(validation.selector).toBe('0.8.0-rev.20261021');
-      expect(validation.defaulted).toBe(true);
+      expect(validation.selector).toBe('0.9.0-draft.4');
+      expect(validation.defaulted).toBe(false);
     });
 
     it('reports and omits server capabilities that MCP Description cannot represent', () => {
@@ -113,6 +114,17 @@ describe('mcpdesc-converter', () => {
         'futureCapability',
         'protocolVersions',
       ]);
+    });
+
+    it('emits Draft 4 by default or when explicitly pinned', () => {
+      const doc = contractDumpToMcpDescription(minimalDump(), { selector: '0.9.0-draft.4' });
+
+      expect(doc).toMatchObject({
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+        mcpdesc: '0.9.0',
+      });
+      expect(validateMcpDescription(doc, { selector: '0.9.0-draft.4' }).valid).toBe(true);
+      expect(contractDumpToMcpDescription(minimalDump()).mcpdesc).toBe('0.9.0');
     });
 
     it('should not include root tags when dump has none', () => {
@@ -195,23 +207,51 @@ describe('mcpdesc-converter', () => {
       ],
     };
 
-    it('requires an explicit selection for a multi-version document', () => {
+    it('rejects historical processing with upgrade guidance', () => {
       expect(() => parseAsContractDump(multiVersionDocument)).toThrow(
-        /select one with --protocol-version/
+        /mcpcontract migrate/
       );
     });
 
-    it('retains only declarations effective for the selected protocol revision', () => {
-      const dump = parseAsContractDump(multiVersionDocument, '2026-07-28');
+    it('does not bypass the active target when a protocol version is selected', () => {
+      expect(() => parseAsContractDump(multiVersionDocument, '2026-07-28')).toThrow('CLI 2.0.5');
+    });
+  });
 
-      expect(dump.serverInfo.protocolVersion).toBe('2026-07-28');
-      expect(dump.tools).toEqual([
-        expect.objectContaining({
+  describe('v0.9 Draft 4 protocol view projection', () => {
+    const draftDocument = {
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+      mcpdesc: '0.9.0',
+      info: { name: 'draft-server', version: '1.0.0' },
+      protocolVersions: ['2025-11-25', '2026-07-28'],
+      tools: [
+        {
+          name: 'run_job',
+          description: 'Legacy behavior',
+          protocolVersions: ['2025-11-25'],
+          inputSchema: { type: 'object' },
+        },
+        {
           name: 'run_job',
           description: 'Modern behavior',
-        }),
+          protocolVersions: ['2026-07-28'],
+          inputSchema: { type: 'object' },
+        },
+      ],
+    };
+
+    it('projects only the declaration effective for the selected revision', () => {
+      const view = projectMcpDescriptionView(draftDocument, '2026-07-28');
+      expect(view.protocolVersions).toEqual(['2026-07-28']);
+      expect(view.tools).toEqual([
+        expect.objectContaining({ name: 'run_job', description: 'Modern behavior' }),
       ]);
-      expect(dump.tools[0]).not.toHaveProperty('protocolVersions');
+    });
+
+    it('uses the pinned Draft 4 selector for internal diff conversion', () => {
+      const dump = parseAsContractDump(draftDocument, '2025-11-25');
+      expect(dump.serverInfo.protocolVersion).toBe('2025-11-25');
+      expect(dump.tools[0]).toMatchObject({ description: 'Legacy behavior' });
     });
   });
 

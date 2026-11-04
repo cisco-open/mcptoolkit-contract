@@ -65,6 +65,10 @@ echo "---------------------"
 node build/index.js --help > /dev/null 2>&1 && echo "✓ Main help working"
 node build/index.js dump --help > /dev/null 2>&1 && echo "✓ Dump help working"
 node build/index.js rules --help > /dev/null 2>&1 && echo "✓ Rules help working"
+node build/index.js convert --help > /dev/null 2>&1 && echo "✓ Convert help working"
+node build/index.js migrate --help > /dev/null 2>&1 && echo "✓ Migrate help working"
+node build/index.js project tests/fixtures/dumps/multi-protocol.mcpdesc.json \
+  --protocol-version 2026-07-28 --quiet > /dev/null && echo "✓ Active protocol projection working"
 echo ""
 
 # Test 5: Rules command - list with default catalog

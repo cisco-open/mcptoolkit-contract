@@ -9,6 +9,13 @@ const v08Document = {
   protocolVersions: ['2026-07-28'],
 };
 
+const v09Draft4Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+  mcpdesc: '0.9.0',
+  info: { name: 'validator-test', version: '1.0.0' },
+  protocolVersions: ['2026-07-28'],
+};
+
 describe('Validator mcpdesc dispatch', () => {
   it('uses the shared v0.8 structural and semantic validator', async () => {
     const validator = new Validator();
@@ -69,6 +76,32 @@ describe('Validator mcpdesc dispatch', () => {
     expect(result.valid).toBe(true);
     expect(result.schemaVersion).toBe('0.8.0');
     expect(result.errors).toEqual([]);
+  });
+
+  it('infers the exact Draft 4 selector from its schema identity and returns rule results', async () => {
+    const result = await new Validator().validateData(v09Draft4Document, 'mcpdesc');
+
+    expect(result.valid).toBe(true);
+    expect(result.selector).toBe('0.9.0-draft.4');
+    expect(result.ruleResults?.length).toBeGreaterThan(0);
+  });
+
+  it('uses the pinned active selector for schema-less 0.9.0 documents', async () => {
+    const document = { ...v09Draft4Document };
+    delete (document as { $schema?: string }).$schema;
+
+    const unpinned = await new Validator().validateData(document, 'mcpdesc');
+    expect(unpinned.valid).toBe(true);
+    expect(unpinned.selector).toBe('0.9.0-draft.4');
+
+    const result = await new Validator().validateData(
+      document,
+      'mcpdesc',
+      'data',
+      '0.9.0-draft.4',
+    );
+    expect(result.valid).toBe(true);
+    expect(result.selector).toBe('0.9.0-draft.4');
   });
 
   it('retains local validation for legacy v0.7 documents', async () => {

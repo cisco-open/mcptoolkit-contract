@@ -14,15 +14,17 @@ import { parseAsContractDump, isMcpDescDocument } from '../lib/mcpdesc-converter
 
 export const diffCommand = new Command('diff')
   .description('Generate a structural diff between two MCP descriptions')
+  .usage('--from <file> --to <file> [options]')
   .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
   .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
-  .option('--protocol-version <version>', 'Compare one effective MCP protocol view')
+  .option('--protocol-version <version>', 'Compare one effective MCP protocol view (required for multi-version input)')
+  .option('--selector <selector>', 'Pin the MCP Description selector')
   .option('--output <file>', 'Structural diff output file (default: stdout)')
   .option('--detect-renames', 'Use similarity scoring to detect renames (not yet implemented)', false)
   .option('--quiet', 'Suppress informational messages', false)
   .configureHelp({
     formatHelp: (cmd, helper) => {
-      return `Usage: mcpcontract diff --from <file> --to <file> [options]
+      return `Usage: ${helper.commandUsage(cmd)}
 
 ${helper.commandDescription(cmd)}
 
@@ -30,8 +32,10 @@ Options:
   --from <file>                 Source version (MCP description, JSON/YAML) [required]
   --to <file>                   Target version (MCP description, JSON/YAML) [required]
   --protocol-version <version>  Compare one effective MCP protocol view
+                                (required for multi-version input)
+  --selector <selector>         Pin the MCP Description selector
   --output <file>               Structural diff output file (default: stdout)
-  --detect-renames              Use similarity scoring to detect renames (default: false)
+  --detect-renames              Rename detection (not yet implemented)
   --quiet                       Suppress informational messages (default: false)
   -h, --help                    Display help for command
 
@@ -51,7 +55,7 @@ EXAMPLES:
   })
   .action(async (options) => {
     try {
-      const { from: fromFile, to: toFile, protocolVersion, output, detectRenames, quiet } = options;
+      const { from: fromFile, to: toFile, protocolVersion, selector, output, detectRenames, quiet } = options;
 
       if (!quiet) {
         console.error(`🔍 Comparing ${fromFile} → ${toFile}...`);
@@ -108,8 +112,8 @@ EXAMPLES:
           process.exit(2);
         }
       }
-      fromData = parseAsContractDump(fromData, protocolVersion);
-      toData = parseAsContractDump(toData, protocolVersion);
+      fromData = parseAsContractDump(fromData, protocolVersion, selector);
+      toData = parseAsContractDump(toData, protocolVersion, selector);
 
       // Create differ and compare
       const differ = new Differ({ detectRenames });
