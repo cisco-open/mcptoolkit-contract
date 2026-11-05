@@ -11,7 +11,7 @@ import {
 import { formatJSON, formatYAML } from '../lib/formatters.js';
 import { isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 import { migrateMcpDescription } from '../lib/mcpdesc-migration.js';
-import { ACTIVE_MCPDESC_VERSION, ACTIVE_MCPDESC_SELECTOR } from '../lib/mcpdesc-target.js';
+import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
 
 interface MigrateOptions {
   toVersion?: string;
@@ -41,10 +41,10 @@ export function migrateCommand(): Command {
   const cmd = new Command('migrate');
 
   cmd
-    .description('Upgrade MCP Description documents to the active format using reviewed migration steps')
+    .description('Upgrade MCP Description documents using reviewed migration steps (stable output by default)')
     .argument('<input>', 'Input MCP Description file (JSON or YAML)')
-    .option('--to-version <version>', 'Target format version (0.8.0 or active 0.9.0)', ACTIVE_MCPDESC_VERSION)
-    .option('--selector <selector>', 'Pin target rules (0.9.0-draft.4 for 0.9.0; 0.8.0 for 0.8.0)')
+    .option('--to-version <version>', 'Destination format version: 0.8.0 or 0.9.0', DEFAULT_OUTPUT_VERSION)
+    .option('--selector <selector>', 'Pin destination rules; source rules are resolved independently')
     .option('--fixes <file>', 'JSON/YAML object with a top-level "fixes" array of requested conversion fixes')
     .option('-o, --output <path>', 'Converted document output path (default: stdout)')
     .option('--report <path>', 'Write conversion status and diagnostics as JSON')
@@ -73,14 +73,11 @@ async function parseSource(content: string, description: string): Promise<unknow
 }
 
 async function runMigrate(input: string, options: MigrateOptions): Promise<void> {
-  const toVersion = options.toVersion ?? ACTIVE_MCPDESC_VERSION;
-  if (toVersion !== ACTIVE_MCPDESC_VERSION && toVersion !== '0.8.0') {
+  const toVersion = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
+  if (toVersion !== '0.9.0' && toVersion !== '0.8.0') {
     throw new Error('Supported migration targets are 0.8.0 and 0.9.0');
   }
-  const selector = toVersion === '0.8.0' ? '0.8.0' : ACTIVE_MCPDESC_SELECTOR;
-  if (options.selector !== undefined && options.selector !== selector) {
-    throw new Error(`Target ${toVersion} requires selector ${selector}`);
-  }
+  resolveOutputSelection(toVersion, options.selector);
   if (options.format && options.format !== 'json' && options.format !== 'yaml') {
     throw new Error('--format must be json or yaml');
   }
@@ -116,12 +113,16 @@ async function runMigrate(input: string, options: MigrateOptions): Promise<void>
 
   const conversion = await migrateMcpDescription(source as import('../lib/mcpdesc-converter.js').McpDescDocument, {
     toVersion,
+    selector: options.selector,
     fixes,
   });
   const report = {
     from: (source as Record<string, unknown>).mcpdesc,
     to: toVersion,
-    selector,
+    selector: conversion.selector,
+    selectionSource: conversion.selectionSource,
+    sourceSelector: conversion.sourceSelector,
+    sourceSelectionSource: conversion.sourceSelectionSource,
     status: conversion.status,
     diagnostics: conversion.diagnostics,
     steps: conversion.steps,

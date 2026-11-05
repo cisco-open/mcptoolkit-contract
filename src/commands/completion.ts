@@ -7,6 +7,7 @@
  */
 
 import { Command } from 'commander';
+import { CLI_MCPDESC_SELECTORS } from '../lib/mcpdesc-target.js';
 
 export function completionCommand(): Command {
   const cmd = new Command('completion');
@@ -70,6 +71,7 @@ function detectShell(): string | null {
  * Generate completion script for the specified shell
  */
 function generateCompletionScript(shell: string): string {
+    const selectors = CLI_MCPDESC_SELECTORS.join(' ');
   if (shell === 'bash') {
     return `# mcpcontract completion for bash
 _mcpcontract_completion() {
@@ -148,11 +150,7 @@ _mcpcontract_completion() {
             return
             ;;
         --selector)
-            if [[ "\${cmd}" == validate || "\${cmd}" == migrate ]]; then
-                COMPREPLY=( $(compgen -W "0.8.0 0.9.0-draft.4" -- "\${cur}") )
-            else
-                COMPREPLY=( $(compgen -W "0.9.0-draft.4" -- "\${cur}") )
-            fi
+            COMPREPLY=( $(compgen -W "${selectors}" -- "\${cur}") )
             return
             ;;
         --schema)
@@ -281,7 +279,7 @@ _mcpcontract_completion() {
                 # User typed --, show long options
                 case "\${cmd}" in
                     dump)
-                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --selector --help"
+                        local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --to-version --selector --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     split)
@@ -289,7 +287,7 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     convert)
-                        local opts="--to-format --output --format --compact --quiet --guide --help"
+                        local opts="--to-format --to-version --selector --output --format --compact --quiet --guide --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     project)
@@ -391,7 +389,7 @@ _mcpcontract_completion() {
                         # Other commands show options to improve discoverability
                         case "\${cmd}" in
                             dump)
-                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --selector --help"
+                                local opts="--wizard --config --mcp-server --server-name --transport --url --header --command --args --env --output --format --compact --quiet --verbose --protocol --auth --oauth-scope --oauth-resource --oauth-callback-port --oauth-callback-url --oauth-client-id --oauth-client-secret --info --skip-cors-check --cors-origin --page-size --to-version --selector --help"
                                 COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                                 ;;
                             diff)
@@ -482,7 +480,8 @@ _mcp_contract() {
                         '--skip-cors-check[Skip CORS detection]' \\
                         '--cors-origin[CORS preflight origin]:origin:' \\
                         '--page-size[Page size for pagination testing]:number:' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--to-version[Output MCP Description format]:version:(0.8.0 0.9.0)' \\
+                        '--selector[Output rule selector]:selector:(${selectors})' \\
                         '--auth[Authentication mode]:mode:(none auto oauth)' \\
                         '--oauth-scope[Additional OAuth scope (repeatable)]:scope:' \\
                         '--oauth-resource[Override OAuth resource value]:uri:' \\
@@ -498,7 +497,7 @@ _mcp_contract() {
                     _arguments \\
                         '1:MCP description file:_files' \\
                         '--config[Split configuration file]:file:_files' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--selector[MCP Description selector]:selector:(${selectors})' \\
                         '--output-dir[Output directory]:directory:_files -/' \\
                         '(-f --format)'{-f,--format}'[Output format]:format:(json yaml)' \\
                         '--pretty[Pretty print JSON]' \\
@@ -512,6 +511,8 @@ _mcp_contract() {
                     _arguments \\
                         '1:Input file:_files' \\
                         '--to-format[Target format]:format:(mcpdesc)' \\
+                        '--to-version[Output MCP Description format]:version:(0.8.0 0.9.0)' \\
+                        '--selector[Output rule selector]:selector:(${selectors})' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
                         '(-f --format)'{-f,--format}'[Serialization format]:format:(json yaml)' \\
                         '--compact[Compact JSON output]' \\
@@ -523,7 +524,7 @@ _mcp_contract() {
                     _arguments \\
                         '1:Input MCP Description:_files' \\
                         '--view[Projection mode]:mode:(effective native)' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--selector[MCP Description selector]:selector:(${selectors})' \\
                         '--protocol-version[MCP protocol version]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \\
                         '--kind[Native MCP declaration kind]:kind:(tool resource resourceTemplate prompt)' \\
                         '--identifier[Native MCP identifier]:identifier:' \\
@@ -537,7 +538,7 @@ _mcp_contract() {
                     _arguments \\
                         '1:Input MCP Description:_files' \\
                         '--to-version[Target format version]:version:(0.8.0 0.9.0)' \\
-                        '--selector[Target rule set]:selector:(0.8.0 0.9.0-draft.4)' \\
+                        '--selector[Destination rule selector]:selector:(${selectors})' \\
                         '--fixes[Explicit fixes file]:file:_files' \\
                         '(-o --output)'{-o,--output}'[Converted document]:file:_files' \\
                         '--report[Conversion report]:file:_files' \\
@@ -547,7 +548,7 @@ _mcp_contract() {
                 validate)
                     _arguments \\
                         '1:file:_files' \\
-                        '--selector[Validation selector]:selector:(0.8.0 0.9.0-draft.4)' \\
+                        '--selector[Validation selector]:selector:(${selectors})' \\
                         '--schema[Schema type]:type:(mcpdesc mcp-description dump diff diff-breaking dump-split)' \\
                         '--strict[Treat warnings as errors]' \\
                         '(-f --format)'{-f,--format}'[Output format]:format:(text json)' \\
@@ -560,7 +561,7 @@ _mcp_contract() {
                 document)
                     _arguments \\
                         '1:file:_files' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--selector[MCP Description selector]:selector:(${selectors})' \\
                         '(-t --template)'{-t,--template}'[Template name]:template:(mcpdesc-documentation reference-documentation card-view)' \\
                         '(-r --rendering)'{-r,--rendering}'[Rendering mode]:mode:(full reference)' \\
                         '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
@@ -576,7 +577,7 @@ _mcp_contract() {
                 diff)
                     _arguments \\
                         '--from[Source MCP description]:file:_files' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--selector[MCP Description selector]:selector:(${selectors})' \\
                         '--to[Target MCP description]:file:_files' \\
                         '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '--output[Output file]:file:_files' \\
@@ -611,7 +612,7 @@ _mcp_contract() {
                 compare)
                     _arguments \\
                         '--from[Source MCP description]:file:_files' \\
-                        '--selector[Active MCP Description selector]:selector:(0.9.0-draft.4)' \\
+                        '--selector[MCP Description selector]:selector:(${selectors})' \\
                         '--to[Target MCP description]:file:_files' \\
                         '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '--output[Changelog output file]:file:_files' \\
@@ -752,7 +753,8 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l protocol -d "MC
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l skip-cors-check -d "Skip CORS detection"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l cors-origin -d "CORS preflight origin"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l page-size -d "Page size for pagination testing"
-complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l to-version -d "Output MCP Description format" -a "0.8.0 0.9.0"
+complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l selector -d "Output rule selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l auth -d "Authentication mode" -a "none auto oauth"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-scope -d "Additional OAuth scope (repeatable)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -l oauth-resource -d "Override OAuth resource value"
@@ -765,7 +767,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from dump" -s h -l help -d "S
 
 # split command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from split" -l config -d "Split configuration file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from split" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from split" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from split" -l output-dir -d "Output directory" -a "(__fish_complete_directories)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from split" -s f -l format -d "Output format" -a "json yaml"
 complete -c mcpcontract -n "__fish_seen_subcommand_from split" -l pretty -d "Pretty print JSON"
@@ -777,6 +779,8 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from split" -s h -l help -d "
 
 # convert command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -l to-format -d "Target format" -a "mcpdesc"
+complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -l to-version -d "Output MCP Description format" -a "0.8.0 0.9.0"
+complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -l selector -d "Output rule selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -s o -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -s f -l format -d "Serialization format" -a "json yaml"
 complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -l compact -d "Compact JSON output"
@@ -786,7 +790,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from convert" -s h -l help -d
 
 # project command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l view -d "Projection mode" -a "effective native"
-complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l protocol-version -d "MCP protocol version" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l kind -d "Native declaration kind" -a "tool resource resourceTemplate prompt"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l identifier -d "Native declaration identifier"
@@ -795,7 +799,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l output -d "O
 
 # migrate command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l to-version -d "Target format version" -a "0.8.0 0.9.0"
-complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l selector -d "Target selector" -a "0.8.0 0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l selector -d "Destination rule selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l fixes -d "Explicit fixes file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l output -d "Converted document output" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l report -d "Conversion report" -F
@@ -803,7 +807,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l patch -d "JS
 
 # validate command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc dump diff diff-breaking dump-split"
-complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l selector -d "MCP Description selector" -a "0.8.0 0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l strict -d "Treat warnings as errors"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s f -l format -d "Output format" -a "text json"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s o -l output -d "Output file" -F
@@ -815,7 +819,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s h -l help -
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s t -l template -d "Template name" -a "mcpdesc-documentation reference-documentation card-view"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s r -l rendering -d "Rendering mode" -a "full reference"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
-complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s o -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "mcpdesc dump auto"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l list -d "List templates"
@@ -828,7 +832,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s h -l help -
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l from -d "Source MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l output -d "Output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Detect renames"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l quiet -d "Suppress output"
@@ -857,7 +861,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from changelog" -s h -l help 
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l from -d "Source MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l to -d "Target MCP description" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
-complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l selector -d "Active MCP Description selector" -a "0.9.0-draft.4"
+complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l output -d "Changelog output file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l rules -d "Custom rules file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from compare" -l format -d "Changelog format" -a "release compact"

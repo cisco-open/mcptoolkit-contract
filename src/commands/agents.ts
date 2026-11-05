@@ -90,14 +90,14 @@ mcpcontract agents --command breaking
 **split** - Split large MCP descriptions into focused subsets
 → Use when: You have a large federation MCP description and need to organize it by category
 
-**convert** - Convert legacy capability dumps to active MCP Description
+**convert** - Import legacy dumps (stable output)
 → Use when: Importing an old capability dump rather than upgrading an mcpdesc document
 
 **project** - Export an effective protocol view or native MCP declaration
 → Use when: You need a version-specific MCP Description document or MCP-native declaration
 
-**migrate** - Upgrade supported historical MCP Description versions to the active target
-→ Use when: Preparing a document for the 0.9.0 Draft 4 rules
+**migrate** - Upgrade mcpdesc (stable destination)
+→ Use when: Upgrading 0.7.0 or opting into 0.9.0 RC.1
 
 **validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
@@ -352,6 +352,8 @@ Choose either \`--config\` (with \`--mcp-server\` when needed) or direct transpo
 ### Output and Diagnostics
 - \`--output <file>\` - Output file (default: stdout)
 - \`--format <type>\` - json, yaml, or markdown (default: json)
+- \`--to-version <version>\` - mcpdesc: 0.8.0 (default), 0.9.0
+- \`--selector <id>\` - Pin output rules
 - \`--compact\` - Emit single-line JSON
 - \`--info <file>\` - Add contact, license, security, and other metadata from JSON/YAML
 - \`--quiet\` - Suppress progress messages on stderr
@@ -394,8 +396,8 @@ A dump file containing:
 Example dump.json structure:
 \`\`\`json
 {
-  "$schema": "https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json",
-  "mcpdesc": "0.9.0",
+  "$schema": "https://mcpdesc.org/schema/mcp-description/0.8.0.json",
+  "mcpdesc": "0.8.0",
   "info": {
     "name": "my-server",
     "version": "1.0.0"
@@ -1471,7 +1473,7 @@ const PROJECT_GUIDE = `# project - Project MCP Descriptions
 Export an Effective Protocol View or a native MCP value for one protocol revision.
 
 ## When to Use
-Export protocol-specific declarations from an active-format document.
+Export protocol-specific declarations from a supported 0.8.0 or 0.9.0 document.
 
 ## Basic Usage
 \`\`\`bash
@@ -1482,20 +1484,22 @@ mcpcontract project server.yaml --view native --kind tool --identifier search --
 ## Common Patterns
 - Effective views retain MCP Description metadata and select declarations for one protocol revision.
 - Native projection returns MCP declarations without MCP Description-only fields.
-- Processing targets 0.9.0 Draft 4, including schema-less 0.9.0 inputs. Upgrade older documents with migrate first.
+- Effective: 0.8.0/0.9.0; native: 0.9.0 only.
+- Rules: selector > schema > default. Schema-less 0.9.0 uses RC.1; Draft 4 pins remain.
 `;
 
 const CONVERT_GUIDE = `# convert - Convert Legacy Capability Dumps
 
 ## Purpose
-Import legacy dumps as active mcpdesc.
+Import dumps as 0.8.0 (default) or 0.9.0 RC.1.
 
 ## When to Use
-For legacy dumps; use migrate for mcpdesc.
+Legacy dumps only; use migrate for mcpdesc.
 
 ## Basic Usage
 \`\`\`bash
 mcpcontract convert legacy.json --output server.yaml
+mcpcontract convert legacy.json --to-version 0.9.0 --output preview.yaml
 \`\`\`
 
 ## Common Patterns
@@ -1505,15 +1509,15 @@ One-way, supported, document-only stdout. No output on blockers.
 const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
 
 ## Purpose
-Upgrade 0.7.0 through 0.8.0 to the active draft.
+Upgrade to stable 0.8.0; opt into 0.9.0 RC.1.
 
 ## When to Use
-Before processing historical mcpdesc.
+Reviewed format upgrades, not ordinary 0.8.0 processing.
 
 ## Basic Usage
 \`\`\`bash
 mcpcontract migrate historical.yaml --output current.yaml --report migration.json
-mcpcontract migrate historical.yaml --to-version 0.8.0 --output intermediate.yaml
+mcpcontract migrate historical.yaml --to-version 0.9.0 --output preview.yaml
 \`\`\`
 
 ## Common Patterns
@@ -1523,7 +1527,7 @@ Blockers stop output. Use \`--fixes file.json\` for reviewed fixes and \`--patch
 { "fixes": [{ "fix": "remove-property", "path": ["tools", 0, "annotations", "customFlag"] }] }
 \`\`\`
 
-Fix paths address intermediate 0.8.0. Reports list steps; patches address the original source (root replacement for chains). No guessed values or automatic removals.
+Fix paths: intermediate 0.8.0. Patches: original input (root replacement for chains). Reports: steps and selectors. \`--selector\`: destination rules, not format. No guessed fixes.
 `;
 
 // ============================================================================

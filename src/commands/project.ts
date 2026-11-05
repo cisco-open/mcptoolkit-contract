@@ -8,6 +8,7 @@ import {
   projectMcpNativeValue,
   parseMcpDescriptionSource,
   type McpNativeKind,
+  type ProjectMcpNativeValueOptions,
   type SupportedCoreSpecification,
 } from '@mcpdesc/core';
 import { supportedProtocolVersions, type SupportedProtocolVersion } from '@mcpdesc/validator';
@@ -38,7 +39,7 @@ export function projectCommand(): Command {
     .description('Project an MCP Description into an effective view or native MCP value')
     .argument('<input>', 'Input MCP Description file (JSON or YAML)')
     .option('--view <mode>', 'Projection mode: effective or native', 'effective')
-    .option('--selector <selector>', 'Pin the MCP Description selector, e.g. 0.9.0-draft.4')
+    .option('--selector <selector>', 'Pin MCP Description rules, overriding a recognized same-format schema')
     .option('--protocol-version <version>', 'MCP protocol version (required for native view or multi-version input)')
     .option('--kind <kind>', 'Native declaration kind: tool, resource, resourceTemplate, or prompt (required with --view native)')
     .option('--identifier <identifier>', 'Project one native declaration by its MCP identity (only with --view native)')
@@ -92,8 +93,8 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
     }
     result = projectMcpDescriptionView(document, options.protocolVersion, selector);
   } else {
-    if (!selector.startsWith('0.9.0-draft.')) {
-      throw new Error('Native projection requires a 0.9.0 draft selector');
+    if (document.mcpdesc !== '0.9.0') {
+      throw new Error('Native projection requires MCP Description 0.9.0; migrate explicitly first');
     }
     if (!options.protocolVersion) {
       throw new Error('--protocol-version is required with --view native');
@@ -109,7 +110,7 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
     }
 
     const projection = projectMcpNativeValue(document, {
-      selector: selector as Extract<SupportedCoreSpecification, `0.9.0-draft.${string}`>,
+      selector: selector as ProjectMcpNativeValueOptions['selector'],
       protocolVersion: options.protocolVersion as SupportedProtocolVersion,
       kind: options.kind,
       ...(options.identifier ? { identifier: options.identifier } : {}),

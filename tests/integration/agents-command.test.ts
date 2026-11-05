@@ -317,9 +317,9 @@ describe('Agents Command Integration Tests', () => {
       expect(singleTokens).toBeGreaterThan(400);
       expect(singleTokens).toBeLessThan(2000);
       
-      // Complete reference should remain below 11,000 tokens
+      // Complete reference should remain below 13,200 tokens
       expect(allTokens).toBeGreaterThan(7000);
-      expect(allTokens).toBeLessThan(11000);
+      expect(allTokens).toBeLessThan(13200);
       
       // The focused changelog guide should remain substantially smaller than --all
       const efficiencyRatio = allTokens / singleTokens;

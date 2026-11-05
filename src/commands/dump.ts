@@ -22,7 +22,7 @@ import {
 import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } from '../lib/mcpdesc-converter.js';
 import { parse as yamlParse } from 'yaml';
 import { validateMcpDescription } from '@mcpdesc/validator';
-import { requireActiveSelector } from '../lib/mcpdesc-target.js';
+import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
 
 // ANSI color codes
 const GREEN = '\x1b[32m';
@@ -114,7 +114,10 @@ function logImplicitAuthDefault(options: CLIOptions): void {
 /** * Main dump execution
  */
 async function runDump(options: CLIOptions): Promise<void> {
-  const selector = requireActiveSelector(options.selector);
+  const toVersion = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
+  const selection = resolveOutputSelection(toVersion, options.selector);
+  const selector = selection.selector;
+  log(`MCP Description ${toVersion}: ${selector} (${selection.source})`, options);
   // Show helpful message about --quiet flag when outputting to stdout
   if (!options.output && !options.quiet) {
     log('Tip: Use --quiet flag to suppress these messages when piping output', options);
@@ -213,6 +216,7 @@ async function runDump(options: CLIOptions): Promise<void> {
 
   // Convert to mcpdesc format
   const mcpdesc = contractDumpToMcpDescription(dump, {
+    toVersion,
     selector,
     onUnsupportedServerCapabilities: (capabilities) => {
       console.error(
@@ -331,7 +335,8 @@ export function dumpCommand(): Command {
     .option('--skip-cors-check', 'Skip CORS support detection for HTTP/SSE transports', false)
     .option('--cors-origin <origin>', 'Origin header for CORS preflight testing (default: http://localhost:3000)', 'http://localhost:3000')
     .option('--page-size <number>', 'Request specific page size for pagination (hint to server, not guaranteed)', parseNumber)
-    .option('--selector <selector>', 'Pin the active MCP Description target (0.9.0-draft.4)')
+    .option('--to-version <version>', 'Output MCP Description format: 0.8.0 or 0.9.0', DEFAULT_OUTPUT_VERSION)
+    .option('--selector <selector>', 'Pin rules for the requested output format')
     .option('-i, --info <path>', 'Enrichment info file (JSON/YAML) — adds contact, license, security, and other metadata')
     .configureHelp({
       formatHelp: (cmd, helper) => {
@@ -360,6 +365,8 @@ CONNECTION
 OUTPUT
   -o, --output <path>           Output file path (default: stdout)
   -f, --format <format>         Output format: json, yaml, or markdown (default: "json")
+  --to-version <version>        MCP Description format: 0.8.0 or 0.9.0 (default: "0.8.0")
+  --selector <selector>         Pin output rules (default: maintained rules for the output format)
   --compact                     Emit compact JSON
   -i, --info <path>             Enrich output from a JSON/YAML metadata file
   -q, --quiet                   Suppress progress messages
@@ -379,7 +386,6 @@ DIAGNOSTICS
   --skip-cors-check             Skip browser CORS support detection
   --cors-origin <origin>        Origin used for CORS testing (default: "http://localhost:3000")
   --page-size <number>          Page-size hint for pagination testing
-  --selector <selector>         MCP Description selector (default: 0.9.0-draft.4)
   -h, --help                    Display help for command
 
 For advanced workflows and behavior details:
@@ -398,7 +404,8 @@ For advanced workflows and behavior details:
         if (options.wizard || !hasAnyOption) {
           // Dynamically import wizard to avoid circular dependencies
           const { runWizardInteractive } = await import('./wizard.js');
-          await runWizardInteractive();
+          resolveOutputSelection(options.toVersion, options.selector);
+          await runWizardInteractive({ toVersion: options.toVersion, selector: options.selector });
           return;
         }
         

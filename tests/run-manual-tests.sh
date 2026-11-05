@@ -68,7 +68,18 @@ node build/index.js rules --help > /dev/null 2>&1 && echo "✓ Rules help workin
 node build/index.js convert --help > /dev/null 2>&1 && echo "✓ Convert help working"
 node build/index.js migrate --help > /dev/null 2>&1 && echo "✓ Migrate help working"
 node build/index.js project tests/fixtures/dumps/multi-protocol.mcpdesc.json \
-  --protocol-version 2026-07-28 --quiet > /dev/null && echo "✓ Active protocol projection working"
+  --protocol-version 2026-07-28 --quiet > /dev/null && echo "✓ Protocol projection working"
+echo ""
+
+# Test 4: Selector precedence and output-version options (offline)
+echo "Test 4: Selector precedence and stable output options"
+echo "-----------------------------------------------------"
+node build/index.js dump --help | grep -q -- '--to-version'
+node build/index.js convert --help | grep -q -- '--to-version'
+node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --format json |
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0-draft.4" || result.selectionSource!=="schema-derived") process.exit(1); console.log("Schema-derived Draft 4 pin verified");'
+node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --selector 0.9.0-rc.1 --format json |
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0-rc.1" || result.selectionSource!=="explicit" || !result.ruleResults?.length) process.exit(1); console.log("Explicit RC.1 override and rule results verified");'
 echo ""
 
 # Test 5: Rules command - list with default catalog

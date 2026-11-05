@@ -12,13 +12,16 @@ import AjvModule from 'ajv';
 import type { ValidateFunction, ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
 import {
-  supportedSpecifications,
   validateMcpDescription,
   type McpDescriptionDiagnostic,
   type McpDescriptionRuleResult,
   type McpDescriptionSelector,
 } from '@mcpdesc/validator';
-import { ACTIVE_MCPDESC_VERSION, ACTIVE_MCPDESC_SELECTOR } from './mcpdesc-target.js';
+import {
+  McpDescriptionSelectionError,
+  resolveMcpDescriptionSelection,
+  type SelectionSource,
+} from './mcpdesc-target.js';
 
 const Ajv = (AjvModule as any).default || AjvModule;
 const addFormats = (addFormatsModule as any).default || addFormatsModule;
@@ -57,6 +60,7 @@ export interface ValidationResult {
   warnings: ValidationIssue[];
   selector?: McpDescriptionSelector;
   defaulted?: boolean;
+  selectionSource?: SelectionSource;
   diagnostics?: McpDescriptionDiagnostic[];
   ruleResults?: readonly McpDescriptionRuleResult[];
 }
@@ -219,16 +223,24 @@ export class Validator {
 
     if (
       (schemaType === 'mcpdesc' || schemaType === 'mcp-description') &&
-      (detectedVersion === '0.8.0' || detectedVersion === '0.9.0')
+      detectedVersion !== '0.7.0'
     ) {
-      const inferredSelector = detectedVersion === ACTIVE_MCPDESC_VERSION
-        ? ACTIVE_MCPDESC_SELECTOR
-        : undefined;
-      const selector = requestedSelector ?? inferredSelector;
-      if (selector && !supportedSpecifications.includes(selector)) {
-        throw new Error(`Unsupported MCP Description selector: ${selector}`);
+      let selection;
+      try {
+        selection = resolveMcpDescriptionSelection(data, requestedSelector);
+      } catch (error) {
+        if (!(error instanceof McpDescriptionSelectionError)) throw error;
+        return {
+          valid: false, file: fileName, schemaType, schemaVersion: detectedVersion,
+          errors: error.diagnostics.map((diagnostic) => ({
+            path: diagnosticPath(diagnostic.path),
+            message: diagnostic.message ?? diagnostic.code ?? 'Selection failed',
+            keyword: diagnostic.code,
+          })),
+          warnings: [], diagnostics: error.diagnostics,
+        };
       }
-      const validation = validateMcpDescription(data, selector ? { selector } : undefined);
+      const validation = validateMcpDescription(data, { selector: selection.selector });
       const errors: ValidationIssue[] = [];
       const warnings: ValidationIssue[] = [];
 
@@ -252,21 +264,26 @@ export class Validator {
         errors,
         warnings,
         selector: validation.selector ?? undefined,
-        defaulted: validation.defaulted,
+        defaulted: selection.defaulted,
+        selectionSource: selection.source,
         diagnostics: validation.diagnostics,
         ruleResults: validation.results,
       };
     }
 
-    if (
-      (schemaType === 'mcpdesc' || schemaType === 'mcp-description') &&
-      detectedVersion &&
-      detectedVersion !== '0.7.0'
-    ) {
-      throw new Error(`Unsupported MCP Description version: ${detectedVersion}`);
-    }
-
     let usedVersion: string | undefined;
+
+    if ((schemaType === 'mcpdesc' || schemaType === 'mcp-description') && detectedVersion === '0.7.0') {
+      if (requestedSelector !== undefined) throw new Error('Legacy 0.7.0 validation does not accept a modern selector');
+      const declaredSchema = (data as { $schema?: unknown }).$schema;
+      if (declaredSchema !== undefined && declaredSchema !== 'https://mcpdesc.org/schema/mcp-description/0.7.0.json') {
+        return {
+          valid: false, file: fileName, schemaType, schemaVersion: detectedVersion,
+          errors: [{ path: '/$schema', message: 'Unknown or contradictory 0.7.0 schema identity', keyword: 'unknown-schema-identity' }],
+          warnings: [],
+        };
+      }
+    }
 
     // Try to load version-specific schema
     let validate: ValidateFunction;

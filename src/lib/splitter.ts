@@ -42,6 +42,10 @@ export class Splitter {
   private dump!: ContractDump;
   private document!: McpDescriptionDocument;
   private selector!: SupportedCoreSpecification;
+
+  get selectedSelector(): SupportedCoreSpecification {
+    return this.selector;
+  }
   private config!: SplitConfig;
   private stats: SplitStats = {
     totalTools: 0,

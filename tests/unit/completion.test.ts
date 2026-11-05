@@ -10,6 +10,15 @@ import { execSync } from 'child_process';
 import { describe, it, expect } from '@jest/globals';
 
 describe('Bash Completion', () => {
+  it.each(['bash', 'zsh', 'fish'])('offers supported selectors and output versions in %s', (shell) => {
+    const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
+    expect(script).toContain('0.8.0-rev.20261021');
+    expect(script).toContain('0.9.0-rc.1');
+    expect(script).toContain('0.9.0-draft.4');
+    expect(script).not.toContain('0.9.0-draft.3');
+    expect(script).toContain(shell === 'fish' ? '-l to-version' : '--to-version');
+  });
+
   const generateCompletion = (): string => {
     return execSync('node build/index.js completion bash 2>/dev/null', {
       encoding: 'utf-8',

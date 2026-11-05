@@ -32,7 +32,7 @@ Quick reference for AI agents and developers extending this CLI tool.
 - `split` - Split large dumps into focused subsets by filtering rules
 - `convert` - Convert legacy capability dumps to the active MCP Description format (one-way)
 - `project` - Export an effective protocol view or native MCP declaration
-- `migrate` - Upgrade historical MCP Description documents through reviewed steps to the active target
+- `migrate` - Upgrade MCP Description documents through reviewed steps (stable 0.8.0 destination by default)
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
 - `diff` - Compare dumps and generate structural diff
@@ -135,13 +135,22 @@ mcpcontract/
 
 ## MCP Description Specification Ownership
 
-The active target is centralized in `src/lib/mcpdesc-target.ts`: currently
-format `0.9.0`, selector `0.9.0-draft.4`. Capture and processing commands use
-only that target. Historical `validate` and `migrate` paths are deliberate
-exceptions; processing never silently upgrades input. Use CLI `1.2.4` for
-0.7.0 processing or CLI `2.0.5` for 0.8.0. `convert` accepts legacy dumps only;
-`migrate` handles 0.7.0 -> 0.8.0 -> the active target. Update the README's
-version table whenever the active target or a historical CLI mapping changes.
+Selector policy and the CLI support set are centralized in
+`src/lib/mcpdesc-target.ts`. Required `mcpdesc` identifies input format;
+explicit selector wins over recognized same-format schema identity, then the
+maintained format default applies. Shared 0.8.0 identity selects the maintained
+revision; unique supported draft/RC identities pin exact snapshots. Core and
+validator are pinned at 0.13.0-rc.5 / 0.14.0-rc.5.
+
+Generation and migration default to stable `0.8.0`; `--to-version 0.9.0` opts
+into the maintained preview default, currently RC.1. Modern processing supports
+0.8.0 and 0.9.0; native projection requires 0.9.0. Keep local 0.7.0 validation
+and reviewed 0.7.0 -> 0.8.0 -> 0.9.0 migration. Use CLI 1.2.4 for historical
+0.7.0 processing. Processing never silently upgrades input. CLI support is
+narrower than library support and may retire drafts/RCs in a new release.
+Update the README compatibility table when defaults or support change. See the
+[selector design](docs/maintainers/design/versions-and-selectors.md) and
+[user guide](docs/versions-and-selectors.md).
 
 The MCP Description (`mcpdesc`) specification is published at
 [mcpdesc.org](https://mcpdesc.org/format/) and developed in the canonical

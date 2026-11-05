@@ -3,6 +3,19 @@
   "description": "Maps CLI versions to compatible schema versions - append new entries on release",
   "compatibility": [
     {
+      "cliVersion": "2.1.0-rc.2",
+      "releaseDate": "2026-11-05",
+      "schemas": {
+        "mcp-description": "0.8.0",
+        "mcp-description-preview": "0.9.0-rc.1",
+        "x-cisco-metadata": "read-only 0.2.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0"
+      },
+      "notes": "Stable 0.8.0 by default; opt into 0.9.0 RC.1. Modern processing accepts 0.8.0/0.9.0; native projection requires 0.9.0. Original stable and Draft 4 pins remain supported. Explicit selector > recognized schema > maintained format default. Historical 0.7.0 validation and chained migration remain supported; use CLI 1.2.4 for historical 0.7.0 processing."
+    },
+    {
       "cliVersion": "2.1.0-rc.1",
       "releaseDate": "2026-11-01",
       "schemas": {

@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
-- [[2.1.0-rc.1] - 2026-11-01](#210-rc1---2026-11-01)
+- [[2.1.0-rc.2] - 2026-11-05](#210-rc2---2026-11-05)
+- [[2.1.0-rc.1] - 2026-11-02](#210-rc1---2026-11-02)
 - [[2.0.5] - 2026-10-27](#205---2026-10-27)
 - [[2.0.4] - 2026-10-27](#204---2026-10-27)
 - [[2.0.3] - 2026-10-22](#203---2026-10-22)
@@ -36,6 +37,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.1.0-rc.2] - 2026-11-05
+
+### Added
+
+- Adopted MCP Description RC.1 with `@mcpdesc/core` 0.13.0-rc.5 and
+  `@mcpdesc/validator` 0.14.0-rc.5, preserving RC.1 validation result format
+  1.3.0, protocol-version rule identities, diagnostics, and per-rule results.
+- Added `--to-version` and exact output selector support to `dump` and `convert`.
+- Documented the implemented versions-and-selectors policy and user guide,
+  including schema-derived pins, maintained defaults, and CLI snapshot retirement.
+
+### Changed
+
+- Stable 0.8.0 is the default output and migration destination. Request 0.9.0
+  explicitly for maintained preview rules, currently RC.1. No implicit downgrades.
+- Input rules now follow explicit selector, recognized same-format schema, then
+  maintained format default. Shared 0.8.0 schema identities use the maintained
+  revision; original stable and unique Draft 4 pins remain available.
+- Modern processing accepts 0.8.0 and 0.9.0; native projection requires 0.9.0.
+  CLI selector support is intentionally narrower than underlying library support.
+- Validation and migration reports distinguish explicit, schema-derived, and
+  default selections. Migration source and destination selectors are independent.
+
+### Fixed
+
+- Reused the split selector when validating generated subsets and enabled native
+  RC.1 projection without a draft-only guard. Wizard output choices are forwarded.
 
 ## [2.1.0-rc.1] - 2026-11-02
 
@@ -582,3 +611,7 @@ This release consolidates pre-1.0 development into a single, stable v1.0 line. P
 - Binary: `mcpcontract`
 - License: Apache-2.0
 - Repository: `github.com/cisco-open/mcptoolkit-contract`
+
+[Unreleased]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.2...HEAD
+[2.1.0-rc.2]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.1...v2.1.0-rc.2
+[2.1.0-rc.1]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.0.5...v2.1.0-rc.1

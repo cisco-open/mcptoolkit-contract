@@ -18,6 +18,7 @@ import {
 } from '../lib/mcpdesc-converter.js';
 import type { ContractDump } from '../lib/types.js';
 import { migrateMcpDescription } from '../lib/mcpdesc-migration.js';
+import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
 
 type TargetFormat = 'mcpdesc';
 type OutputFormat = 'json' | 'yaml';
@@ -29,16 +30,20 @@ interface ConvertCommandOptions {
   compact?: boolean;
   quiet?: boolean;
   guide?: boolean;
+  toVersion?: string;
+  selector?: string;
 }
 
 export function convertCommand(): Command {
   const cmd = new Command('convert');
 
   cmd
-    .description('Convert a legacy capability dump to the active MCP Description format')
+    .description('Convert a legacy capability dump to MCP Description (stable output by default)')
     .usage('[options] <input>')
     .argument('[input]', 'Legacy capability dump file (JSON or YAML; required unless using --guide)')
     .option('--to-format <format>', 'Target format: mcpdesc (default)')
+    .option('--to-version <version>', 'Output MCP Description format: 0.8.0 or 0.9.0', DEFAULT_OUTPUT_VERSION)
+    .option('--selector <selector>', 'Pin rules for the requested output format')
     .option('-o, --output <path>', 'Output file path (default: stdout)')
     .option('-f, --format <format>', 'Output serialization: json or yaml (default: infer from output path, then input path)')
     .option('--compact', 'Compact JSON output (no indentation)', false)
@@ -71,6 +76,7 @@ async function printGuide(): Promise<void> {
 }
 
 async function runConvert(inputPath: string, options: ConvertCommandOptions): Promise<void> {
+  const selection = resolveOutputSelection(options.toVersion, options.selector);
   if (options.toFormat && options.toFormat !== 'mcpdesc') {
     throw new Error('convert supports only legacy dump to mcpdesc conversion; reverse conversion is no longer supported');
   }
@@ -107,12 +113,13 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
   }
 
   const intermediate = contractDumpToMcpDescription(data as unknown as ContractDump, {
-    selector: '0.8.0',
     onUnsupportedServerCapabilities: (names) => {
       console.error(`Warning: capabilities not representable in mcpdesc were omitted: ${names.join(', ')}`);
     },
   });
-  const migration = await migrateMcpDescription(intermediate);
+  const migration = await migrateMcpDescription(intermediate, {
+    toVersion: options.toVersion, selector: options.selector,
+  });
   for (const diagnostic of migration.diagnostics) {
     console.error(`${diagnostic.severity}: ${diagnostic.message ?? diagnostic.code ?? diagnostic.rule}`);
   }
@@ -120,6 +127,7 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
     throw new Error(`Conversion ${migration.status}. Review the diagnostics; no output document was written`);
   }
   const result = migration.value;
+  if (!options.quiet) console.error(`MCP Description ${result.mcpdesc}: ${selection.selector} (${selection.source})`);
 
   // Determine output serialization format
   const outputFormat: OutputFormat = options.format || inferSerializationFormat(inputPath, options.output);

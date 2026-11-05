@@ -14,6 +14,7 @@ import { Splitter } from '../lib/splitter.js';
 import { Validator } from '../lib/validator.js';
 import { formatJSON } from '../lib/formatters.js';
 import type { SplitResult } from '../lib/types.js';
+import type { McpDescriptionSelector } from '@mcpdesc/validator';
 
 interface SplitCommandOptions {
   config: string;
@@ -80,11 +81,11 @@ async function writeResult(
 /**
  * Validate a split dump
  */
-async function validateDump(filePath: string, quiet: boolean): Promise<boolean> {
+async function validateDump(filePath: string, quiet: boolean, selector: McpDescriptionSelector): Promise<boolean> {
   const validator = new Validator();
   
   try {
-    const result = await validator.validateFile(filePath, 'mcpdesc');
+    const result = await validator.validateFile(filePath, 'mcpdesc', selector);
     
     if (!result.valid) {
       console.error(`\n✗ Validation failed: ${filePath}`);
@@ -267,7 +268,7 @@ export function splitCommand(): Command {
           
           let allValid = true;
           for (const filePath of outputFiles) {
-            const valid = await validateDump(filePath, options.quiet || false);
+            const valid = await validateDump(filePath, options.quiet || false, splitter.selectedSelector);
             if (!valid) {
               allValid = false;
             }

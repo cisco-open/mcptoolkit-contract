@@ -8,7 +8,8 @@
 
 import { Command } from 'commander';
 import { writeFile, readFile } from 'node:fs/promises';
-import { supportedSpecifications, type McpDescriptionSelector } from '@mcpdesc/validator';
+import { type McpDescriptionSelector } from '@mcpdesc/validator';
+import { CLI_MCPDESC_SELECTORS } from '../lib/mcpdesc-target.js';
 import { Validator, ValidationError, detectSchemaType, type SchemaType, type ValidationResult } from '../lib/validator.js';
 
 interface ValidateCommandOptions {
@@ -40,7 +41,7 @@ export function validateCommand(): Command {
   .usage('[options] <file>')
   .argument('[file]', 'Path to file to validate (required unless using --show-compatibility)')
   .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), diff, diff-breaking, or dump-split')
-    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-draft.4')
+    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-rc.1 (overrides a recognized same-format schema)')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
@@ -129,7 +130,7 @@ async function validateFile(filePath: string, options: ValidateCommandOptions): 
     if (schemaType !== 'mcpdesc' && schemaType !== 'mcp-description') {
       throw new Error('--selector can only be used when validating an MCP Description');
     }
-    if (!supportedSpecifications.includes(options.selector as McpDescriptionSelector)) {
+    if (!CLI_MCPDESC_SELECTORS.includes(options.selector as McpDescriptionSelector)) {
       throw new Error(`Unsupported MCP Description selector: ${options.selector}`);
     }
   }
@@ -195,7 +196,7 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
     lines.push(`- Schema Version: ${result.schemaVersion}`);
   }
   if (result.selector) {
-    lines.push(`- Validation Selector: ${result.selector}${result.defaulted ? ' (defaulted)' : ''}`);
+    lines.push(`- Validation Selector: ${result.selector}${result.selectionSource ? ` (${result.selectionSource})` : ''}`);
   }
   lines.push(`- Errors: ${result.errors.length}`);
   lines.push(`- Warnings: ${result.warnings.length}`);
@@ -354,10 +355,10 @@ function formatCompatibilityTable(data: CompatibilityData, displayMode: string):
   }
   
   lines.push('Usage Guidelines:');
-  lines.push('- For current work: Use latest CLI with latest schemas');
-  lines.push('- For old dumps: Regenerate with appropriate CLI version');
-  lines.push('- Diff/breaking analysis requires matching schema versions');
-  lines.push('- Validation accepts any historical schema version');
+  lines.push('- New output defaults to stable 0.8.0; --to-version 0.9.0 opts into preview rules');
+  lines.push('- Input rules: explicit selector, recognized same-format schema, maintained format default');
+  lines.push('- Compare matching effective MCP protocol revisions; migrate explicitly when needed');
+  lines.push('- Use a matching former CLI release for retired drafts/RCs or historical processing');
   
   return lines.join('\n');
 }

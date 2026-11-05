@@ -346,6 +346,7 @@ export interface CLIOptions {
   pageSize?: number;       // Hint for pagination page size (for testing/discovery)
   protocol?: 'legacy' | 'auto' | '2026-07-28'; // MCP protocol negotiation mode
   selector?: string;       // Exact MCP Description validation/output selector
+  toVersion?: string;
   info?: string;           // Path to enrichment info file (for dump command)
 }
 

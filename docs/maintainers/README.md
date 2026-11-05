@@ -9,6 +9,7 @@ If you are looking for usage docs, see [../users/](../users/).
 ### `design/`
 
 - [`architecture.md`](design/architecture.md) — high-level architecture and module overview
+- [Versions and Selectors](design/versions-and-selectors.md) - CLI selection, output-default, and support-lifecycle policy
 - [`design-decisions.md`](design/design-decisions.md) — consolidated design rationale and arbitrations (pagination, CORS, rules engine, schema versioning, deferred designs)
 - [`workflow-examples.md`](design/workflow-examples.md) — end-to-end workflow examples (CI/CD, scripts)
 - [`compare-command.md`](design/compare-command.md) — **proposed (v1.1)** `compare` command + CI/CD guide plan (replaces `scripts/changelog.sh`)

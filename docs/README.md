@@ -9,6 +9,7 @@ User-facing and maintainer documentation for **mcpcontract**.
 
 Other entry points at the repository root:
 
+- [Versions and Selectors](versions-and-selectors.md) - format versions, schema identities, and exact rule selection
 - [README.md](../README.md) — project overview and quick start
 - [101-tutorial.md](101-tutorial.md) — short getting-started walkthrough
 - [CHANGELOG.md](../CHANGELOG.md) — version history

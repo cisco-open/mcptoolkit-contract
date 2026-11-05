@@ -31,6 +31,7 @@ check() {
 # User-facing entry points (referenced from README.md / 101-tutorial.md / SUPPORT.md)
 echo "Checking user-facing docs..."
 check "docs/101-tutorial.md"
+check "docs/versions-and-selectors.md"
 check "docs/users/README.md"
 check "docs/users/reference/schemas.md"
 check "docs/users/reference/compatibility.md"
@@ -59,6 +60,7 @@ echo "Checking maintainer docs..."
 check "docs/maintainers/README.md"
 check "docs/maintainers/design/architecture.md"
 check "docs/maintainers/design/design-decisions.md"
+check "docs/maintainers/design/versions-and-selectors.md"
 check "docs/maintainers/design/workflow-examples.md"
 
 # MCP Description specification (canonical source of truth, referenced from README/AGENTS)

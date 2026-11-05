@@ -4,12 +4,11 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output targets the active MCP Description version. Legacy v0.7 documents and
+ * New output defaults to stable MCP Description. Legacy v0.7 documents and
  * x-cisco-metadata remain readable for migration.
  */
 
 import {
-  V0_8_SCHEMA_URI,
   migrateMcpDescription07To08 as migrateMcpDescription07To08Core,
   projectEffectiveProtocolView,
   type CoreDiagnostic,
@@ -28,10 +27,9 @@ import type {
 } from './types.js';
 import { Validator } from './validator.js';
 import {
-  ACTIVE_MCPDESC_VERSION,
-  ACTIVE_MCPDESC_SELECTOR,
-  ACTIVE_MCPDESC_SCHEMA_URI,
-  requireActiveDocument,
+  DEFAULT_OUTPUT_VERSION,
+  resolveOutputSelection,
+  resolveMcpDescriptionSelection,
 } from './mcpdesc-target.js';
 
 // ============================================================================
@@ -199,7 +197,8 @@ const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
 
 export interface ContractDumpConversionOptions {
   onUnsupportedServerCapabilities?: (capabilities: string[]) => void;
-  selector?: '0.8.0' | '0.9.0-draft.4';
+  toVersion?: string;
+  selector?: SupportedCoreSpecification;
 }
 
 // ============================================================================
@@ -213,13 +212,11 @@ export function contractDumpToMcpDescription(
   dump: ContractDump,
   options: ContractDumpConversionOptions = {},
 ): McpDescDocument {
-  const selector = options.selector ?? ACTIVE_MCPDESC_SELECTOR;
-  if (selector !== '0.8.0' && selector !== '0.9.0-draft.4') {
-    throw new Error(`Unsupported dump output selector: ${selector}`);
-  }
+  const version = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
+  const selection = resolveOutputSelection(version, options.selector);
   const doc: McpDescDocument = {
-    $schema: selector === ACTIVE_MCPDESC_SELECTOR ? ACTIVE_MCPDESC_SCHEMA_URI : V0_8_SCHEMA_URI,
-    mcpdesc: selector === ACTIVE_MCPDESC_SELECTOR ? ACTIVE_MCPDESC_VERSION : '0.8.0',
+    $schema: selection.schemaUri,
+    mcpdesc: version,
     info: buildInfo(dump),
     protocolVersions: [dump.serverInfo.protocolVersion],
     transports: buildTransports(dump.dumpDetails.mcpServerConfig),
@@ -507,7 +504,8 @@ export interface McpDescriptionMigrationResult {
  */
 export async function migrateMcpDescription07To08(
   document: McpDescDocument,
-  sourceName: string = 'data'
+  sourceName: string = 'data',
+  selector: '0.8.0' | '0.8.0-rev.20261021' = resolveOutputSelection('0.8.0').selector as '0.8.0' | '0.8.0-rev.20261021',
 ): Promise<McpDescriptionMigrationResult> {
   if (document.mcpdesc !== '0.7.0') {
     throw new Error(`Migration requires MCP Description 0.7.0, received ${document.mcpdesc}`);
@@ -522,7 +520,7 @@ export async function migrateMcpDescription07To08(
   }
 
   const migration = migrateMcpDescription07To08Core(document, {
-    specification: '0.8.0',
+    selector,
     sourceValidated: true,
   });
   if (!migration.ok) {
@@ -570,7 +568,7 @@ export function projectMcpDescriptionView(
 
   const declaredVersions = document.protocolVersions;
   if (!Array.isArray(declaredVersions) || declaredVersions.length === 0) {
-    throw new Error(`MCP Description ${ACTIVE_MCPDESC_VERSION} requires non-empty protocolVersions`);
+    throw new Error(`MCP Description ${document.mcpdesc} requires non-empty protocolVersions`);
   }
 
   const selectedVersion = requestedProtocolVersion ?? (
@@ -602,7 +600,7 @@ export function getMcpDescriptionSelector(
   document: McpDescDocument,
   requestedSelector?: SupportedCoreSpecification,
 ): SupportedCoreSpecification {
-  return requireActiveDocument(document, requestedSelector);
+  return resolveMcpDescriptionSelection(document, requestedSelector).selector;
 }
 
 // ============================================================================
