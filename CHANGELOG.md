@@ -38,6 +38,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Adopted MCP Description 0.9.0 RC.3 with `@mcpdesc/core` 0.13.0-rc.8 and
+  `@mcpdesc/validator` 0.14.0-rc.9, including native document-order projection
+  and the validator's structured diagnostic detail and related locations.
+- Added `normalize` for document-oriented JSON/YAML serialization, plus
+  `project --key-order document` for native declaration output.
+
+### Changed
+
+- 0.9.0 processing now uses RC.3; upstream-retired drafts and RC.1/RC.2 are no
+  longer selectable in this CLI. Validation text output retains structured
+  diagnostic details and related component-definition locations.
+- RC.3 may change diagnostic paths, counts, rule attribution, and validity from
+  RC.2; unknown members in Tool Interaction Example elicitation responses are
+  now rejected by the upstream validator.
+- YAML normalization uses the core serializer's two-space indented-sequence
+  output style. Existing command serializers keep their timestamp quoting.
+
 ## [2.1.0-rc.2] - 2026-11-05
 
 ### Added

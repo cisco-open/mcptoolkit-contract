@@ -29,7 +29,7 @@ access private configuration files at runtime.
 - `$schema` is optional and identifies a recognized schema for that format.
   Under CLI policy, it also selects associated rules unless explicitly overridden.
 - A selector identifies exact validation and operation rules, for example
-  `0.9.0-draft.4`, `0.9.0-rc.1`, or `0.8.0-rev.20261021`. An explicit
+  `0.9.0-rc.3` or `0.8.0-rev.20261021`. An explicit
   `--selector` is a deliberate pin, subject to CLI and operation support.
 
 The server's `info.version`, the CLI/package version, and the MCP protocol
@@ -70,8 +70,8 @@ explicit selector rather than guessing.
 Specifically, `0.8.0` and `0.8.0-rev.20261021` share the canonical `0.8.0.json`
 URI and schema bytes. That URI selects maintained `0.8.0-rev.20261021` behavior.
 An explicit `--selector 0.8.0` requests the original behavior while the CLI
-supports it. Unique supported identities, including Draft 4 and RC.1, select
-their corresponding snapshots unambiguously.
+supports it. RC.3 is the only currently supported 0.9.0 identity; earlier
+drafts and RCs have been retired.
 
 ### Difference From Upstream Default Resolution
 
@@ -85,6 +85,11 @@ default. Resolve the identity with public metadata and pass the resulting
 selector explicitly to core/validator. Do not change upstream configuration.
 When neither a schema nor selector is supplied, use the library's maintained
 format default, provided the CLI and operation support it.
+
+Validator's `schemaPolicyIfPresent` and `fallbackIfSelectorIsUnknown` options
+are intentionally not surfaced by this CLI. The CLI owns its documented
+selector precedence, and falling back from an unavailable selector would hide a
+retired or mistyped ruleset instead of reporting it.
 
 Record resolution origin as explicit, schema-derived, or default in relevant
 reports. Passing a schema-derived selector explicitly to a library must not be
@@ -128,9 +133,9 @@ destination of `migrate`. The dependency's default for a format is not a choice
 of default output format across formats.
 
 An explicit request for output format `0.9.0`, without an exact selector, uses
-its maintained default: currently `0.9.0-rc.1`. Dependency upgrades can advance
-that choice through approved RCs to final. An explicit RC.1 selector stays pinned
-while supported. Never advance silently from `0.9.0` to a future `0.10.0`.
+its maintained default: currently `0.9.0-rc.3`. Dependency upgrades can advance
+that choice through approved RCs to final. Never advance silently from `0.9.0`
+to a future `0.10.0`.
 
 Migration is an explicit reviewed operation, not a side effect of processing.
 Retain the supported `0.7.0 -> 0.8.0 -> 0.9.0` chain, source/result checks,
@@ -156,9 +161,10 @@ automation should pin the CLI release and, where needed, an explicit selector.
 
 Keep the CLI validation report envelope compatible unless a separate change is
 approved. Preserve upstream diagnostic rule identities, protocol attribution,
-rule-result statuses and reasons. RC.1 uses validation result format `1.3.0`
-and protocol-version rule IDs; old selectors retain their own contracts. The
-CLI's breaking-change catalog is unrelated and must not be rewritten for this.
+structured detail and related locations, and rule-result statuses and reasons.
+RC.3 uses validation result format `1.4.0`; 0.8 selectors retain their existing
+diagnostic contract. The CLI's breaking-change catalog is unrelated and must not
+be rewritten for this.
 
 ## Support Lifecycle and Maintenance
 
@@ -173,11 +179,11 @@ implementations for every snapshot. Existing historical `0.7.0` validation and
 reviewed migration are deliberate exceptions; their removal is a separate,
 documented compatibility decision, not an automatic result of retiring RCs.
 
-The current CLI supports original stable `0.8.0`, the maintained defaults for
-`0.8.0` and `0.9.0`, and the previously adopted `0.9.0-draft.4` pin. Earlier
-drafts and `0.8.0-rc.4` are not exposed even though the libraries support them.
-Native projection requires `0.9.0`. The maintained defaults come from public
-package metadata, so approved default advances do not require new RC constants.
+The current CLI supports original stable `0.8.0` and the maintained defaults for
+`0.8.0` and `0.9.0` (currently RC.3). Retired drafts and earlier RCs are not
+exposed even when historical packages support them. Native projection requires
+`0.9.0`. The maintained defaults come from public package metadata, so approved
+default advances do not require new RC constants.
 
 Document retirements, affected operations, and matching historical CLI releases
 in the changelog and compatibility guidance. Reject unsupported selections with
@@ -189,11 +195,9 @@ test identity precedence, shared identities, operation capabilities, historical
 paths, output identities, and reports. The goal is to avoid routine per-RC code
 edits, not to skip review and regression tests on dependency upgrades.
 
-The offline result-contract fixture at
-[`tests/fixtures/validation-result-1.3.0.schema.json`](../../../tests/fixtures/validation-result-1.3.0.schema.json)
-is structurally identical to the validator's frozen RC.1 validation-result
-schema from specification tag `v0.9.0-rc.1`. It is test data, not a CLI-owned
-specification or a bundled mcpdesc document schema.
+The validator's RC.3 result format is `1.4.0`. Structured diagnostic fields
+are preserved in JSON reports and rendered in text output; they are not CLI
+schema extensions.
 
 ## References
 

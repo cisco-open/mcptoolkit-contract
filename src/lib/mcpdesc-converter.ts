@@ -26,6 +26,7 @@ import type {
   Icon,
 } from './types.js';
 import { Validator } from './validator.js';
+import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
 import {
   DEFAULT_OUTPUT_VERSION,
   resolveOutputSelection,
@@ -525,7 +526,7 @@ export async function migrateMcpDescription07To08(
   });
   if (!migration.ok) {
     const details = migration.diagnostics
-      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+      .map(formatMcpDescriptionDiagnostic)
       .join('; ');
     throw new Error(`Cannot migrate MCP Description 0.7.0: ${details}`);
   }
@@ -589,7 +590,7 @@ export function projectMcpDescriptionView(
   });
   if (!projection.ok) {
     const details = projection.diagnostics
-      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+      .map(formatMcpDescriptionDiagnostic)
       .join('; ');
     throw new Error(`Cannot project MCP Description protocol view: ${details}`);
   }

@@ -32,6 +32,7 @@ Quick reference for AI agents and developers extending this CLI tool.
 - `split` - Split large dumps into focused subsets by filtering rules
 - `convert` - Convert legacy capability dumps to the active MCP Description format (one-way)
 - `project` - Export an effective protocol view or native MCP declaration
+- `normalize` - Normalize MCP Description member order and JSON/YAML serialization
 - `migrate` - Upgrade MCP Description documents through reviewed steps (stable 0.8.0 destination by default)
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
@@ -53,6 +54,7 @@ mcpcontract/
 │   │   ├── split.ts         # ✅ Split large dumps (Phase 1: tools)
 │   │   ├── convert.ts       # ✅ Import legacy capability dumps as active mcpdesc
 │   │   ├── project.ts       # ✅ Export effective/native protocol views
+│   │   ├── normalize.ts     # ✅ Document-oriented MCP Description serialization
 │   │   ├── migrate.ts       # ✅ Reviewed MCP Description version conversion
 │   │   ├── validate.ts      # ✅ Validate against schemas
 │   │   ├── document.ts      # ✅ Generate documentation
@@ -67,6 +69,7 @@ mcpcontract/
 │       ├── dumper.ts         # Capability extraction
 │       ├── config.ts         # Config parser
 │       ├── formatters.ts     # JSON/YAML/Markdown output
+│       ├── mcpdesc-diagnostics.ts # Format structured MCP Description diagnostics
 │       ├── types.ts          # Type definitions
 │       ├── validator.ts      # ✅ Schema validation
 │       ├── renderer.ts       # ✅ Template rendering
@@ -139,15 +142,17 @@ Selector policy and the CLI support set are centralized in
 `src/lib/mcpdesc-target.ts`. Required `mcpdesc` identifies input format;
 explicit selector wins over recognized same-format schema identity, then the
 maintained format default applies. Shared 0.8.0 identity selects the maintained
-revision; unique supported draft/RC identities pin exact snapshots. Core and
-validator are pinned at 0.13.0-rc.5 / 0.14.0-rc.5.
+revision; the 0.9.0 RC.3 identity selects the maintained preview snapshot. Core
+and validator are pinned at 0.13.0-rc.8 / 0.14.0-rc.9.
 
 Generation and migration default to stable `0.8.0`; `--to-version 0.9.0` opts
-into the maintained preview default, currently RC.1. Modern processing supports
+into the maintained preview default, currently RC.3. Modern processing supports
 0.8.0 and 0.9.0; native projection requires 0.9.0. Keep local 0.7.0 validation
 and reviewed 0.7.0 -> 0.8.0 -> 0.9.0 migration. Use CLI 1.2.4 for historical
 0.7.0 processing. Processing never silently upgrades input. CLI support is
-narrower than library support and may retire drafts/RCs in a new release.
+narrower than library support; retired drafts and RC.1/RC.2 require a matching
+historical CLI. `normalize` uses the core document-order serializer; native
+projection can opt into document key order with `--key-order document`.
 Update the README compatibility table when defaults or support change. See the
 [selector design](docs/maintainers/design/versions-and-selectors.md) and
 [user guide](docs/versions-and-selectors.md).

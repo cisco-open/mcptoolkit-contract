@@ -33,6 +33,13 @@ interface CompatibilityData {
   compatibility: CompatibilityEntry[];
 }
 
+function diagnosticPath(path: readonly (string | number)[]): string {
+  if (path.length === 0) return '/';
+  return `/${path
+    .map((segment) => String(segment).replace(/~/g, '~0').replace(/\//g, '~1'))
+    .join('/')}`;
+}
+
 export function validateCommand(): Command {
   const cmd = new Command('validate');
 
@@ -41,7 +48,7 @@ export function validateCommand(): Command {
   .usage('[options] <file>')
   .argument('[file]', 'Path to file to validate (required unless using --show-compatibility)')
   .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), diff, diff-breaking, or dump-split')
-    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-rc.1 (overrides a recognized same-format schema)')
+    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-rc.3 (overrides a recognized same-format schema)')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
@@ -219,6 +226,12 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
       if (error.protocolVersions?.length) {
         lines.push(`     MCP versions: ${error.protocolVersions.join(', ')}`);
       }
+      if (error.detail) {
+        lines.push(`     Detail: ${JSON.stringify(error.detail)}`);
+      }
+      for (const related of error.relatedLocations ?? []) {
+        lines.push(`     Related location: ${diagnosticPath(related.path)} (${related.relation})`);
+      }
       lines.push('');
     }
   }
@@ -233,6 +246,12 @@ function formatTextOutput(result: ValidationResult, strict: boolean): string {
       }
       if (warning.protocolVersions?.length) {
         lines.push(`     MCP versions: ${warning.protocolVersions.join(', ')}`);
+      }
+      if (warning.detail) {
+        lines.push(`     Detail: ${JSON.stringify(warning.detail)}`);
+      }
+      for (const related of warning.relatedLocations ?? []) {
+        lines.push(`     Related location: ${diagnosticPath(related.path)} (${related.relation})`);
       }
       lines.push('');
     }

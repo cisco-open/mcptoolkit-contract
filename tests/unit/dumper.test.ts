@@ -20,8 +20,8 @@ describe('ContractDumper', () => {
 
   it.each([
     [[], '0.8.0', '0.8.0'],
-    [['--to-version', '0.9.0'], '0.9.0', '0.9.0-rc.1'],
-    [['--to-version', '0.9.0', '--selector', '0.9.0-draft.4'], '0.9.0', '0.9.0-draft.4'],
+    [['--to-version', '0.9.0'], '0.9.0', '0.9.0-rc.3'],
+    [['--to-version', '0.9.0', '--selector', '0.9.0-rc.3'], '0.9.0', '0.9.0-rc.3'],
   ] as const)('generates the requested output with flags %j', async (flags, version, selector) => {
     jest.spyOn(ContractDumper.prototype, 'dump').mockResolvedValue({
       version: '0.3.8',

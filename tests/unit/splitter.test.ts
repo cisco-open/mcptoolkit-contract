@@ -281,7 +281,7 @@ categories:
     it('should handle empty tools array', async () => {
       // Create an mcpdesc document with no tools
       const emptyDumpContent = {
-        $schema: "https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json",
+        $schema: "https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json",
         mcpdesc: "0.9.0",
         info: {
           name: "empty-server",

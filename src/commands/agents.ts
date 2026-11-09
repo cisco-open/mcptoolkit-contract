@@ -78,7 +78,7 @@ mcpcontract agents --command breaking
 ## Key Parameters
 
 - \`--command <name>\` - Get help for specific command
-  - Available: dump, split, convert, project, migrate, validate, diff, breaking, changelog, compare, document, rules, completion
+  - Available: dump, split, convert, project, normalize, migrate, validate, diff, breaking, changelog, compare, document, rules, completion
 - \`--workflows\` - Show all end-to-end workflows
 - \`--all\` - Output complete reference in single document
 
@@ -96,8 +96,11 @@ mcpcontract agents --command breaking
 **project** - Export an effective protocol view or native MCP declaration
 → Use when: You need a version-specific MCP Description document or MCP-native declaration
 
+**normalize** - Normalize MCP Description member order and serialization
+→ Use when: You want document-oriented JSON/YAML output without changing values
+
 **migrate** - Upgrade mcpdesc (stable destination)
-→ Use when: Upgrading 0.7.0 or opting into 0.9.0 RC.1
+→ Use when: Upgrading 0.7.0 or opting into 0.9.0 RC.3
 
 **validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
@@ -1478,20 +1481,42 @@ Export protocol-specific declarations from a supported 0.8.0 or 0.9.0 document.
 ## Basic Usage
 \`\`\`bash
 mcpcontract project server.yaml --view effective --protocol-version 2026-07-28 --output server-2026.yaml
-mcpcontract project server.yaml --view native --kind tool --identifier search --protocol-version 2026-07-28
+mcpcontract project server.yaml --view native --kind tool --identifier search --protocol-version 2026-07-28 --key-order document
 \`\`\`
 
 ## Common Patterns
 - Effective views retain MCP Description metadata and select declarations for one protocol revision.
 - Native projection returns MCP declarations without MCP Description-only fields.
 - Effective: 0.8.0/0.9.0; native: 0.9.0 only.
-- Rules: selector > schema > default. Schema-less 0.9.0 uses RC.1; Draft 4 pins remain.
+- Rules: selector > schema > default. Schema-less 0.9.0 uses RC.3; earlier drafts and RCs are retired.
+`;
+
+const NORMALIZE_GUIDE = `# normalize - Normalize MCP Description Serialization
+
+## Purpose
+Serialize a supported MCP Description with document-oriented key order by default.
+
+## When to Use
+Use it to produce consistent, review-friendly JSON or YAML without editing document values.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract normalize server.yaml --output normalized.yaml
+mcpcontract normalize server.json --key-order preserve --output server-preserved.json
+\`\`\`
+
+## Common Patterns
+- Supported key orders: \`document\` (default), \`preserve\`, and \`sorted\`.
+- \`--format\` selects JSON or YAML; otherwise the output path or input format is used.
+- Normalization changes member ordering and formatting, not document values.
+- Normalization does not validate specification compliance; use \`validate\` separately.
+- Retired schema identities are rejected; use the matching historical CLI to process them.
 `;
 
 const CONVERT_GUIDE = `# convert - Convert Legacy Capability Dumps
 
 ## Purpose
-Import dumps as 0.8.0 (default) or 0.9.0 RC.1.
+Import dumps as 0.8.0 (default) or 0.9.0 RC.3.
 
 ## When to Use
 Legacy dumps only; use migrate for mcpdesc.
@@ -1509,7 +1534,7 @@ One-way, supported, document-only stdout. No output on blockers.
 const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
 
 ## Purpose
-Upgrade to stable 0.8.0; opt into 0.9.0 RC.1.
+Upgrade to stable 0.8.0; opt into 0.9.0 RC.3.
 
 ## When to Use
 Reviewed format upgrades, not ordinary 0.8.0 processing.
@@ -1556,6 +1581,7 @@ export function agentsCommand(): Command {
           SPLIT_GUIDE,
           CONVERT_GUIDE,
           PROJECT_GUIDE,
+          NORMALIZE_GUIDE,
           MIGRATE_GUIDE,
           VALIDATE_GUIDE,
           DIFF_GUIDE,
@@ -1596,6 +1622,7 @@ export function agentsCommand(): Command {
           split: SPLIT_GUIDE,
           convert: CONVERT_GUIDE,
           project: PROJECT_GUIDE,
+          normalize: NORMALIZE_GUIDE,
           migrate: MIGRATE_GUIDE,
           validate: VALIDATE_GUIDE,
           diff: DIFF_GUIDE,

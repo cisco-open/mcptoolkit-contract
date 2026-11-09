@@ -29,6 +29,7 @@ import {
   getMcpDescriptionSelector,
   type McpDescDocument,
 } from './mcpdesc-converter.js';
+import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
 
 export interface SplitOptions {
   mcpdescPath: string;
@@ -95,7 +96,7 @@ export class Splitter {
     });
     if (!selection.ok) {
       const details = selection.diagnostics
-        .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+        .map(formatMcpDescriptionDiagnostic)
         .join('; ');
       throw new Error(`Cannot select MCP Description declarations: ${details}`);
     }

@@ -23,6 +23,7 @@ import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } fr
 import { parse as yamlParse } from 'yaml';
 import { validateMcpDescription } from '@mcpdesc/validator';
 import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
+import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
 
 // ANSI color codes
 const GREEN = '\x1b[32m';
@@ -250,7 +251,7 @@ async function runDump(options: CLIOptions): Promise<void> {
   );
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
-      .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
+      .map(formatMcpDescriptionDiagnostic)
       .join('\n');
     throw new MCPProtocolError(
       `Captured server description is not valid MCP Description ${mcpdesc.mcpdesc}:\n${diagnostics}`,
@@ -260,7 +261,7 @@ async function runDump(options: CLIOptions): Promise<void> {
   for (const diagnostic of validation.diagnostics) {
     if (diagnostic.severity === 'warning') {
       console.error(
-        `[WARN] [${diagnostic.code}] at ${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`
+        `[WARN] ${formatMcpDescriptionDiagnostic(diagnostic)}`
       );
     }
   }

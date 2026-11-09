@@ -116,22 +116,25 @@ describe('mcpdesc-converter', () => {
       ]);
     });
 
-    it('emits Draft 4 only when explicitly requested and pinned', () => {
-      const doc = contractDumpToMcpDescription(minimalDump(), { toVersion: '0.9.0', selector: '0.9.0-draft.4' });
-
+    it('emits RC.3 by default and rejects retired selectors', () => {
+      const doc = contractDumpToMcpDescription(minimalDump(), { toVersion: '0.9.0' });
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
         mcpdesc: '0.9.0',
       });
-      expect(validateMcpDescription(doc, { selector: '0.9.0-draft.4' }).valid).toBe(true);
+      expect(validateMcpDescription(doc, { selector: '0.9.0-rc.3' }).valid).toBe(true);
+      expect(() => contractDumpToMcpDescription(minimalDump(), {
+        toVersion: '0.9.0',
+        selector: '0.9.0-draft.4',
+      })).toThrow();
       expect(contractDumpToMcpDescription(minimalDump()).mcpdesc).toBe('0.8.0');
     });
 
-    it('uses RC.1 for requested 0.9.0 output and rejects cross-format selectors', () => {
+    it('uses RC.3 for requested 0.9.0 output and rejects cross-format selectors', () => {
       const doc = contractDumpToMcpDescription(minimalDump(), { toVersion: '0.9.0' });
-      expect(doc.$schema).toBe('https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json');
+      expect(doc.$schema).toBe('https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json');
       expect(validateMcpDescription(doc).valid).toBe(true);
-      expect(() => contractDumpToMcpDescription(minimalDump(), { selector: '0.9.0-rc.1' })).toThrow();
+      expect(() => contractDumpToMcpDescription(minimalDump(), { selector: '0.9.0-rc.3' })).toThrow();
     });
 
     it('should not include root tags when dump has none', () => {
@@ -227,11 +230,11 @@ describe('mcpdesc-converter', () => {
     });
   });
 
-  describe('v0.9 Draft 4 protocol view projection', () => {
-    const draftDocument = {
-      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+  describe('v0.9 RC.3 protocol view projection', () => {
+    const rcDocument = {
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
       mcpdesc: '0.9.0',
-      info: { name: 'draft-server', version: '1.0.0' },
+      info: { name: 'rc-server', version: '1.0.0' },
       protocolVersions: ['2025-11-25', '2026-07-28'],
       tools: [
         {
@@ -250,15 +253,15 @@ describe('mcpdesc-converter', () => {
     };
 
     it('projects only the declaration effective for the selected revision', () => {
-      const view = projectMcpDescriptionView(draftDocument, '2026-07-28');
+      const view = projectMcpDescriptionView(rcDocument, '2026-07-28');
       expect(view.protocolVersions).toEqual(['2026-07-28']);
       expect(view.tools).toEqual([
         expect.objectContaining({ name: 'run_job', description: 'Modern behavior' }),
       ]);
     });
 
-    it('uses the pinned Draft 4 selector for internal diff conversion', () => {
-      const dump = parseAsContractDump(draftDocument, '2025-11-25');
+    it('uses RC.3 rules for internal diff conversion', () => {
+      const dump = parseAsContractDump(rcDocument, '2025-11-25');
       expect(dump.serverInfo.protocolVersion).toBe('2025-11-25');
       expect(dump.tools[0]).toMatchObject({ description: 'Legacy behavior' });
     });

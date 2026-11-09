@@ -13,6 +13,7 @@ import {
 } from '@mcpdesc/core';
 import { supportedProtocolVersions, type SupportedProtocolVersion } from '@mcpdesc/validator';
 import { formatJSON, formatYAML } from '../lib/formatters.js';
+import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
 import {
   getMcpDescriptionSelector,
   isMcpDescDocument,
@@ -29,6 +30,7 @@ interface ProjectOptions {
   format?: 'json' | 'yaml';
   output?: string;
   compact?: boolean;
+  keyOrder?: 'preserve' | 'document';
   quiet?: boolean;
 }
 
@@ -43,6 +45,7 @@ export function projectCommand(): Command {
     .option('--protocol-version <version>', 'MCP protocol version (required for native view or multi-version input)')
     .option('--kind <kind>', 'Native declaration kind: tool, resource, resourceTemplate, or prompt (required with --view native)')
     .option('--identifier <identifier>', 'Project one native declaration by its MCP identity (only with --view native)')
+    .option('--key-order <order>', 'Native output key order: preserve or document')
     .option('-f, --format <format>', 'Output serialization: json or yaml (default: infer from output path)')
     .option('-o, --output <path>', 'Output file path (default: stdout)')
     .option('--compact', 'Compact JSON output', false)
@@ -65,6 +68,9 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
   }
   if (options.format && options.format !== 'json' && options.format !== 'yaml') {
     throw new Error('--format must be json or yaml');
+  }
+  if (options.keyOrder && options.keyOrder !== 'preserve' && options.keyOrder !== 'document') {
+    throw new Error('--key-order must be preserve or document');
   }
 
   const parsed = parseMcpDescriptionSource(await readFile(input, 'utf-8'));
@@ -91,6 +97,9 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
     if (options.kind || options.identifier) {
       throw new Error('--kind and --identifier are only available with --view native');
     }
+    if (options.keyOrder) {
+      throw new Error('--key-order is only available with --view native');
+    }
     result = projectMcpDescriptionView(document, options.protocolVersion, selector);
   } else {
     if (document.mcpdesc !== '0.9.0') {
@@ -113,16 +122,17 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
       selector: selector as ProjectMcpNativeValueOptions['selector'],
       protocolVersion: options.protocolVersion as SupportedProtocolVersion,
       kind: options.kind,
+      keyOrder: options.keyOrder ?? 'preserve',
       ...(options.identifier ? { identifier: options.identifier } : {}),
     });
     if (!projection.ok) {
-      throw new Error(projection.diagnostics
-        .map((item) => `${item.code ?? item.rule ?? 'projection-error'}: ${item.message ?? 'Projection failed'}`)
-        .join('; '));
+      throw new Error(`Native projection failed:\n${projection.diagnostics
+        .map(formatMcpDescriptionDiagnostic)
+        .join('\n')}`);
     }
     result = projection.value;
     for (const diagnostic of projection.diagnostics) {
-      console.error(`Warning: ${diagnostic.code ?? diagnostic.rule}: ${diagnostic.message ?? 'Projection warning'}`);
+      console.error(`Warning: ${formatMcpDescriptionDiagnostic(diagnostic)}`);
     }
   }
 

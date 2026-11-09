@@ -11,6 +11,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { parse as yamlParse } from 'yaml';
 import { extname } from 'node:path';
 import { formatJSON, formatYAML } from '../lib/formatters.js';
+import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
 import {
   contractDumpToMcpDescription,
   isMcpDescDocument,
@@ -121,7 +122,7 @@ async function runConvert(inputPath: string, options: ConvertCommandOptions): Pr
     toVersion: options.toVersion, selector: options.selector,
   });
   for (const diagnostic of migration.diagnostics) {
-    console.error(`${diagnostic.severity}: ${diagnostic.message ?? diagnostic.code ?? diagnostic.rule}`);
+    console.error(`${diagnostic.severity}: ${formatMcpDescriptionDiagnostic(diagnostic)}`);
   }
   if (!migration.ok) {
     throw new Error(`Conversion ${migration.status}. Review the diagnostics; no output document was written`);

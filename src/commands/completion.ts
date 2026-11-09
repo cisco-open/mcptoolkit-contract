@@ -89,7 +89,7 @@ _mcpcontract_completion() {
     fi
 
     # Commands
-    local commands="dump split convert project migrate validate document diff breaking changelog compare completion rules agents"
+    local commands="dump split convert project normalize migrate validate document diff breaking changelog compare completion rules agents"
     
     # If no command yet, complete commands
     if [[ \${cword} -eq 1 ]]; then
@@ -151,6 +151,17 @@ _mcpcontract_completion() {
             ;;
         --selector)
             COMPREPLY=( $(compgen -W "${selectors}" -- "\${cur}") )
+            return
+            ;;
+        --key-order)
+            case "\${cmd}" in
+                project)
+                    COMPREPLY=( $(compgen -W "preserve document" -- "\${cur}") )
+                    ;;
+                normalize)
+                    COMPREPLY=( $(compgen -W "document preserve sorted" -- "\${cur}") )
+                    ;;
+            esac
             return
             ;;
         --schema)
@@ -262,7 +273,7 @@ _mcpcontract_completion() {
         agents)
             # Special handling for agents command
             if [[ "\${prev}" == "--command" ]]; then
-                local subcommands="dump split convert project migrate validate diff breaking changelog compare document rules completion"
+                local subcommands="dump split convert project normalize migrate validate diff breaking changelog compare document rules completion"
                 COMPREPLY=( $(compgen -W "\${subcommands}" -- "\${cur}") )
             elif [[ "\${cur}" == -* ]]; then
                 local opts="--command --workflows --all"
@@ -291,7 +302,11 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     project)
-                        local opts="--view --selector --protocol-version --kind --identifier --format --output --compact --quiet --help"
+                        local opts="--view --selector --protocol-version --kind --identifier --key-order --format --output --compact --quiet --help"
+                        COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
+                        ;;
+                    normalize)
+                        local opts="--format --key-order --output --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     migrate)
@@ -434,6 +449,7 @@ _mcp_contract() {
         'split:Split large MCP description into focused subsets'
         'convert:Convert legacy dumps to the active MCP Description format'
         'project:Create an effective view or native MCP value'
+        'normalize:Normalize MCP Description key order and serialization'
         'migrate:Convert MCP Description versions with explicit fixes'
         'validate:Validate files against MCP schemas'
         'document:Generate human-readable documentation'
@@ -528,9 +544,19 @@ _mcp_contract() {
                         '--protocol-version[MCP protocol version]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \\
                         '--kind[Native MCP declaration kind]:kind:(tool resource resourceTemplate prompt)' \\
                         '--identifier[Native MCP identifier]:identifier:' \\
+                        '--key-order[Native output key order]:order:(preserve document)' \\
                         '(-f --format)'{-f,--format}'[Serialization format]:format:(json yaml)' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
                         '--compact[Compact JSON output]' \\
+                        '--quiet[Suppress status messages]' \\
+                        '(-h --help)'{-h,--help}'[Show help]'
+                    ;;
+                normalize)
+                    _arguments \\
+                        '1:Input MCP Description:_files' \\
+                        '--format[Output serialization]:format:(json yaml)' \\
+                        '--key-order[Key order]:order:(document preserve sorted)' \\
+                        '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
                         '--quiet[Suppress status messages]' \\
                         '(-h --help)'{-h,--help}'[Show help]'
                     ;;
@@ -700,7 +726,7 @@ _mcp_contract() {
                     ;;
                 agents)
                     _arguments \
-                        '--command[Get help for specific command]:command:(dump split convert project migrate validate diff breaking changelog compare document rules completion)' \
+                        '--command[Get help for specific command]:command:(dump split convert project normalize migrate validate diff breaking changelog compare document rules completion)' \
                         '--workflows[Show all end-to-end workflows]' \
                         '--all[Output all commands in single document]'
                     ;;
@@ -722,6 +748,7 @@ complete -c mcpcontract -f -n "__fish_use_subcommand" -a "dump" -d "Extract capa
 complete -c mcpcontract -n "__fish_use_subcommand" -a "split" -d "Split large MCP description into focused subsets"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "convert" -d "Convert legacy dumps to the active MCP Description format"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "project" -d "Project an effective view or native MCP value"
+complete -c mcpcontract -f -n "__fish_use_subcommand" -a "normalize" -d "Normalize MCP Description key order and serialization"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "migrate" -d "Convert MCP Description versions with explicit fixes"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "validate" -d "Validate files against MCP schemas"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "document" -d "Generate human-readable documentation"
@@ -794,8 +821,15 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l selector -d 
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l protocol-version -d "MCP protocol version" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l kind -d "Native declaration kind" -a "tool resource resourceTemplate prompt"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l identifier -d "Native declaration identifier"
+complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l key-order -d "Native output key order" -a "preserve document"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l format -d "Output format" -a "json yaml"
 complete -c mcpcontract -n "__fish_seen_subcommand_from project" -l output -d "Output file" -F
+
+# normalize command options
+complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l format -d "Output serialization" -a "json yaml"
+complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l key-order -d "Key order" -a "document preserve sorted"
+complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l output -d "Output file" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l quiet -d "Suppress status messages"
 
 # migrate command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l to-version -d "Target format version" -a "0.8.0 0.9.0"

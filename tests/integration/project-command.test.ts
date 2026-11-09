@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
 const draftDocument = {
-  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
   mcpdesc: '0.9.0',
   info: { name: 'project-test', version: '1.0.0' },
   protocolVersions: ['2025-11-25', '2026-07-28'],
@@ -65,6 +65,28 @@ describe('project command', () => {
     expect(JSON.parse(output)).toMatchObject({ name: 'lookup', description: 'Modern' });
   });
 
+  it('applies document-oriented key order to native projections', async () => {
+    await writeFile(input, JSON.stringify({
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
+      mcpdesc: '0.9.0',
+      info: { name: 'project-test', version: '1.0.0' },
+      protocolVersions: ['2026-07-28'],
+      tools: [{
+        description: 'Search records',
+        inputSchema: { type: 'object' },
+        name: 'search',
+      }],
+    }), 'utf-8');
+    const output = execFileSync(process.execPath, [
+      'build/index.js', 'project', input,
+      '--view', 'native', '--protocol-version', '2026-07-28',
+      '--kind', 'tool', '--identifier', 'search', '--key-order', 'document',
+    ], { encoding: 'utf-8' });
+    const keys = Object.keys(JSON.parse(output));
+
+    expect(keys.indexOf('name')).toBeLessThan(keys.indexOf('description'));
+  });
+
   it('rejects parsed scalar input as a non-document', async () => {
     await writeFile(input, 'null', 'utf-8');
     const result = spawnProject(input);
@@ -72,7 +94,7 @@ describe('project command', () => {
     expect(result.stderr).toContain('Input must be an MCP Description document');
   });
 
-  it('uses RC.1 effective and native projection when the document omits $schema', async () => {
+  it('uses RC.3 effective and native projection when the document omits $schema', async () => {
     const document = { ...draftDocument };
     delete (document as { $schema?: string }).$schema;
     await writeFile(input, JSON.stringify(document));
@@ -115,10 +137,10 @@ describe('project command', () => {
     expect(result.stderr).toContain('requires MCP Description 0.9.0');
   });
 
-  it('uses the RC.1 protocol-version diagnostic without partial native output', () => {
+  it('uses the RC.3 protocol-version diagnostic without partial native output', () => {
     const result = spawnSync(process.execPath, [
       'build/index.js', 'project', input, '--view', 'native', '--kind', 'tool',
-      '--selector', '0.9.0-rc.1', '--protocol-version', '2024-11-05',
+      '--selector', '0.9.0-rc.3', '--protocol-version', '2024-11-05',
     ], { encoding: 'utf-8' });
     expect(result.status).toBe(2);
     expect(result.stdout).toBe('');
@@ -127,8 +149,8 @@ describe('project command', () => {
 
   it('validates schema pins and explicit overrides with their actual resolution origin', () => {
     for (const [extra, expected] of [
-      [[], { selector: '0.9.0-draft.4', selectionSource: 'schema-derived' }],
-      [['--selector', '0.9.0-rc.1'], { selector: '0.9.0-rc.1', selectionSource: 'explicit' }],
+      [[], { selector: '0.9.0-rc.3', selectionSource: 'schema-derived' }],
+      [['--selector', '0.9.0-rc.3'], { selector: '0.9.0-rc.3', selectionSource: 'explicit' }],
     ] as const) {
       const report = JSON.parse(execFileSync(process.execPath, [
         'build/index.js', 'validate', input, '--format', 'json', ...extra,
@@ -141,17 +163,17 @@ describe('project command', () => {
     const stable = join(directory, 'stable.json');
     const rc = join(directory, 'rc.json');
     await writeFile(stable, JSON.stringify({ ...draftDocument, mcpdesc: '0.8.0', $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json' }));
-    await writeFile(rc, JSON.stringify({ ...draftDocument, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json' }));
+    await writeFile(rc, JSON.stringify({ ...draftDocument, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json' }));
     const diff = (from: string, to: string) => JSON.parse(execFileSync(process.execPath, [
       'build/index.js', 'diff', '--from', from, '--to', to, '--protocol-version', '2026-07-28', '--quiet',
     ], { encoding: 'utf-8' }));
     expect(diff(stable, rc).statistics).toEqual(diff(stable, stable).statistics);
-    await writeFile(rc, JSON.stringify({ ...draftDocument, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json',
+    await writeFile(rc, JSON.stringify({ ...draftDocument, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
       tools: [...draftDocument.tools, { name: 'new_tool', inputSchema: { type: 'object' } }],
     }));
     expect(JSON.stringify(diff(stable, rc))).toContain('new_tool');
     const conflict = spawnSync(process.execPath, [
-      'build/index.js', 'diff', '--from', stable, '--to', rc, '--protocol-version', '2026-07-28', '--selector', '0.9.0-rc.1',
+      'build/index.js', 'diff', '--from', stable, '--to', rc, '--protocol-version', '2026-07-28', '--selector', '0.9.0-rc.3',
     ], { encoding: 'utf-8' });
     expect(conflict.status).not.toBe(0);
     expect(conflict.stdout).toBe('');

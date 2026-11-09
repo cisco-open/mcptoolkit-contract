@@ -13,8 +13,10 @@ describe('Bash Completion', () => {
   it.each(['bash', 'zsh', 'fish'])('offers supported selectors and output versions in %s', (shell) => {
     const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
     expect(script).toContain('0.8.0-rev.20261021');
-    expect(script).toContain('0.9.0-rc.1');
-    expect(script).toContain('0.9.0-draft.4');
+    expect(script).toContain('0.9.0-rc.3');
+    expect(script).not.toContain('0.9.0-rc.1');
+    expect(script).not.toContain('0.9.0-draft.4');
+    expect(script).toContain('normalize');
     expect(script).not.toContain('0.9.0-draft.3');
     expect(script).toContain(shell === 'fish' ? '-l to-version' : '--to-version');
   });
@@ -34,7 +36,7 @@ describe('Bash Completion', () => {
 
   it('should include all commands in completion', () => {
     const script = generateCompletion();
-    const commands = ['dump', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
+    const commands = ['dump', 'normalize', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
     
     for (const cmd of commands) {
       expect(script).toContain(cmd);

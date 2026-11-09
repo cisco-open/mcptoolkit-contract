@@ -28,7 +28,7 @@ describe('Agents Command Integration Tests', () => {
     it('should include all command descriptions', () => {
       const result = execSync(`${CLI_PATH} agents`).toString();
       
-      const commands = ['dump', 'convert', 'project', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+      const commands = ['dump', 'convert', 'project', 'normalize', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
       commands.forEach(cmd => {
         expect(result).toContain(`**${cmd}**`);
       });
@@ -58,7 +58,7 @@ describe('Agents Command Integration Tests', () => {
   });
 
   describe('Command-Specific Help', () => {
-    const commands = ['dump', 'convert', 'project', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
+    const commands = ['dump', 'convert', 'project', 'normalize', 'migrate', 'validate', 'diff', 'breaking', 'changelog', 'document', 'rules', 'completion'];
 
     commands.forEach(cmd => {
       it(`should output ${cmd} command guide`, () => {

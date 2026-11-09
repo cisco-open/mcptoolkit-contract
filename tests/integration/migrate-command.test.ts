@@ -30,7 +30,7 @@ describe('migrate command', () => {
     if (directory) await rm(directory, { recursive: true, force: true });
   });
 
-  it('chains 0.7 through 0.8 to requested RC.1 and patches the original source', async () => {
+  it('chains 0.7 through 0.8 to requested RC.3 and patches the original source', async () => {
     const legacy = {
       mcpdesc: '0.7.0',
       info: { name: 'legacy', version: '1.0.0', protocolVersion: '2025-11-25' },
@@ -45,7 +45,7 @@ describe('migrate command', () => {
     ], { encoding: 'utf-8' });
     const document = JSON.parse(output);
     expect(document.mcpdesc).toBe('0.9.0');
-    expect(document.$schema).toContain('0.9.0-rc.1');
+    expect(document.$schema).toContain('0.9.0-rc.3');
     expect(JSON.parse(await readFile(reportPath, 'utf-8')).steps).toEqual([
       expect.objectContaining({ from: '0.7.0', to: '0.8.0', status: 'converted' }),
       expect.objectContaining({ from: '0.8.0', to: '0.9.0', status: 'converted' }),
@@ -68,7 +68,7 @@ describe('migrate command', () => {
     expect(result.stderr).toContain('mcpcontract migrate');
   });
 
-  it('converts legacy dumps to stable by default and RC.1 on request with clean stdout', async () => {
+  it('converts legacy dumps to stable by default and RC.3 on request with clean stdout', async () => {
     await writeFile(input, JSON.stringify({
       version: '0.3.8',
       dumpDetails: {
@@ -87,7 +87,7 @@ describe('migrate command', () => {
     const rc = spawnSync(process.execPath, ['build/index.js', 'convert', input, '--to-version', '0.9.0'], { encoding: 'utf-8' });
     expect(rc.status).toBe(0);
     expect(JSON.parse(rc.stdout)).toMatchObject({
-      mcpdesc: '0.9.0', $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json',
+      mcpdesc: '0.9.0', $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
     });
   });
 
@@ -127,7 +127,7 @@ describe('migrate command', () => {
 
     const migrated = JSON.parse(await readFile(outputPath, 'utf-8'));
     expect(migrated.mcpdesc).toBe('0.9.0');
-    expect(migrated.$schema).toBe('https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json');
+    expect(migrated.$schema).toBe('https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json');
     expect(migrated.tools[0].annotations).not.toHaveProperty('customFlag');
     expect(JSON.parse(await readFile(patchPath, 'utf-8'))).toContainEqual(
       expect.objectContaining({ op: 'remove', path: '/tools/0/annotations/customFlag' }),
@@ -149,11 +149,11 @@ describe('migrate command', () => {
     await writeFile(input, JSON.stringify({ mcpdesc: '0.8.0', info: { name: 'schema-less', version: '1.0.0' }, protocolVersions: ['2026-07-28'] }));
     const reportPath = join(directory!, 'selectors.json');
     const output = execFileSync(process.execPath, [
-      'build/index.js', 'migrate', input, '--to-version', '0.9.0', '--selector', '0.9.0-draft.4', '--report', reportPath, '--quiet',
+      'build/index.js', 'migrate', input, '--to-version', '0.9.0', '--selector', '0.9.0-rc.3', '--report', reportPath, '--quiet',
     ], { encoding: 'utf-8' });
     expect(JSON.parse(output)).not.toHaveProperty('$schema');
     expect(JSON.parse(await readFile(reportPath, 'utf-8'))).toMatchObject({
-      selector: '0.9.0-draft.4', selectionSource: 'explicit',
+      selector: '0.9.0-rc.3', selectionSource: 'explicit',
       sourceSelector: '0.8.0-rev.20261021', sourceSelectionSource: 'default',
     });
   });

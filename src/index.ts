@@ -20,6 +20,7 @@ import { splitCommand } from './commands/split.js';
 import { convertCommand } from './commands/convert.js';
 import { projectCommand } from './commands/project.js';
 import { migrateCommand } from './commands/migrate.js';
+import { normalizeCommand } from './commands/normalize.js';
 
 // Read version from package.json
 const packageJsonPath = new URL('../package.json', import.meta.url).pathname;
@@ -48,6 +49,7 @@ program.addCommand(dumpCommand());
 program.addCommand(splitCommand());
 program.addCommand(convertCommand());
 program.addCommand(projectCommand());
+program.addCommand(normalizeCommand());
 program.addCommand(migrateCommand());
 program.addCommand(createDocumentCommand());
 // Register 'render' as hidden alias for backward compatibility
@@ -66,7 +68,7 @@ program.addCommand(agentsCommand());
 // Check if dump should be the default command
 // If first argument is an option (starts with -) and not a known command, inject 'dump'
 // Exception: --help and --version should show main program help/version
-const commands = ['dump', 'split', 'convert', 'project', 'migrate', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'compare', 'completion', 'rules', 'agents'];
+const commands = ['dump', 'split', 'convert', 'project', 'normalize', 'migrate', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'compare', 'completion', 'rules', 'agents'];
 const firstArg = process.argv[2];
 const hasCommand = firstArg && commands.includes(firstArg);
 const hasOption = firstArg && firstArg.startsWith('-');

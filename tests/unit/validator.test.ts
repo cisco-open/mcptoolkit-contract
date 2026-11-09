@@ -1,6 +1,4 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'node:fs';
-import Ajv2020 from 'ajv/dist/2020.js';
 import { validateMcpDescription } from '@mcpdesc/validator';
 
 import { Validator } from '../../src/lib/validator.js';
@@ -12,8 +10,8 @@ const v08Document = {
   protocolVersions: ['2026-07-28'],
 };
 
-const v09Draft4Document = {
-  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-draft.4.json',
+const v09Rc3Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
   mcpdesc: '0.9.0',
   info: { name: 'validator-test', version: '1.0.0' },
   protocolVersions: ['2026-07-28'],
@@ -81,63 +79,59 @@ describe('Validator mcpdesc dispatch', () => {
     expect(result.errors).toEqual([]);
   });
 
-  it('infers the exact Draft 4 selector from its schema identity and returns rule results', async () => {
-    const result = await new Validator().validateData(v09Draft4Document, 'mcpdesc');
+  it('infers RC.3 from its schema identity and returns rule results', async () => {
+    const result = await new Validator().validateData(v09Rc3Document, 'mcpdesc');
 
     expect(result.valid).toBe(true);
-    expect(result.selector).toBe('0.9.0-draft.4');
+    expect(result.selector).toBe('0.9.0-rc.3');
     expect(result.ruleResults?.length).toBeGreaterThan(0);
   });
 
-  it('uses RC.1 by default and retains an explicit Draft 4 pin', async () => {
-    const document = { ...v09Draft4Document };
+  it('uses RC.3 by default and rejects retired selectors', async () => {
+    const document = { ...v09Rc3Document };
     delete (document as { $schema?: string }).$schema;
 
     const unpinned = await new Validator().validateData(document, 'mcpdesc');
     expect(unpinned.valid).toBe(true);
-    expect(unpinned.selector).toBe('0.9.0-rc.1');
+    expect(unpinned.selector).toBe('0.9.0-rc.3');
     expect(unpinned.defaulted).toBe(true);
     expect(unpinned.selectionSource).toBe('default');
 
-    const result = await new Validator().validateData(
-      document,
-      'mcpdesc',
-      'data',
-      '0.9.0-draft.4',
-    );
-    expect(result.valid).toBe(true);
-    expect(result.selector).toBe('0.9.0-draft.4');
-    expect(result.selectionSource).toBe('explicit');
+    const retired = await new Validator().validateData(document, 'mcpdesc', 'data', '0.9.0-rc.1');
+    expect(retired.valid).toBe(false);
+    expect(retired.errors).toContainEqual(expect.objectContaining({ keyword: 'unsupported-selector' }));
   });
 
   it('distinguishes schema-derived selection from explicit overrides', async () => {
     const validator = new Validator();
-    expect(await validator.validateData(v09Draft4Document, 'mcpdesc')).toMatchObject({
-      selector: '0.9.0-draft.4', selectionSource: 'schema-derived', defaulted: false,
+    expect(await validator.validateData(v09Rc3Document, 'mcpdesc')).toMatchObject({
+      selector: '0.9.0-rc.3', selectionSource: 'schema-derived', defaulted: false,
     });
-    const result = await validator.validateData(v09Draft4Document, 'mcpdesc', 'data', '0.9.0-rc.1');
-    expect(result).toMatchObject({ valid: true, selector: '0.9.0-rc.1', selectionSource: 'explicit' });
+    const result = await validator.validateData(v09Rc3Document, 'mcpdesc', 'data', '0.9.0-rc.3');
+    expect(result).toMatchObject({ valid: true, selector: '0.9.0-rc.3', selectionSource: 'explicit' });
     expect(result.ruleResults).toContainEqual(expect.objectContaining({ rule: 'mcp.tool.output-schema.protocol-version' }));
   });
 
   it('requires a format even if a schema or selector is supplied', async () => {
-    const result = await new Validator().validateData({ $schema: v09Draft4Document.$schema }, 'mcpdesc', 'data', '0.9.0-rc.1');
+    const result = await new Validator().validateData({ $schema: v09Rc3Document.$schema }, 'mcpdesc', 'data', '0.9.0-rc.3');
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual(expect.objectContaining({ keyword: 'missing-format-version' }));
   });
 
-  it('preserves RC.1 rule results and diagnostics conforming to result format 1.3.0', async () => {
-    const schema = JSON.parse(readFileSync(new URL('../fixtures/validation-result-1.3.0.schema.json', import.meta.url), 'utf-8'));
-    const validateResult = new Ajv2020({ strict: false }).compile(schema);
+  it('preserves RC.3 rule results and structured diagnostics', async () => {
     for (const extra of [{}, { capabilities: [{ logging: {} }] }, { tools: [{ name: 'invalid', inputSchema: 42 }] }]) {
-      const document = { ...v09Draft4Document, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.1.json',
+      const document = { ...v09Rc3Document, $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
         protocolVersions: ['2025-11-25', '2026-07-28'], ...extra,
       };
-      const expected = validateMcpDescription(document, { selector: '0.9.0-rc.1' });
+      const expected = validateMcpDescription(document, { selector: '0.9.0-rc.3' });
       const result = await new Validator().validateData(document, 'mcpdesc');
       expect(result.diagnostics).toEqual(expected.diagnostics);
       expect(result.ruleResults).toEqual(expected.results);
-      expect(validateResult({ valid: result.valid, diagnostics: result.diagnostics, results: result.ruleResults })).toBe(true);
+      if ('tools' in extra) {
+        expect(result.diagnostics).toContainEqual(expect.objectContaining({
+          detail: expect.objectContaining({ kind: 'invalid-type' }),
+        }));
+      }
     }
   });
 

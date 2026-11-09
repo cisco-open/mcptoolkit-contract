@@ -14,6 +14,8 @@ import addFormatsModule from 'ajv-formats';
 import {
   validateMcpDescription,
   type McpDescriptionDiagnostic,
+  type McpDescriptionDiagnosticDetail,
+  type McpDescriptionRelatedLocation,
   type McpDescriptionRuleResult,
   type McpDescriptionSelector,
 } from '@mcpdesc/validator';
@@ -72,6 +74,8 @@ export interface ValidationIssue {
   params?: Record<string, unknown>;
   rule?: string;
   protocolVersions?: readonly string[];
+  detail?: McpDescriptionDiagnosticDetail;
+  relatedLocations?: readonly McpDescriptionRelatedLocation[];
 }
 
 function diagnosticPath(path: readonly (number | string)[]): string {
@@ -251,6 +255,8 @@ export class Validator {
           keyword: diagnostic.code,
           rule: diagnostic.rule,
           protocolVersions: diagnostic.protocolVersions,
+          detail: diagnostic.detail,
+          relatedLocations: diagnostic.relatedLocations,
         };
         if (diagnostic.severity === 'error') errors.push(issue);
         else warnings.push(issue);

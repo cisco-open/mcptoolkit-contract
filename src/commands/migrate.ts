@@ -9,6 +9,7 @@ import {
   type McpDescriptionConversionFix,
 } from '@mcpdesc/core';
 import { formatJSON, formatYAML } from '../lib/formatters.js';
+import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
 import { isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 import { migrateMcpDescription } from '../lib/mcpdesc-migration.js';
 import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
@@ -137,7 +138,7 @@ async function runMigrate(input: string, options: MigrateOptions): Promise<void>
 
   if (!conversion.ok) {
     for (const diagnostic of conversion.diagnostics) {
-      console.error(`${diagnostic.severity}: ${diagnostic.code ?? diagnostic.rule}: ${diagnostic.message ?? 'Conversion blocked'}`);
+      console.error(`${diagnostic.severity}: ${formatMcpDescriptionDiagnostic(diagnostic)}`);
     }
     if (options.report) console.error(`Conversion report written to ${options.report}`);
     process.exitCode = 1;

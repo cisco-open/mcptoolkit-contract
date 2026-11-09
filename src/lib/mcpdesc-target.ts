@@ -8,7 +8,7 @@ import {
 
 export const DEFAULT_OUTPUT_VERSION = '0.8.0';
 export const CLI_MCPDESC_SELECTORS: readonly McpDescriptionSelector[] = [
-  '0.8.0', '0.9.0-draft.4',
+  '0.8.0',
   defaultSpecifications['0.8.0']!.selector, defaultSpecifications['0.9.0']!.selector,
 ];
 

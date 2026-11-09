@@ -47,8 +47,8 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",
-    "@mcpdesc/core": "0.13.0-rc.5",
-    "@mcpdesc/validator": "0.14.0-rc.5",
+    "@mcpdesc/core": "0.13.0-rc.8",
+    "@mcpdesc/validator": "0.14.0-rc.9",
     "@modelcontextprotocol/client": "2.3.1",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
