@@ -77,9 +77,9 @@ echo "-----------------------------------------------------"
 node build/index.js dump --help | grep -q -- '--to-version'
 node build/index.js convert --help | grep -q -- '--to-version'
 node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --format json |
-  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0-rc.3" || result.selectionSource!=="schema-derived") process.exit(1); console.log("Schema-derived RC.3 pin verified");'
-node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --selector 0.9.0-rc.3 --format json |
-  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0-rc.3" || result.selectionSource!=="explicit" || !result.ruleResults?.length) process.exit(1); console.log("Explicit RC.3 override and rule results verified");'
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0" || result.selectionSource!=="schema-derived") process.exit(1); console.log("Schema-derived stable 0.9.0 pin verified");'
+node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --selector 0.9.0 --format json |
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0" || result.selectionSource!=="explicit" || !result.ruleResults?.length) process.exit(1); console.log("Explicit stable 0.9.0 override and rule results verified");'
 echo ""
 
 # Test 5: Rules command - list with default catalog

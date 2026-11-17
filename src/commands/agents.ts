@@ -100,7 +100,7 @@ mcpcontract agents --command breaking
 → Use when: You want document-oriented JSON/YAML output without changing values
 
 **migrate** - Upgrade mcpdesc to the maintained destination
-→ Use when: Explicitly upgrading 0.8.0 to 0.9.0 RC.3
+→ Use when: Explicitly upgrading 0.8.0 to stable 0.9.0
 
 **validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
@@ -355,7 +355,7 @@ Choose either \`--config\` (with \`--mcp-server\` when needed) or direct transpo
 ### Output and Diagnostics
 - \`--output <file>\` - Output file (default: stdout)
 - \`--format <type>\` - json, yaml, or markdown (default: json)
-- \`--to-version <version>\` - mcpdesc: 0.8.0 (default), 0.9.0
+- \`--to-version <version>\` - mcpdesc: 0.9.0 (default), 0.8.0
 - \`--selector <id>\` - Pin output rules
 - \`--compact\` - Emit single-line JSON
 - \`--info <file>\` - Add contact, license, security, and other metadata from JSON/YAML
@@ -1488,7 +1488,7 @@ mcpcontract project server.yaml --view native --kind tool --identifier search --
 - Effective views retain MCP Description metadata and select declarations for one protocol revision.
 - Native projection returns MCP declarations without MCP Description-only fields.
 - Effective: 0.8.0/0.9.0; native: 0.9.0 only.
-- Rules: selector > schema > default. Schema-less 0.9.0 uses RC.3; earlier drafts and RCs are retired.
+- Rules: selector > schema > default. Schema-less 0.9.0 uses stable rules; earlier drafts and RCs are retired.
 `;
 
 const NORMALIZE_GUIDE = `# normalize - Normalize MCP Description Serialization
@@ -1528,7 +1528,7 @@ CLI 1.2.4 supports historical 0.7.0 processing but does not produce 0.8.0.
 ## Basic Usage
 \`\`\`bash
 npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert old.yaml --output stable.yaml
-mcpcontract migrate stable.yaml --output preview.yaml
+mcpcontract migrate stable.yaml --output upgraded.yaml
 \`\`\`
 
 ## Common Patterns
@@ -1539,14 +1539,14 @@ Normal invocation: guidance on stderr, exit 1, no converted output.
 const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
 
 ## Purpose
-Upgrade 0.8.0 to the installed CLI's maintained destination: 0.9.0, currently using RC.3 preview rules.
+Upgrade 0.8.0 to the installed CLI's maintained destination: stable 0.9.0.
 
 ## When to Use
 Reviewed format upgrades, not ordinary 0.8.0 processing.
 
 ## Basic Usage
 \`\`\`bash
-mcpcontract migrate stable.yaml --output preview.yaml --report migration.json
+mcpcontract migrate stable.yaml --output upgraded.yaml --report migration.json
 mcpcontract migrate stable.yaml --key-order document --output normalized.yaml
 \`\`\`
 

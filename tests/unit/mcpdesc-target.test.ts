@@ -6,14 +6,14 @@ const schema = (selector: string) => `https://mcpdesc.org/schema/mcp-description
 describe('MCP Description selector policy', () => {
   it('uses maintained defaults only when neither schema nor selector is supplied', () => {
     expect(resolveMcpDescriptionSelection({ mcpdesc: '0.9.0' })).toMatchObject({
-      selector: '0.9.0-rc.3', source: 'default', defaulted: true,
+      selector: '0.9.0', source: 'default', defaulted: true,
     });
     expect(resolveMcpDescriptionSelection({ mcpdesc: '0.8.0' }).selector).toBe('0.8.0-rev.20261021');
-    expect(resolveOutputSelection().selector).toBe('0.8.0-rev.20261021');
+    expect(resolveOutputSelection().selector).toBe('0.9.0');
   });
 
   it('pins the maintained schema identity', () => {
-    const selector = '0.9.0-rc.3';
+    const selector = '0.9.0';
     expect(resolveMcpDescriptionSelection({ mcpdesc: '0.9.0', $schema: schema(selector) }))
       .toMatchObject({ selector, source: 'schema-derived', defaulted: false });
   });
@@ -25,8 +25,8 @@ describe('MCP Description selector policy', () => {
   });
 
   it('lets an explicit same-format selector override a schema pin', () => {
-    expect(resolveMcpDescriptionSelection({ mcpdesc: '0.9.0', $schema: schema('0.9.0-rc.3') }, '0.9.0-rc.3'))
-      .toMatchObject({ selector: '0.9.0-rc.3', source: 'explicit', defaulted: false });
+    expect(resolveMcpDescriptionSelection({ mcpdesc: '0.9.0', $schema: schema('0.9.0') }, '0.9.0'))
+      .toMatchObject({ selector: '0.9.0', source: 'explicit', defaulted: false });
   });
 
   it.each([undefined, '0.9.0-rc.1'])('rejects unknown schema identities even with selector %s', (selector) => {

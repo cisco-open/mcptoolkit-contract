@@ -6,7 +6,7 @@ import {
   type McpDescriptionSelector,
 } from '@mcpdesc/validator';
 
-export const DEFAULT_OUTPUT_VERSION = '0.8.0';
+export const DEFAULT_OUTPUT_VERSION = '0.9.0';
 export const DEFAULT_MIGRATION_VERSION = '0.9.0';
 export const LEGACY_CONVERSION_GUIDANCE =
   'Use CLI 2.0.5 to convert legacy capability dumps or MCP Description 0.7.0 to 0.8.0:\n' +
@@ -46,7 +46,7 @@ export function checkMcpDescriptionInputVersion(document: unknown, name: string)
   if (document.mcpdesc === '0.8.0') {
     console.error(
       `Recommendation: ${name} uses MCP Description 0.8.0. ` +
-      'Consider migrating to 0.9.0 (preview); this command will not upgrade it:\n' +
+      'Consider migrating to 0.9.0; this command will not upgrade it:\n' +
       'mcpcontract migrate <input> --output <new-file>'
     );
   }

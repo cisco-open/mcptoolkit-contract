@@ -331,7 +331,7 @@ export function dumpCommand(): Command {
     .option('--skip-cors-check', 'Skip CORS support detection for HTTP/SSE transports', false)
     .option('--cors-origin <origin>', 'Origin header for CORS preflight testing (default: http://localhost:3000)', 'http://localhost:3000')
     .option('--page-size <number>', 'Request specific page size for pagination (hint to server, not guaranteed)', parseNumber)
-    .option('--to-version <version>', 'Output MCP Description format: 0.8.0 or 0.9.0', DEFAULT_OUTPUT_VERSION)
+    .option('--to-version <version>', 'Output MCP Description format: 0.9.0 (default) or 0.8.0', DEFAULT_OUTPUT_VERSION)
     .option('--selector <selector>', 'Pin rules for the requested output format')
     .option('-i, --info <path>', 'Enrichment info file (JSON/YAML) — adds contact, license, security, and other metadata')
     .configureHelp({
@@ -361,7 +361,7 @@ CONNECTION
 OUTPUT
   -o, --output <path>           Output file path (default: stdout)
   -f, --format <format>         Output format: json, yaml, or markdown (default: "json")
-  --to-version <version>        MCP Description format: 0.8.0 or 0.9.0 (default: "0.8.0")
+  --to-version <version>        MCP Description format: 0.9.0 or 0.8.0 (default: "0.9.0")
   --selector <selector>         Pin output rules (default: maintained rules for the output format)
   --compact                     Emit compact JSON
   -i, --info <path>             Enrich output from a JSON/YAML metadata file

@@ -9,7 +9,7 @@ before relying on an option or supported selector.
 An MCP Description always declares its format:
 
 ```yaml
-mcpdesc: "0.8.0"
+mcpdesc: "0.9.0"
 info:
   name: example-server
   version: "1.0.0"
@@ -22,7 +22,7 @@ and `protocolVersions` lists MCP protocol revisions. None of these is the CLI's
 package version.
 
 A selector chooses a particular set of rules within a format, such as
-`0.8.0-rev.20261021` or `0.9.0-rc.3`. It does not convert the document to another
+`0.8.0-rev.20261021` or `0.9.0`. It does not convert the document to another
 format. The required `mcpdesc` property cannot be replaced by a selector or schema.
 
 ## How Rules Are Chosen
@@ -34,18 +34,16 @@ The CLI chooses rules in this order:
 3. The maintained default for the document's declared format.
 
 Neither `$schema` nor `--selector` is required when the format has a supported
-default. For example, a schema-less `0.9.0` document uses RC.3 rules with the
-current upstream releases. After a dependency upgrade, that default can advance
-to a later approved RC or final.
+default. A schema-less `0.9.0` document uses the stable `0.9.0` rules.
 
 To select rules through the document itself, include a recognized schema URI:
 
 ```yaml
-$schema: https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json
+$schema: https://mcpdesc.org/schema/mcp-description/0.9.0.json
 mcpdesc: "0.9.0"
 ```
 
-This fragment selects RC.3 while supported. An explicit compatible selector wins
+This fragment selects stable 0.9.0 rules. An explicit compatible selector wins
 over the schema's selection. Unknown schema URIs and disagreements across format
 versions are errors, even with an explicit selector.
 
@@ -80,27 +78,25 @@ analysis artifacts and catalog; they do not select mcpdesc validation rules.
 
 ## Output and Migration Defaults
 
-New dumps default to stable `0.8.0` until final `0.9.0` is adopted as latest
-stable by the CLI. `migrate` instead targets `0.9.0`, using its maintained
-default, currently RC.3, unless an exact supported selector is requested.
+New dumps and `migrate` default to stable `0.9.0`. Use `--to-version 0.8.0` to
+explicitly emit the previous stable format.
 
 Use `--to-version` on `dump` to choose the output format:
 
 ```bash
-# Stable output by default
+# Stable 0.9.0 output by default
 mcpcontract dump --config mcp.json --output stable.yaml
-# Explicitly migrate to the maintained destination (currently 0.9.0 RC.3)
-mcpcontract migrate stable.yaml --output preview.yaml
-# Pin exact preview rules as well as choosing the format
-mcpcontract dump --config mcp.json --to-version 0.9.0 \
-  --selector 0.9.0-rc.3 --output preview.yaml
+# Explicitly emit the previous stable format
+mcpcontract dump --config mcp.json --to-version 0.8.0 --output previous.yaml
+# Migrate 0.8.0 input to stable 0.9.0
+mcpcontract migrate previous.yaml --output stable.yaml
 ```
 
 Running `migrate` expresses an upgrade to the installed CLI's maintained
 destination. A selector pins its rules, not a different format. `migrate` no
 longer accepts `--to-version`; omit it to use the maintained target. A `0.9.0` input is validated
 under source and destination rules and reported unchanged; no conversion
-between preview snapshots is inferred.
+between stable specification snapshots is inferred.
 
 Reading or splitting a document preserves its authored identity. Generated or
 migrated schema identities reflect destination rules, with schema omission
@@ -109,15 +105,15 @@ actually used and whether selection was explicit, schema-derived, or default.
 
 ## Compatibility and Reproducibility
 
-CLI support is intentionally narrower than the underlying libraries. A new CLI
-release may retire drafts and RCs after final is available. Use a matching older
+CLI support is intentionally narrower than the underlying libraries. This CLI
+supports stable 0.9.0 and retires draft and RC identities. Use a matching older
 CLI release when those rules are needed; a recognized URI does not guarantee
 continued support. Unsupported selections fail rather than silently adopting
 different rules.
 
-This CLI supports original `0.8.0`, its maintained revision, and the `0.9.0`
-maintained default (currently RC.3). Drafts and earlier RCs are retired by the
-current upstream packages; use a matching historical CLI to reproduce them.
+This CLI supports original `0.8.0`, its maintained revision, and stable `0.9.0`.
+Drafts and RCs are retired by the current upstream packages; use a matching
+historical CLI to reproduce them.
 Native projection requires `0.9.0`.
 
 Pin the CLI version in automation. Add an explicit selector when exact rule
@@ -128,10 +124,10 @@ behavior matters, particularly when a schema URI is shared. This CLI rejects
 ```bash
 npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert \
   old.yaml --output stable.yaml
-mcpcontract migrate stable.yaml --output preview.yaml
+mcpcontract migrate stable.yaml --output upgraded.yaml
 ```
 
-Commands reading 0.8.0 recommend that preview migration on stderr,
+Commands reading 0.8.0 recommend migration to stable 0.9.0 on stderr,
 without upgrading input or changing success status. `migrate` does not repeat
 the recommendation. Quiet mode suppresses progress, not this recommendation.
 

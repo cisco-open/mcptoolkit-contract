@@ -8,8 +8,9 @@
 
 Dumps created before v0.25.0 used a Cisco-specific *capability dump* schema
 (top-level `version` / `dumpDetails` / `serverInfo`). Later releases emitted
-mcpdesc 0.7.0. `mcpcontract dump` now emits [mcpdesc](schemas.md) 0.8.0
-directly. Use CLI 2.0.5 to bring either legacy format to 0.8.0.
+mcpdesc 0.7.0. `mcpcontract dump` now emits [mcpdesc](schemas.md) 0.9.0
+directly. Use CLI 2.0.5 to bring either legacy format to 0.8.0, then migrate
+with the current CLI to stable 0.9.0.
 The latest v1 CLI, 1.2.4, supports historical 0.7.0 processing but does not
 produce 0.8.0.
 
@@ -20,7 +21,7 @@ produce 0.8.0.
 npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert \
   server-0.7.yaml --output server-0.8.yaml
 
-# Then use the current CLI for the explicit preview upgrade
+# Then use the current CLI for the explicit stable upgrade
 mcpcontract migrate server-0.8.yaml --output server-0.9.yaml
 ```
 

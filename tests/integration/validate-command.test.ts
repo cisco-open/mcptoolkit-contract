@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
-describe('validate command RC.3 diagnostics', () => {
+describe('validate command stable 0.9.0 diagnostics', () => {
   let directory: string;
   let input: string;
 
@@ -12,7 +12,7 @@ describe('validate command RC.3 diagnostics', () => {
     directory = await mkdtemp(join(tmpdir(), 'mcpcontract-validate-'));
     input = join(directory, 'invalid.json');
     await writeFile(input, JSON.stringify({
-      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
       mcpdesc: '0.9.0',
       info: { name: 'invalid-test', version: '1.0.0' },
       protocolVersions: ['2026-07-28'],

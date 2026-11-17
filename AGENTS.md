@@ -142,12 +142,12 @@ Selector policy and the CLI support set are centralized in
 `src/lib/mcpdesc-target.ts`. Required `mcpdesc` identifies input format;
 explicit selector wins over recognized same-format schema identity, then the
 maintained format default applies. Shared 0.8.0 identity selects the maintained
-revision; the 0.9.0 RC.3 identity selects the maintained preview snapshot. Core
-and validator are pinned at 0.13.0-rc.10 / 0.14.0-rc.9.
+revision; the 0.9.0 identity selects the stable specification. Core and
+validator are pinned at 0.13.0 / 0.14.0.
 
-Generation defaults to stable `0.8.0`; `dump --to-version 0.9.0` opts into
-the maintained preview default. Migration targets `0.9.0` using the maintained
-preview default, currently RC.3. Modern processing supports
+Generation defaults to stable `0.9.0`; `dump --to-version 0.8.0` selects the
+previous stable format. Migration targets `0.9.0` using the maintained stable
+rules. Modern processing supports
 0.8.0 and 0.9.0; native projection requires 0.9.0. Reject 0.7.0 with guidance
 to use CLI 2.0.5's `convert` for migration to 0.8.0. CLI 1.2.4 only processes
 historical 0.7.0; it cannot emit 0.8.0. Current `convert` is guidance-only.

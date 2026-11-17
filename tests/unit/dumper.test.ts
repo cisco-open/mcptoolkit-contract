@@ -20,11 +20,12 @@ describe('ContractDumper', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it.each([
-    [[], '0.8.0', '0.8.0'],
-    [['--to-version', '0.9.0'], '0.9.0', '0.9.0-rc.3'],
-    [['--to-version', '0.9.0', '--selector', '0.9.0-rc.3'], '0.9.0', '0.9.0-rc.3'],
-    [['--format', 'yaml'], '0.8.0', '0.8.0'],
-    [['--compact'], '0.8.0', '0.8.0'],
+    [[], '0.9.0', '0.9.0'],
+    [['--to-version', '0.8.0'], '0.8.0', '0.8.0'],
+    [['--to-version', '0.9.0'], '0.9.0', '0.9.0'],
+    [['--to-version', '0.9.0', '--selector', '0.9.0'], '0.9.0', '0.9.0'],
+    [['--format', 'yaml'], '0.9.0', '0.9.0'],
+    [['--compact'], '0.9.0', '0.9.0'],
   ] as const)('generates the requested output with flags %j', async (flags, version, selector) => {
     jest.spyOn(ContractDumper.prototype, 'dump').mockResolvedValue({
       version: '0.3.8',

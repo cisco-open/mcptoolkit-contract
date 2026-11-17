@@ -13,7 +13,8 @@ describe('Bash Completion', () => {
   it.each(['bash', 'zsh', 'fish'])('offers supported selectors and output versions in %s', (shell) => {
     const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
     expect(script).toContain('0.8.0-rev.20261021');
-    expect(script).toContain('0.9.0-rc.3');
+    expect(script).toContain('0.9.0');
+    expect(script).not.toContain('0.9.0-rc.3');
     expect(script).not.toContain('0.9.0-rc.1');
     expect(script).not.toContain('0.9.0-draft.4');
     expect(script).toContain('normalize');
@@ -55,7 +56,7 @@ printf '%s\\n' "\${COMPREPLY[@]}"
     }).trim().split('\n');
     expect(complete('--key-order')).toEqual(['document', 'preserve', 'sorted']);
     expect(complete('--to-version')).toEqual(['']);
-    expect(complete('--selector')).toEqual(['0.9.0-rc.3']);
+    expect(complete('--selector')).toEqual(['0.9.0']);
   });
 
   it('should generate bash completion script', () => {

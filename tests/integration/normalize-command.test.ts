@@ -17,7 +17,7 @@ describe('normalize command', () => {
       info: { version: '1.0.0', name: 'normalize-test' },
       mcpdesc: '0.9.0',
       protocolVersions: ['2026-07-28'],
-      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0-rc.3.json',
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
     }), 'utf-8');
   });
 

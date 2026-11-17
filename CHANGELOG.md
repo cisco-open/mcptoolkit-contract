@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.2.0] - 2026-11-17](#220---2026-11-17)
 - [[2.1.0-rc.2] - 2026-11-05](#210-rc2---2026-11-05)
 - [[2.1.0-rc.1] - 2026-11-02](#210-rc1---2026-11-02)
 - [[2.0.5] - 2026-10-27](#205---2026-10-27)
@@ -38,10 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-17
+
 ### Added
 
-- Adopted MCP Description 0.9.0 RC.3 with `@mcpdesc/core` 0.13.0-rc.10 and
-  `@mcpdesc/validator` 0.14.0-rc.9, including native document-order projection
+- Adopted stable MCP Description 0.9.0 with `@mcpdesc/core` 0.13.0 and
+  `@mcpdesc/validator` 0.14.0, including native document-order projection
   and the validator's structured diagnostic detail and related locations.
 - Added `normalize` for document-oriented JSON/YAML serialization, plus
   `project --key-order document` for native declaration output.
@@ -50,12 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 0.9.0 processing now uses RC.3; upstream-retired drafts and RC.1/RC.2 are no
-  longer selectable in this CLI. Validation text output retains structured
-  diagnostic details and related component-definition locations.
-- RC.3 may change diagnostic paths, counts, rule attribution, and validity from
-  RC.2; unknown members in Tool Interaction Example elicitation responses are
-  now rejected by the upstream validator.
+- 0.9.0 processing now uses the final schema and selector; upstream-retired
+  drafts and RC snapshots are no longer selectable in this CLI. Validation text
+  output retains structured diagnostic details and related component-definition
+  locations.
+- Stable 0.9.0 is now the default dump format. Upstream finalization may change
+  diagnostic paths, rule attribution, or validity from RC.3; unknown members in
+  Tool Interaction Example elicitation responses are rejected by the validator.
 - MCP Description YAML output from `normalize`, `dump`, `split`, `migrate`,
   and `project` uses core's Section 15.9 normalized presentation, including
   safe scalar/key quoting, quoted protocol versions, lossless multiline values,
@@ -69,9 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   configuration, catalog, and analysis formats retain their existing parsing.
 - MCP Description 0.8.0 inputs receive a non-blocking migration recommendation
   on stderr, except in `migrate`. No input is silently upgraded.
-- **Breaking:** `migrate` now targets maintained MCP Description 0.9.0 preview
-  rules (currently RC.3) by default rather than stable 0.8.0. The `migrate`
-  `--to-version` option has been removed; `dump` continues to default to 0.8.0.
+- **Breaking:** `migrate` now targets stable MCP Description 0.9.0 rules by
+  default rather than stable 0.8.0. The `migrate` `--to-version` option has
+  been removed; `dump` now defaults to stable 0.9.0.
   Already-current inputs are validated and reported unchanged.
 
 ### Removed
@@ -656,6 +660,7 @@ This release consolidates pre-1.0 development into a single, stable v1.0 line. P
 - License: Apache-2.0
 - Repository: `github.com/cisco-open/mcptoolkit-contract`
 
-[Unreleased]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.2...HEAD
+[Unreleased]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.2...v2.2.0
 [2.1.0-rc.2]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.1...v2.1.0-rc.2
 [2.1.0-rc.1]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.0.5...v2.1.0-rc.1

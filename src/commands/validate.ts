@@ -48,7 +48,7 @@ export function validateCommand(): Command {
   .usage('[options] <file>')
   .argument('[file]', 'Path to file to validate (required unless using --show-compatibility)')
   .option('--schema <type>', 'Schema type (auto-detected if omitted): mcpdesc (or mcp-description), diff, diff-breaking, or dump-split')
-    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0-rc.3 (overrides a recognized same-format schema)')
+    .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0 (overrides a recognized same-format schema)')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
     .option('-o, --output <path>', 'Write validation report to file')
@@ -374,7 +374,7 @@ function formatCompatibilityTable(data: CompatibilityData, displayMode: string):
   }
   
   lines.push('Usage Guidelines:');
-  lines.push('- Dump defaults to stable 0.8.0; migrate targets 0.9.0 preview rules');
+  lines.push('- Dump and migrate default to stable MCP Description 0.9.0');
   lines.push('- Input rules: explicit selector, recognized same-format schema, maintained format default');
   lines.push('- Compare matching effective MCP protocol revisions; migrate explicitly when needed');
   lines.push('- Use a matching former CLI release for retired drafts/RCs or historical processing');
