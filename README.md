@@ -12,8 +12,8 @@ The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you cre
 - **MCP Description specification:** [mcpdesc.org](https://mcpdesc.org/format/) — format documentation and the current specification
 - **CLI Commands:** mcpcontract [dump, diff, changelog, compare, document...](#-commands)
 
-This CLI generates stable **MCP Description 0.8.0** by default and supports
-**0.9.0 RC.3** on request. Input rules follow explicit selectors, authored schema
+This CLI generates stable **MCP Description 0.8.0** dumps by default and
+explicitly migrates to **0.9.0 RC.3** by default. Input rules follow explicit selectors, authored schema
 identities, then maintained defaults. See [Versions and Selectors](docs/versions-and-selectors.md).
 
 ## MCP Description Compatibility
@@ -21,8 +21,8 @@ identities, then maintained defaults. See [Versions and Selectors](docs/versions
 | MCP Description Version | Latest Matching CLI | Status |
 | --- | --- | --- |
 | `0.7.0` | [`1.2.4`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/1.2.4) | Historical format; 1.x maintenance line |
-| `0.8.0` | `2.1.0-rc.2` | Stable default; maintained revision rules. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
-| `0.9.0-rc.3` | Unreleased | Opt-in preview in this development build |
+| `0.8.0` | `2.1.0-rc.2` | Stable dump default; maintained revision rules. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
+| `0.9.0-rc.3` | Unreleased | Preview; migration default and opt-in for dumps in this development build |
 
 Install an exact historical CLI without changing your global installation:
 
@@ -34,7 +34,10 @@ npx --package @cisco_open/mcptoolkit-contract@2.0.5 mcpcontract --help
 Each CLI release pins its library dependencies; it never fetches rules at runtime.
 `project`, `document`, `diff`, `compare`, and `split` process supported 0.8.0 and
 0.9.0 input under its selected rules. Native projection requires 0.9.0.
-`validate` retains local 0.7.0 validation, and `migrate` provides reviewed upgrades.
+0.7.0 inputs are rejected with historical CLI guidance. Use CLI 2.0.5 to
+convert 0.7.0 to 0.8.0; CLI 1.2.4 only processes the historical 0.7.0 format.
+Supported 0.8.0 inputs receive a non-blocking recommendation on stderr to use
+`migrate`, except when already running `migrate`.
 Unsupported input versions produce guidance rather than implicit upgrades.
 Commands such as `breaking` and `changelog` continue to consume their own diff schemas.
 
@@ -119,12 +122,12 @@ repository.
 - **Read the v0.8 specification:** [mcpdesc.org/docs/specification/0.8.0](https://mcpdesc.org/docs/specification/0.8.0/)
 - **Contribute to the format:** [mcpdesc/mcpdesc-specification](https://github.com/mcpdesc/mcpdesc-specification)
 - **Browse versioned schemas:** [schemas/mcp-description](https://github.com/mcpdesc/mcpdesc-specification/tree/main/schemas/mcp-description)
-- **Bundled legacy material:** the local [`spec/`](spec/) tree and `mcpdesc` 0.7.0 [schema](schemas/mcp-description/0.7.0.json) are retained for compatibility and migration
+- **Bundled legacy material:** the local [`spec/`](spec/) tree and `mcpdesc` 0.7.0 [schema](schemas/mcp-description/0.7.0.json) remain archived historical material, not active validation or migration support
 
-This development CLI emits stable MCP Description 0.8.0 by default. Use
-`--to-version 0.9.0` on `dump`, `convert`, or `migrate` for the maintained preview
-rules, currently RC.3. Legacy 0.7.0 documents can be validated or upgraded using
-`migrate`; use CLI 1.2.4 for historical 0.7.0 processing without upgrading.
+This development CLI emits stable MCP Description 0.8.0 by default from `dump`;
+use `dump --to-version 0.9.0` to opt into preview rules. `migrate` targets
+0.9.0 with maintained preview rules, currently RC.3. Use CLI 2.0.5 for legacy conversion and CLI 1.2.4 for
+historical 0.7.0 processing without upgrading.
 New dumps do not include `x-cisco-metadata`.
 
 The format is versioned **independently of this CLI**. `mcpcontract` targets a
@@ -196,43 +199,62 @@ mcpcontract project spec.yaml --view native --kind tool --identifier search \
 Reorder known MCP Description members to the document-oriented profile and
 serialize JSON or YAML without changing the document's values. This is a
 formatting operation, not a validation step.
+YAML uses core's Section 15.9 normalized presentation. Key ordering is
+independently selectable as `document` (default), `preserve`, or `sorted`.
+The same YAML presentation is used by `dump`, `split`, `migrate`, and `project`,
+without changing their ordering defaults or JSON output.
 
 ```bash
 mcpcontract normalize spec.yaml --output normalized.yaml
 mcpcontract normalize spec.json --key-order preserve --output unchanged-order.json
 ```
 
-### ✅ convert - Convert a legacy capability dump
+Modern MCP Description input uses JSON scalar recognition with a string
+fallback, not YAML Core resolution: plain `0o12`, `0x12`, `012`, `TRUE`, and
+`~` remain strings. Use JSON spellings for actual numbers, booleans, and nulls.
+These rules also apply to enrichment and migration-fix files, independently
+of output presentation.
 
-Convert the old capability-dump format to stable MCP Description by default.
-This command is not deprecated. It does not accept mcpdesc inputs or export
-legacy dumps; use `migrate` to upgrade an existing mcpdesc document.
+### ✅ convert - Show historical conversion guidance
+
+This command no longer converts files. Normal invocations print guidance on
+stderr and exit nonzero without reading or writing files; `--guide` prints
+guidance and succeeds. Use the verified historical bridge release:
 
 ```bash
-mcpcontract convert legacy-dump.json --output server.yaml
-mcpcontract convert legacy-dump.json --to-version 0.9.0 --output preview.yaml
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert \
+  spec-0.7.yaml --output spec-0.8.yaml
 ```
 
 ### ✅ migrate - Upgrade MCP Description versions
 
-The default destination is stable 0.8.0. Request 0.9.0 explicitly to use RC.3
-rules. A 0.7.0 document is upgraded through 0.8.0 before the 0.9.0 conversion.
-Review blockers and apply only explicitly requested fixes.
+The installed CLI's maintained migration target is 0.9.0, using RC.3 preview
+rules by default. Input must use 0.8.0 or 0.9.0. First convert 0.7.0 with
+CLI 2.0.5. Review blockers and apply only explicitly requested fixes.
 
 ```bash
-mcpcontract migrate spec-0.7.yaml \
-  --report migration.json --output spec-0.8.yaml
-# Opt into preview output, optionally pinning exact destination rules
-mcpcontract migrate spec-0.7.yaml --to-version 0.9.0 \
-  --selector 0.9.0-rc.3 --output spec-0.9.yaml
+# Upgrade with the maintained rules; optionally normalize the key order
+mcpcontract migrate spec-0.8.yaml --output spec-0.9.yaml
+mcpcontract migrate spec-0.8.yaml --key-order document --output normalized.yaml
+# Optionally pin exact supported destination rules
+mcpcontract migrate spec-0.8.yaml --selector 0.9.0-rc.3 --output pinned.yaml
 ```
 
 Preview rules may change between snapshots. `migrate` never guesses
 URI values, rounds numbers, or removes properties unless a fix is supplied.
 Reports list each upgrade step. `--patch patch.json` always applies to the
-original input document; chained upgrades use an RFC 6902 root replacement.
+original input document; key ordering is serialization and does not change the
+patch. `--key-order` accepts `preserve` (default), `document` (the same
+ordering as `normalize`), or `sorted`. Ordering preserves values and array
+order, not comments, whitespace, quoting, or original bytes. JSON is the default
+on stdout; an output path ending in `.yaml` or `.yml` selects YAML unless
+`--format` overrides it.
 Fix paths refer to the 0.8.0 document at the 0.8-to-0.9 step. Failed migrations
 can write a diagnostic report, but never a partial final document or patch.
+Already-current input is validated and reported as unchanged; it is not
+implicitly converted between preview snapshots. `migrate` no longer accepts
+`--to-version`; omit it to use the maintained target. Pin the CLI version for
+reproducible automation.
 
 ### ✅ diff - Compare two releases of an MCP server
 

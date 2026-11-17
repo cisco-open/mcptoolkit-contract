@@ -8,7 +8,7 @@
 
 import { Command } from 'commander';
 import * as fs from 'fs';
-import * as yaml from 'yaml';
+import { parseMcpDescriptionInput } from '../lib/mcpdesc-io.js';
 import { Differ } from '../lib/differ.js';
 import { parseAsContractDump, isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 
@@ -81,22 +81,14 @@ EXAMPLES:
       let toData: any;
 
       try {
-        if (fromFile.endsWith('.yaml') || fromFile.endsWith('.yml')) {
-          fromData = yaml.parse(fromContent);
-        } else {
-          fromData = JSON.parse(fromContent);
-        }
+        fromData = parseMcpDescriptionInput(fromContent, fromFile).value;
       } catch (error) {
         console.error(`❌ Error parsing source file: ${(error as Error).message}`);
         process.exit(2);
       }
 
       try {
-        if (toFile.endsWith('.yaml') || toFile.endsWith('.yml')) {
-          toData = yaml.parse(toContent);
-        } else {
-          toData = JSON.parse(toContent);
-        }
+        toData = parseMcpDescriptionInput(toContent, toFile).value;
       } catch (error) {
         console.error(`❌ Error parsing target file: ${(error as Error).message}`);
         process.exit(2);

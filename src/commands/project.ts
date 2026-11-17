@@ -6,7 +6,6 @@ import { Command } from 'commander';
 import { readFile, writeFile } from 'node:fs/promises';
 import {
   projectMcpNativeValue,
-  parseMcpDescriptionSource,
   type McpNativeKind,
   type ProjectMcpNativeValueOptions,
   type SupportedCoreSpecification,
@@ -14,6 +13,7 @@ import {
 import { supportedProtocolVersions, type SupportedProtocolVersion } from '@mcpdesc/validator';
 import { formatJSON, formatYAML } from '../lib/formatters.js';
 import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
+import { parseMcpDescriptionInput } from '../lib/mcpdesc-io.js';
 import {
   getMcpDescriptionSelector,
   isMcpDescDocument,
@@ -73,10 +73,7 @@ async function runProject(input: string, options: ProjectOptions): Promise<void>
     throw new Error('--key-order must be preserve or document');
   }
 
-  const parsed = parseMcpDescriptionSource(await readFile(input, 'utf-8'));
-  if (!parsed.ok) {
-    throw new Error(parsed.diagnostics.map((item) => item.message).join('; '));
-  }
+  const parsed = parseMcpDescriptionInput(await readFile(input, 'utf-8'), input);
   if (
     typeof parsed.value !== 'object' ||
     parsed.value === null ||

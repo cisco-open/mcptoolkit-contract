@@ -1,31 +1,30 @@
 # Migrating Legacy Inputs to Current mcpdesc
 
-> **Deprecated.** `mcpcontract convert` exists only to migrate older capability
-> dumps and mcpdesc 0.7.0 documents to the current mcpdesc format. It prints a
-> deprecation warning and will be removed in a future release. New dumps from
-> `mcpcontract dump` are already current and do not need conversion.
+> **Historical CLI required.** `mcpcontract convert` now only displays guidance.
+> It does not read or write files and exits nonzero, except that `--guide`
+> prints guidance and succeeds. New dumps already use mcpdesc.
 
 ## Background
 
 Dumps created before v0.25.0 used a Cisco-specific *capability dump* schema
 (top-level `version` / `dumpDetails` / `serverInfo`). Later releases emitted
 mcpdesc 0.7.0. `mcpcontract dump` now emits [mcpdesc](schemas.md) 0.8.0
-directly. Use `convert` only to bring either legacy format forward.
+directly. Use CLI 2.0.5 to bring either legacy format to 0.8.0.
+The latest v1 CLI, 1.2.4, supports historical 0.7.0 processing but does not
+produce 0.8.0.
 
 ## Usage
 
 ```bash
-# Auto-detect the input format and convert (outputs to stdout)
-mcpcontract convert legacy-dump.json
+# Use the historical bridge release without replacing your global CLI
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert \
+  server-0.7.yaml --output server-0.8.yaml
 
-# Write to a file (JSON or YAML)
-mcpcontract convert legacy-dump.json -o server.mcpdesc.yaml -f yaml
-
-# Migrate a validated mcpdesc 0.7.0 document to v0.8
-mcpcontract convert server-0.7.yaml -o server.mcpdesc.yaml
+# Then use the current CLI for the explicit preview upgrade
+mcpcontract migrate server-0.8.yaml --output server-0.9.yaml
 ```
 
-For mcpdesc 0.7.0 input, conversion first validates against the frozen 0.7.0
+In CLI 2.0.5, conversion of mcpdesc 0.7.0 first validates against the frozen 0.7.0
 schema, then performs the shared `@mcpdesc/core` migration. Invalid legacy input
 is rejected rather than interpreted as the latest format. Inline legacy security
 schemes may produce warnings when deterministic component names are generated or
@@ -39,7 +38,7 @@ than converting.
 
 | Legacy dump | mcpdesc | Notes |
 |---|---|---|
-| *(new)* | `mcpdesc` | Always the current spec version |
+| *(new)* | `mcpdesc` | 0.8.0 in the bridge release |
 | `serverInfo.{name,version,title,description}` | `info.*` | Identity metadata |
 | `serverInfo.protocolVersion` | `protocolVersions[0]` | Observed MCP revision |
 | `dumpDetails.mcpServerConfig` | `transports[0]` | `transport`→`type`, plus `url`/`command`/`args` |

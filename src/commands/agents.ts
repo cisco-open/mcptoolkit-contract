@@ -90,8 +90,8 @@ mcpcontract agents --command breaking
 **split** - Split large MCP descriptions into focused subsets
 → Use when: You have a large federation MCP description and need to organize it by category
 
-**convert** - Import legacy dumps (stable output)
-→ Use when: Importing an old capability dump rather than upgrading an mcpdesc document
+**convert** - Show historical conversion guidance (no conversion)
+→ Use when: Finding CLI 2.0.5 to convert legacy input to 0.8.0
 
 **project** - Export an effective protocol view or native MCP declaration
 → Use when: You need a version-specific MCP Description document or MCP-native declaration
@@ -99,8 +99,8 @@ mcpcontract agents --command breaking
 **normalize** - Normalize MCP Description member order and serialization
 → Use when: You want document-oriented JSON/YAML output without changing values
 
-**migrate** - Upgrade mcpdesc (stable destination)
-→ Use when: Upgrading 0.7.0 or opting into 0.9.0 RC.3
+**migrate** - Upgrade mcpdesc to the maintained destination
+→ Use when: Explicitly upgrading 0.8.0 to 0.9.0 RC.3
 
 **validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
 → Use when: You want to verify schema compliance before publication
@@ -1130,7 +1130,7 @@ Add \`--emit-diff diff.json --emit-breaking diff-breaking.json\` to your \`compa
 ### compare says "not an MCP description document"
 Input files must be mcpdesc format. Convert legacy dumps first:
 \`\`\`bash
-mcpcontract convert old-dump.json --to-format mcpdesc --output converted.json
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert old-dump.json --output converted.json
 \`\`\`
 `;
 
@@ -1510,39 +1510,44 @@ mcpcontract normalize server.json --key-order preserve --output server-preserved
 - \`--format\` selects JSON or YAML; otherwise the output path or input format is used.
 - Normalization changes member ordering and formatting, not document values.
 - Normalization does not validate specification compliance; use \`validate\` separately.
+- YAML uses core's Section 15.9 normalized presentation, including quoted protocol versions and lossless multiline values.
+- Plain \`0o12\`, \`0x12\`, \`012\`, \`TRUE\`, and \`~\` are strings under the shared input parser.
+- 0.7.0 requires historical CLI 2.0.5 for conversion; 0.8.0 input gets a non-blocking stderr recommendation to migrate explicitly.
 - Retired schema identities are rejected; use the matching historical CLI to process them.
 `;
 
-const CONVERT_GUIDE = `# convert - Convert Legacy Capability Dumps
+const CONVERT_GUIDE = `# convert - Historical Conversion Guidance
 
 ## Purpose
-Import dumps as 0.8.0 (default) or 0.9.0 RC.3.
+Show how to run a historical CLI. This command does not read or write files.
 
 ## When to Use
-Legacy dumps only; use migrate for mcpdesc.
+Legacy dumps or 0.7.0 inputs. Use CLI 2.0.5 to convert to 0.8.0.
+CLI 1.2.4 supports historical 0.7.0 processing but does not produce 0.8.0.
 
 ## Basic Usage
 \`\`\`bash
-mcpcontract convert legacy.json --output server.yaml
-mcpcontract convert legacy.json --to-version 0.9.0 --output preview.yaml
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert old.yaml --output stable.yaml
+mcpcontract migrate stable.yaml --output preview.yaml
 \`\`\`
 
 ## Common Patterns
-One-way, supported, document-only stdout. No output on blockers.
+Normal invocation: guidance on stderr, exit 1, no converted output.
+\`--guide\`: guidance on stdout, exit 0.
 `;
 
 const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
 
 ## Purpose
-Upgrade to stable 0.8.0; opt into 0.9.0 RC.3.
+Upgrade 0.8.0 to the installed CLI's maintained destination: 0.9.0, currently using RC.3 preview rules.
 
 ## When to Use
 Reviewed format upgrades, not ordinary 0.8.0 processing.
 
 ## Basic Usage
 \`\`\`bash
-mcpcontract migrate historical.yaml --output current.yaml --report migration.json
-mcpcontract migrate historical.yaml --to-version 0.9.0 --output preview.yaml
+mcpcontract migrate stable.yaml --output preview.yaml --report migration.json
+mcpcontract migrate stable.yaml --key-order document --output normalized.yaml
 \`\`\`
 
 ## Common Patterns
@@ -1552,7 +1557,11 @@ Blockers stop output. Use \`--fixes file.json\` for reviewed fixes and \`--patch
 { "fixes": [{ "fix": "remove-property", "path": ["tools", 0, "annotations", "customFlag"] }] }
 \`\`\`
 
-Fix paths: intermediate 0.8.0. Patches: original input (root replacement for chains). Reports: steps and selectors. \`--selector\`: destination rules, not format. No guessed fixes.
+Fix paths and patches refer to the 0.8.0 input. Reports: steps and selectors. \`--selector\`: destination rules, not format. No guessed fixes.
+Key order: \`preserve\` (default), \`document\` (same as normalize), or \`sorted\`. Ordering does not alter patch values.
+Already-current inputs are validated and reported unchanged; no implicit RC-to-RC conversion.
+\`--to-version\` is not supported by migrate. Pin the CLI version for reproducibility.
+0.7.0 inputs require CLI 2.0.5's convert command first. No migration recommendation is printed by migrate itself.
 `;
 
 // ============================================================================

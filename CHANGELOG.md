@@ -40,11 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Adopted MCP Description 0.9.0 RC.3 with `@mcpdesc/core` 0.13.0-rc.8 and
+- Adopted MCP Description 0.9.0 RC.3 with `@mcpdesc/core` 0.13.0-rc.10 and
   `@mcpdesc/validator` 0.14.0-rc.9, including native document-order projection
   and the validator's structured diagnostic detail and related locations.
 - Added `normalize` for document-oriented JSON/YAML serialization, plus
   `project --key-order document` for native declaration output.
+- Added `migrate --key-order preserve|document|sorted` to control serialization,
+  including document-oriented ordering in the migration step.
 
 ### Changed
 
@@ -54,8 +56,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC.3 may change diagnostic paths, counts, rule attribution, and validity from
   RC.2; unknown members in Tool Interaction Example elicitation responses are
   now rejected by the upstream validator.
-- YAML normalization uses the core serializer's two-space indented-sequence
-  output style. Existing command serializers keep their timestamp quoting.
+- MCP Description YAML output from `normalize`, `dump`, `split`, `migrate`,
+  and `project` uses core's Section 15.9 normalized presentation, including
+  safe scalar/key quoting, quoted protocol versions, lossless multiline values,
+  and exactly one final LF. `normalize --key-order sorted` remains supported.
+  JSON formatting and command-specific ordering defaults are unchanged.
+- **Breaking:** modern MCP Description readers consistently use core's JSON
+  scalar recognition with string fallback. Plain `0o12`, `0x12`, `012`,
+  `TRUE`, and `~` are strings; use JSON scalar spellings for intended numbers,
+  booleans, and nulls. Unsupported tags and non-finite numbers are rejected.
+  Enrichment and migration-fix files use the same scalar rules; unrelated
+  configuration, catalog, and analysis formats retain their existing parsing.
+- MCP Description 0.8.0 inputs receive a non-blocking migration recommendation
+  on stderr, except in `migrate`. No input is silently upgraded.
+- **Breaking:** `migrate` now targets maintained MCP Description 0.9.0 preview
+  rules (currently RC.3) by default rather than stable 0.8.0. The `migrate`
+  `--to-version` option has been removed; `dump` continues to default to 0.8.0.
+  Already-current inputs are validated and reported unchanged.
+
+### Removed
+
+- **Breaking:** local 0.7.0 validation and migration, and active legacy-dump
+  conversion. `convert` remains a guidance-only command: normal invocations
+  fail without writing files; `--guide` succeeds. All 0.7.0 inputs redirect
+  to CLI 2.0.5 for conversion to 0.8.0. CLI 1.2.4 remains the historical
+  0.7.0 processing release, not a 0.8.0 converter. Archived schemas remain.
 
 ## [2.1.0-rc.2] - 2026-11-05
 

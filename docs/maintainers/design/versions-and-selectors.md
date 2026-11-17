@@ -99,7 +99,7 @@ reported to users as if they supplied `--selector` themselves.
 
 | Command | Intent and selection behavior |
 | --- | --- |
-| `validate` | Check the input using the resolution policy. Retain the local historical `0.7.0` validator. |
+| `validate` | Check supported modern input using the resolution policy. Redirect `0.7.0` to a historical CLI. |
 | `document`, hidden `render` alias | Describe the input under its resolved rules; do not upgrade it. |
 | `project --view effective` | Project the input to an MCP revision using its resolved rules. |
 | `project --view native` | Export native declarations using resolved rules, only where the operation supports them. |
@@ -107,16 +107,17 @@ reported to users as if they supplied `--selector` themselves.
 | `diff` | Resolve each input independently. An explicit selector applies to both and must be compatible with both. |
 | `compare` | Apply the same input policy as `diff`; compatibility analysis rules are a separate choice. |
 | `dump` | Create a document in the default or requested output format; use that format's maintained default unless explicitly pinned. |
-| `convert` | Import a legacy capability dump into the default or requested output format. There is no input mcpdesc identity to resolve. |
-| `migrate` | Resolve source rules independently. The destination format chooses its default rules; `--selector` pins destination rules, not source rules. |
+| `convert` | Display historical CLI guidance only. Do not read inputs or write converted files. |
+| `migrate` | Resolve source rules independently. The maintained migration target chooses its default rules; `--selector` pins destination rules, not source rules. |
 | `breaking`, `changelog` | Consume their own diff/analysis artifacts, not mcpdesc selector inputs. |
 | `rules` | Browse the CLI compatibility catalog, not the specification validation-rule catalog. |
 | `completion`, `agents` | Describe the CLI; no input document resolution. |
 
-`dump`, `convert`, and `migrate` use `--to-version` to choose output format
-`0.8.0` (default) or `0.9.0`. `--selector` pins rules for that format; it does
-not change the format choice. Do not confuse JSON/YAML serialization options
-with an mcpdesc format version.
+`dump` uses `--to-version` to choose output format `0.8.0` (default) or
+`0.9.0`. `migrate` targets the maintained migration version, currently `0.9.0`.
+It does not accept `--to-version`. `--selector` pins destination rules;
+it does not change the format choice. Do not confuse JSON/YAML serialization
+options with an mcpdesc format version.
 
 Cross-format `diff`/`compare` support requires verified comparison semantics;
 independent selector resolution alone does not prove equivalence. If unsupported,
@@ -127,25 +128,26 @@ and changed declarations. Select the same MCP revision for meaningful comparison
 
 ## Default Output and Conversion
 
-The default output format is latest stable `0.8.0` until final `0.9.0` is adopted
-as latest stable by the CLI. This applies to `dump`, `convert`, and the default
-destination of `migrate`. The dependency's default for a format is not a choice
-of default output format across formats.
+The default dump output format is stable `0.8.0` until final `0.9.0` is adopted
+as latest stable by the CLI. The migration destination is separately maintained
+as `0.9.0`. The dependency's default for a format is not a choice of default
+output format across formats.
 
-An explicit request for output format `0.9.0`, without an exact selector, uses
-its maintained default: currently `0.9.0-rc.3`. Dependency upgrades can advance
-that choice through approved RCs to final. Never advance silently from `0.9.0`
-to a future `0.10.0`.
+The `0.9.0` output format, without an exact selector, uses its maintained
+default: currently `0.9.0-rc.3`. Dependency upgrades can advance that choice
+through approved RCs to final. Changing the maintained migration destination
+requires an explicit CLI policy decision and reviewed conversion path.
 
 Migration is an explicit reviewed operation, not a side effect of processing.
-Retain the supported `0.7.0 -> 0.8.0 -> 0.9.0` chain, source/result checks,
-conversion blockers, explicit fixes, reports, and original-input patches. Core
-does not provide direct `0.7.0 -> 0.9.0` conversion. Do not invent conversions
+Support reviewed `0.8.0 -> 0.9.0` migration, source/result checks,
+conversion blockers, explicit fixes, reports, and original-input patches.
+Redirect `0.7.0` to CLI 2.0.5's `convert` for the bridge to 0.8.0; CLI 1.2.4
+is only for historical processing and does not emit 0.8.0. Do not invent conversions
 between draft/RC snapshots solely because they share `mcpdesc: "0.9.0"`.
 
-A `0.9.0` source must not be downgraded when the migration destination defaults
-to `0.8.0`; fail with guidance to select a supported destination. Selecting rules
-does not itself authorize a downgrade or rewrite.
+A `0.9.0` source is validated under independently resolved source and
+destination rules and reported unchanged. Selecting rules does not itself
+authorize a downgrade, preview-snapshot conversion, or rewrite.
 
 ## Output Identity and Reporting
 
@@ -175,9 +177,24 @@ availability. Users needing retired rules must pin a former CLI release that
 supports them.
 
 Keep a small explicit CLI support/capability policy, not separate copied
-implementations for every snapshot. Existing historical `0.7.0` validation and
-reviewed migration are deliberate exceptions; their removal is a separate,
-documented compatibility decision, not an automatic result of retiring RCs.
+implementations for every snapshot. Historical `0.7.0` validation and migration
+are removed by an explicit compatibility decision; the archived schemas remain
+historical material. `convert` is retained only to show actionable guidance.
+
+Modern MCP Description readers use core's parser, including JSON scalar
+recognition with string fallback. Enrichment and migration-fix files use those
+scalar rules too; unrelated CLI formats retain their own parsers. At the input
+boundary, 0.8.0 receives a non-blocking stderr recommendation to migrate,
+except in `migrate`. The recommendation does not change
+validation results, exit status, or the input document.
+
+YAML document output delegates to core's Section 15.9 normalized presentation,
+without adopting RC.4 validation or changing JSON output. Ordering is separate:
+`normalize` and `migrate` accept document, preserve, and sorted policies;
+`migrate` defaults to preserve. Other producers keep their established ordering
+defaults. Ordering does not alter migration patches. Write normalized strings directly so stdout
+and files retain exactly one final LF. Do not silently drop non-JSON runtime
+values to make serialization succeed.
 
 The current CLI supports original stable `0.8.0` and the maintained defaults for
 `0.8.0` and `0.9.0` (currently RC.3). Retired drafts and earlier RCs are not

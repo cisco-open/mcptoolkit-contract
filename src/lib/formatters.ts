@@ -6,26 +6,8 @@
  * Output formatters for different formats: JSON, YAML, Markdown
  */
 
-import { Document, visit } from 'yaml';
+import { serializeMcpDescription, type JsonValue } from '@mcpdesc/core';
 import { ContractDump, Tool, Resource, ResourceTemplate, Prompt } from './types.js';
-
-/**
- * Regex matching YAML 1.1 implicit timestamp patterns (!!timestamp).
- * 
- * YAML 1.1 parsers (PyYAML, Ruby Psych, SnakeYAML 1.x) auto-convert these
- * to date/datetime objects, breaking consumers that expect strings.
- * YAML 1.2 removed this implicit tag, but YAML 1.1 parsers remain widely used
- * (PyYAML alone has ~300M monthly downloads).
- * 
- * Matches:
- *   - Dates:     2025-06-18
- *   - Datetimes: 2025-06-18T10:37:47Z, 2025-06-18T10:37:47.843Z
- *   - Datetime with offset: 2025-06-18T10:37:47+05:30
- *   - Space-separated: 2025-06-18 10:37:47
- * 
- * See: https://yaml.org/type/timestamp.html
- */
-const YAML11_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}(:\d{2})?)?)?$/;
 
 /**
  * Format dump as JSON
@@ -40,27 +22,17 @@ export function formatJSON(data: unknown, pretty: boolean = true): string {
 }
 
 /**
- * Format dump as YAML
- * 
- * Quotes string values that match YAML 1.1 timestamp patterns to ensure
- * interoperability with YAML 1.1 parsers (e.g., PyYAML) that would otherwise
- * auto-convert them to date/datetime objects.
+ * Serialize generated MCP Description values using the upstream YAML profile.
  */
 export function formatYAML(dump: ContractDump): string;
 export function formatYAML(data: unknown): string;
 export function formatYAML(data: unknown): string {
-  const doc = new Document(data);
-  
-  // Quote strings that YAML 1.1 parsers would interpret as timestamps
-  visit(doc, {
-    Scalar(_key, node) {
-      if (typeof node.value === 'string' && YAML11_TIMESTAMP_RE.test(node.value)) {
-        node.type = 'QUOTE_DOUBLE';
-      }
-    }
+  // Normalized serialization checks JSON compatibility at runtime before emitting.
+  return serializeMcpDescription(data as JsonValue, {
+    format: 'yaml',
+    presentation: 'normalized',
+    keyOrder: 'preserve',
   });
-  
-  return doc.toString({ indent: 2, lineWidth: 0, minContentWidth: 0 });
 }
 
 /**

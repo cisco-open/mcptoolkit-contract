@@ -20,7 +20,7 @@ import {
   type CLIOptions
 } from '../lib/types.js';
 import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } from '../lib/mcpdesc-converter.js';
-import { parse as yamlParse } from 'yaml';
+import { parseDocumentSource } from '../lib/mcpdesc-io.js';
 import { validateMcpDescription } from '@mcpdesc/validator';
 import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
 import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
@@ -231,17 +231,11 @@ async function runDump(options: CLIOptions): Promise<void> {
   if (options.info) {
     log(`Applying enrichment from: ${options.info}`, options);
     const infoContent = await readFile(options.info as string, 'utf-8');
-    let info: EnrichmentInfo;
-    try {
-      info = JSON.parse(infoContent);
-    } catch {
-      try {
-        info = yamlParse(infoContent) as EnrichmentInfo;
-      } catch (yamlError) {
-        throw new ConfigurationError(`Failed to parse info file as JSON or YAML: ${(yamlError as Error).message}`);
-      }
+    const { value: info } = parseDocumentSource(infoContent, options.info as string);
+    if (typeof info !== 'object' || info === null || Array.isArray(info)) {
+      throw new ConfigurationError('Info file must contain an enrichment object');
     }
-    applyEnrichment(mcpdesc, info);
+    applyEnrichment(mcpdesc, info as EnrichmentInfo);
     log('✓ Enrichment applied', options);
   }
 
@@ -295,7 +289,8 @@ async function runDump(options: CLIOptions): Promise<void> {
     log(`✓ Dump written to: ${options.output}`, options);
   } else {
     // Write to stdout (actual output, not stderr)
-    console.log(output);
+    const isYaml = format.toLowerCase() === 'yaml' || format.toLowerCase() === 'yml';
+    process.stdout.write(isYaml ? output : `${output}\n`);
   }
 
   log('', options);

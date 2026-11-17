@@ -9,10 +9,9 @@
 import { Command } from 'commander';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { stringify as yamlStringify } from 'yaml';
 import { Splitter } from '../lib/splitter.js';
 import { Validator } from '../lib/validator.js';
-import { formatJSON } from '../lib/formatters.js';
+import { formatJSON, formatYAML } from '../lib/formatters.js';
 import type { SplitResult } from '../lib/types.js';
 import type { McpDescriptionSelector } from '@mcpdesc/validator';
 
@@ -49,7 +48,7 @@ function getOutputFormat(dumpPath: string, options: SplitCommandOptions): 'json'
  */
 function formatOutput(data: unknown, format: 'json' | 'yaml', pretty: boolean): string {
   if (format === 'yaml') {
-    return yamlStringify(data, { indent: 2 });
+    return formatYAML(data);
   }
   
   return formatJSON(data, pretty);

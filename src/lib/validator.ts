@@ -8,6 +8,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { parse as yamlParse } from 'yaml';
+import { parseMcpDescriptionInput } from './mcpdesc-io.js';
 import AjvModule from 'ajv';
 import type { ValidateFunction, ErrorObject } from 'ajv';
 import addFormatsModule from 'ajv-formats';
@@ -198,15 +199,17 @@ export class Validator {
     
     // Auto-detect format and parse
     let data: unknown;
-    try {
-      // Try JSON first
-      data = JSON.parse(fileContent);
-    } catch {
-      // If JSON fails, try YAML
+    if (schemaType === 'mcpdesc' || schemaType === 'mcp-description') {
+      data = parseMcpDescriptionInput(fileContent, filePath).value;
+    } else {
       try {
-        data = yamlParse(fileContent);
-      } catch (yamlError) {
-        throw new Error(`Failed to parse file as JSON or YAML: ${(yamlError as Error).message}`);
+        data = JSON.parse(fileContent);
+      } catch {
+        try {
+          data = yamlParse(fileContent);
+        } catch (yamlError) {
+          throw new Error(`Failed to parse file as JSON or YAML: ${(yamlError as Error).message}`);
+        }
       }
     }
 
@@ -225,10 +228,7 @@ export class Validator {
     // Auto-detect schema version from data
     const detectedVersion = this.extractSchemaVersion(data, schemaType);
 
-    if (
-      (schemaType === 'mcpdesc' || schemaType === 'mcp-description') &&
-      detectedVersion !== '0.7.0'
-    ) {
+    if (schemaType === 'mcpdesc' || schemaType === 'mcp-description') {
       let selection;
       try {
         selection = resolveMcpDescriptionSelection(data, requestedSelector);
@@ -278,18 +278,6 @@ export class Validator {
     }
 
     let usedVersion: string | undefined;
-
-    if ((schemaType === 'mcpdesc' || schemaType === 'mcp-description') && detectedVersion === '0.7.0') {
-      if (requestedSelector !== undefined) throw new Error('Legacy 0.7.0 validation does not accept a modern selector');
-      const declaredSchema = (data as { $schema?: unknown }).$schema;
-      if (declaredSchema !== undefined && declaredSchema !== 'https://mcpdesc.org/schema/mcp-description/0.7.0.json') {
-        return {
-          valid: false, file: fileName, schemaType, schemaVersion: detectedVersion,
-          errors: [{ path: '/$schema', message: 'Unknown or contradictory 0.7.0 schema identity', keyword: 'unknown-schema-identity' }],
-          warnings: [],
-        };
-      }
-    }
 
     // Try to load version-specific schema
     let validate: ValidateFunction;

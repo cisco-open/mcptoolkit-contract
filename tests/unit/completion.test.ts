@@ -6,7 +6,7 @@
  * Unit tests for bash completion script
  */
 
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { describe, it, expect } from '@jest/globals';
 
 describe('Bash Completion', () => {
@@ -21,12 +21,42 @@ describe('Bash Completion', () => {
     expect(script).toContain(shell === 'fish' ? '-l to-version' : '--to-version');
   });
 
+  it.each(['bash', 'zsh', 'fish'])('includes migration ordering and the maintained target in %s', (shell) => {
+    const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
+    if (shell === 'bash') {
+      expect(script).toContain('normalize|migrate)');
+      expect(script).toContain('migrate)\n                        local opts="--selector --fixes --output --report --patch --format --key-order');
+    } else if (shell === 'zsh') {
+      expect(script).not.toContain('--to-version[Deprecated target format version]');
+      expect(script).toContain('--key-order[Key order]:order:(preserve document sorted)');
+    } else {
+      expect(script).toContain('__fish_seen_subcommand_from migrate" -l key-order -d "Key order" -a "preserve document sorted"');
+      expect(script).not.toContain('__fish_seen_subcommand_from migrate" -l to-version');
+    }
+  });
+
   const generateCompletion = (): string => {
     return execSync('node build/index.js completion bash 2>/dev/null', {
       encoding: 'utf-8',
       cwd: process.cwd()
     });
   };
+
+  it('completes migration ordering and destination choices in bash', () => {
+    const script = generateCompletion();
+    const complete = (option: string) => execFileSync('bash', ['-s'], {
+      input: `${script}
+COMP_WORDS=(mcpcontract migrate ${option} "")
+COMP_CWORD=3
+_mcpcontract_completion
+printf '%s\\n' "\${COMPREPLY[@]}"
+`,
+      encoding: 'utf-8',
+    }).trim().split('\n');
+    expect(complete('--key-order')).toEqual(['document', 'preserve', 'sorted']);
+    expect(complete('--to-version')).toEqual(['']);
+    expect(complete('--selector')).toEqual(['0.9.0-rc.3']);
+  });
 
   it('should generate bash completion script', () => {
     const script = generateCompletion();

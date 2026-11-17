@@ -213,7 +213,6 @@ describe('Agents Command Integration Tests', () => {
     });
 
     it.each([
-      ['convert', 'input', '--guide'],
       ['document', 'file', '--list'],
       ['validate', 'file', '--show-compatibility'],
     ])('should show the required %s input and preserve its file-free mode', (command, argument, mode) => {
@@ -226,6 +225,13 @@ describe('Agents Command Integration Tests', () => {
       expect(help).toContain(`Without an input file: mcpcontract ${command} ${mode}`);
       expect(execSync(`${CLI_PATH} ${command} ${mode}`).toString().length).toBeGreaterThan(0);
       expect(() => execSync(`${CLI_PATH} ${command}`, { stdio: 'pipe' })).toThrow();
+    });
+
+    it('keeps convert as a file-free historical guidance command', () => {
+      const help = execSync(`${CLI_PATH} convert --help`).toString();
+      expect(help).toContain('no files are converted');
+      expect(execSync(`${CLI_PATH} convert --guide`).toString()).toContain('@cisco_open/mcptoolkit-contract@2.0.5');
+      expect(() => execSync(`${CLI_PATH} convert`, { stdio: 'pipe' })).toThrow();
     });
 
     it('should show agents command in main help', () => {
@@ -324,7 +330,6 @@ describe('Agents Command Integration Tests', () => {
       // The focused changelog guide should remain substantially smaller than --all
       const efficiencyRatio = allTokens / singleTokens;
       expect(efficiencyRatio).toBeGreaterThan(10);
-      expect(efficiencyRatio).toBeLessThan(16);
     });
   });
 

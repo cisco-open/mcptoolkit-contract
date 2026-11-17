@@ -11,7 +11,6 @@ import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07To08,
   parseAsContractDump,
   projectMcpDescriptionView,
   applyEnrichment,
@@ -280,28 +279,8 @@ describe('mcpdesc-converter', () => {
       tools: [{ name: 'search', inputSchema: { type: 'object' } }],
     };
 
-    it('validates the legacy source and delegates migration to core', async () => {
-      const result = await migrateMcpDescription07To08(legacyDocument, 'legacy.json');
-
-      expect(result.document).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
-        mcpdesc: '0.8.0',
-        protocolVersions: ['2025-11-25'],
-        capabilities: [{ tools: { listChanged: true } }],
-      });
-      expect(result.document.info).not.toHaveProperty('protocolVersion');
-      expect(legacyDocument.info).toHaveProperty('protocolVersion', '2025-11-25');
-    });
-
-    it('rejects a legacy source that does not satisfy the frozen schema', async () => {
-      const invalid = {
-        ...legacyDocument,
-        info: { ...legacyDocument.info, name: '' },
-      };
-
-      await expect(migrateMcpDescription07To08(invalid, 'invalid.json')).rejects.toThrow(
-        /0\.7\.0 validation failed/
-      );
+    it('redirects legacy sources to the historical conversion CLI', () => {
+      expect(() => projectMcpDescriptionView(legacyDocument)).toThrow('CLI 2.0.5');
     });
   });
 });

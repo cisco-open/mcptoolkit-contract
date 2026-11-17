@@ -5,23 +5,25 @@
 import { Command } from 'commander';
 import { readFile, writeFile } from 'node:fs/promises';
 import {
-  parseMcpDescriptionSource,
+  serializeMcpDescription,
+  type JsonValue,
   type McpDescriptionConversionFix,
 } from '@mcpdesc/core';
-import { formatJSON, formatYAML } from '../lib/formatters.js';
+import { formatJSON } from '../lib/formatters.js';
 import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
+import { parseDocumentSource } from '../lib/mcpdesc-io.js';
 import { isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 import { migrateMcpDescription } from '../lib/mcpdesc-migration.js';
-import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
+import { DEFAULT_MIGRATION_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
 
 interface MigrateOptions {
-  toVersion?: string;
   selector?: string;
   fixes?: string;
   output?: string;
   report?: string;
   patch?: string;
   format?: 'json' | 'yaml';
+  keyOrder?: 'preserve' | 'document' | 'sorted';
   compact?: boolean;
   quiet?: boolean;
 }
@@ -40,19 +42,20 @@ function isConversionFix(value: unknown): value is McpDescriptionConversionFix {
 
 export function migrateCommand(): Command {
   const cmd = new Command('migrate');
+  const defaultSelector = resolveOutputSelection(DEFAULT_MIGRATION_VERSION).selector;
 
   cmd
-    .description('Upgrade MCP Description documents using reviewed migration steps (stable output by default)')
+    .description(`Upgrade MCP Description documents to the maintained target (${DEFAULT_MIGRATION_VERSION})`)
     .argument('<input>', 'Input MCP Description file (JSON or YAML)')
-    .option('--to-version <version>', 'Destination format version: 0.8.0 or 0.9.0', DEFAULT_OUTPUT_VERSION)
-    .option('--selector <selector>', 'Pin destination rules; source rules are resolved independently')
-    .option('--fixes <file>', 'JSON/YAML object with a top-level "fixes" array of requested conversion fixes')
     .option('-o, --output <path>', 'Converted document output path (default: stdout)')
-    .option('--report <path>', 'Write conversion status and diagnostics as JSON')
-    .option('--patch <path>', 'Write the generated RFC 6902 JSON Patch as JSON')
     .option('-f, --format <format>', 'Document output serialization: json or yaml')
+    .option('--key-order <order>', 'Key order: preserve, document, or sorted', 'preserve')
     .option('--compact', 'Compact JSON document output', false)
     .option('-q, --quiet', 'Suppress status messages', false)
+    .option('--selector <selector>', `Pin destination rules (default: ${defaultSelector})`)
+    .option('--fixes <file>', 'JSON/YAML object with a top-level "fixes" array of requested conversion fixes')
+    .option('--report <path>', 'Write conversion status and diagnostics as JSON')
+    .option('--patch <path>', 'Write the generated RFC 6902 JSON Patch as JSON')
     .action(async (input: string, options: MigrateOptions) => {
       try {
         await runMigrate(input, options);
@@ -66,21 +69,17 @@ export function migrateCommand(): Command {
 }
 
 async function parseSource(content: string, description: string): Promise<unknown> {
-  const parsed = parseMcpDescriptionSource(content);
-  if (!parsed.ok) {
-    throw new Error(`Failed to parse ${description}: ${parsed.diagnostics.map((item) => item.message).join('; ')}`);
-  }
-  return parsed.value;
+  return parseDocumentSource(content, description).value;
 }
 
 async function runMigrate(input: string, options: MigrateOptions): Promise<void> {
-  const toVersion = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
-  if (toVersion !== '0.9.0' && toVersion !== '0.8.0') {
-    throw new Error('Supported migration targets are 0.8.0 and 0.9.0');
-  }
+  const toVersion = DEFAULT_MIGRATION_VERSION;
   resolveOutputSelection(toVersion, options.selector);
   if (options.format && options.format !== 'json' && options.format !== 'yaml') {
     throw new Error('--format must be json or yaml');
+  }
+  if (!['preserve', 'document', 'sorted'].includes(options.keyOrder ?? 'preserve')) {
+    throw new Error('--key-order must be preserve, document, or sorted');
   }
 
   const source = await parseSource(await readFile(input, 'utf-8'), input);
@@ -113,7 +112,6 @@ async function runMigrate(input: string, options: MigrateOptions): Promise<void>
   }
 
   const conversion = await migrateMcpDescription(source as import('../lib/mcpdesc-converter.js').McpDescDocument, {
-    toVersion,
     selector: options.selector,
     fixes,
   });
@@ -146,9 +144,16 @@ async function runMigrate(input: string, options: MigrateOptions): Promise<void>
   }
 
   const format = options.format ?? (options.output?.match(/\.ya?ml$/i) ? 'yaml' : 'json');
-  const output = format === 'yaml'
-    ? formatYAML(conversion.value)
-    : formatJSON(conversion.value, !options.compact);
+  const keyOrder = options.keyOrder ?? 'preserve';
+  let output: string;
+  if (format === 'yaml') {
+    output = serializeMcpDescription(conversion.value as JsonValue, { format, presentation: 'normalized', keyOrder });
+  } else if (keyOrder === 'preserve') {
+    output = formatJSON(conversion.value, !options.compact);
+  } else {
+    const ordered = serializeMcpDescription(conversion.value as JsonValue, { format, keyOrder });
+    output = options.compact ? formatJSON(JSON.parse(ordered), false) : ordered;
+  }
   if (options.output) {
     await writeFile(options.output, output, 'utf-8');
   } else {

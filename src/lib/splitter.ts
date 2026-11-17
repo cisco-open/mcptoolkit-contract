@@ -10,7 +10,6 @@ import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { parse as yamlParse } from 'yaml';
 import {
-  parseMcpDescriptionSource,
   selectMcpDescriptionDeclarations,
   type McpDescriptionDocument,
   type SupportedCoreSpecification,
@@ -30,6 +29,7 @@ import {
   type McpDescDocument,
 } from './mcpdesc-converter.js';
 import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
+import { parseMcpDescriptionInput } from './mcpdesc-io.js';
 
 export interface SplitOptions {
   mcpdescPath: string;
@@ -62,13 +62,7 @@ export class Splitter {
   async loadMcpDescription(filePath: string, requestedSelector?: SupportedCoreSpecification): Promise<ContractDump> {
     const content = await readFile(filePath, 'utf-8');
 
-    const parsed = parseMcpDescriptionSource(content);
-    if (!parsed.ok) {
-      const details = parsed.diagnostics
-        .map((diagnostic) => diagnostic.message)
-        .join('; ');
-      throw new Error(`Failed to parse MCP description file as JSON or YAML: ${details}`);
-    }
+    const parsed = parseMcpDescriptionInput(content, filePath);
 
     if (
       typeof parsed.value !== 'object' ||

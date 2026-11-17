@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { readFile, writeFile } from 'node:fs/promises';
-import { parseMcpDescriptionSource, serializeMcpDescription } from '@mcpdesc/core';
+import { serializeMcpDescription } from '@mcpdesc/core';
+import { parseMcpDescriptionInput } from '../lib/mcpdesc-io.js';
 import { isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 import { resolveMcpDescriptionSelection } from '../lib/mcpdesc-target.js';
 
@@ -41,10 +42,7 @@ async function runNormalize(input: string, options: NormalizeOptions): Promise<v
     throw new Error('--key-order must be document, preserve, or sorted');
   }
 
-  const parsed = parseMcpDescriptionSource(await readFile(input, 'utf-8'));
-  if (!parsed.ok) {
-    throw new Error(parsed.diagnostics.map((item) => item.message).join('; '));
-  }
+  const parsed = parseMcpDescriptionInput(await readFile(input, 'utf-8'), input);
   if (
     typeof parsed.value !== 'object' ||
     parsed.value === null ||
@@ -57,10 +55,10 @@ async function runNormalize(input: string, options: NormalizeOptions): Promise<v
 
   const format = options.format ??
     (options.output?.match(/\.ya?ml$/i) ? 'yaml' : options.output?.match(/\.json$/i) ? 'json' : parsed.format);
-  const output = serializeMcpDescription(parsed.value, {
-    format,
-    keyOrder: options.keyOrder ?? 'document',
-  });
+  const keyOrder = options.keyOrder ?? 'document';
+  const output = format === 'yaml'
+    ? serializeMcpDescription(parsed.value, { format, presentation: 'normalized', keyOrder })
+    : serializeMcpDescription(parsed.value, { format, keyOrder });
   if (options.output) {
     await writeFile(options.output, output, 'utf-8');
     if (!options.quiet) console.error(`Normalized document written to ${options.output}`);

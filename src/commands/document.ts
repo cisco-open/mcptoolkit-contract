@@ -7,8 +7,7 @@
  */
 
 import { Command } from 'commander';
-import { readFile, writeFile } from 'fs/promises';
-import { parse as yamlParse } from 'yaml';
+import { writeFile } from 'fs/promises';
 import { Renderer, type MarkdownEngine } from '../lib/renderer.js';
 
 export interface DocumentCommandOptions {
@@ -91,38 +90,7 @@ async function documentCommand(file: string | undefined, options: DocumentComman
   // Auto-detect file type if needed
   let fileType = options.type;
   if (fileType === 'auto') {
-    try {
-      const content = await readFile(file, 'utf-8');
-      
-      // Try to parse as JSON or YAML
-      let data: any;
-      try {
-        data = JSON.parse(content);
-      } catch {
-        try {
-          data = yamlParse(content);
-        } catch (yamlError) {
-          throw new Error(`Failed to parse file as JSON or YAML: ${(yamlError as Error).message}`);
-        }
-      }
-
-      // Detect based on structure — mcpdesc only
-      if (data.mcpdesc) {
-        fileType = 'mcpdesc';
-        log(`  Detected: MCP description`);
-      } else if (data.dumpDetails && data.serverInfo && data.version) {
-        throw new Error(
-          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
-        );
-      } else {
-        throw new Error('Unable to auto-detect file type. Please specify --type');
-      }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('parse')) {
-        throw error;
-      }
-      throw new Error(`Failed to read file: ${(error as Error).message}`);
-    }
+    fileType = 'mcpdesc';
   } else {
     log(`  Type: ${fileType}`);
   }

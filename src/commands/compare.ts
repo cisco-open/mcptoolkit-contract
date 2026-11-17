@@ -9,7 +9,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as yaml from 'yaml';
+import { parseMcpDescriptionInput } from '../lib/mcpdesc-io.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Differ } from '../lib/differ.js';
@@ -173,18 +173,14 @@ EXAMPLES:
     let toData: any;
 
     try {
-      fromData = fromFile.endsWith('.yaml') || fromFile.endsWith('.yml')
-        ? yaml.parse(fromContent)
-        : JSON.parse(fromContent);
+      fromData = parseMcpDescriptionInput(fromContent, fromFile).value;
     } catch (error) {
       console.error(`❌ Error parsing source file: ${(error as Error).message}`);
       process.exit(2);
     }
 
     try {
-      toData = toFile.endsWith('.yaml') || toFile.endsWith('.yml')
-        ? yaml.parse(toContent)
-        : JSON.parse(toContent);
+      toData = parseMcpDescriptionInput(toContent, toFile).value;
     } catch (error) {
       console.error(`❌ Error parsing target file: ${(error as Error).message}`);
       process.exit(2);

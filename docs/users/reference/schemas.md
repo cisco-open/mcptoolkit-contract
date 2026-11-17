@@ -25,8 +25,8 @@ content only; capture-specific runtime diagnostics are not embedded in output.
 
 > **Note:** Earlier releases produced a Cisco-specific *capability dump* format
 > (top-level `version` / `dumpDetails` / `serverInfo`). That on-disk format has
-> been removed. Older files can be migrated with the deprecated
-> [`mcpcontract convert`](convert-legacy.md) command.
+> been removed. Older files can be migrated with CLI 2.0.5's
+> [`convert` command](convert-legacy.md); the current command only shows guidance.
 
 ## Why it matters
 
@@ -49,8 +49,8 @@ The format is versioned independently of the CLI:
 schema versions.
 
 > The bundled `schemas/mcp-description/` directory retains versions 0.1.0–0.7.0
-> for legacy validation and migration. The v2 CLI uses `@mcpdesc/validator` for
-> v0.8 validation.
+> as historical material. Current CLI releases reject 0.7.0 and use
+> `@mcpdesc/validator` for supported modern formats.
 
 ## Full field reference
 

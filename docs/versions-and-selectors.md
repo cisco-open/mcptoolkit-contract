@@ -63,8 +63,9 @@ that supports it.
 | `validate` | Check the input under its selected rules. |
 | `document`, `project`, `split` | Process the input under its selected rules, without silently migrating it. |
 | `diff`, `compare` | Resolve each input separately; an explicit selector must work for both inputs. |
-| `dump`, `convert` | Choose rules for a newly generated document's output format. |
-| `migrate` | Choose a destination format; `--selector` pins destination rules. Source rules are resolved separately. |
+| `dump` | Choose rules for a newly generated document's output format. |
+| `convert` | Show historical CLI guidance only; no conversion is performed. |
+| `migrate` | Upgrade to the installed CLI's maintained destination; `--selector` pins destination rules. Source rules are resolved separately. |
 
 Not every operation supports every format or selector. In particular, validation
 support does not guarantee native projection support. Cross-format comparison
@@ -77,27 +78,29 @@ JSON/YAML output options choose serialization, not the mcpdesc format version.
 analysis artifacts and catalog; they do not select mcpdesc validation rules.
 `completion` and `agents` describe the CLI and do not resolve input documents.
 
-## Stable Output by Default
+## Output and Migration Defaults
 
-New documents default to stable `0.8.0` until final `0.9.0` is adopted as latest
-stable by the CLI. Requesting output format `0.9.0` instead uses its maintained
+New dumps default to stable `0.8.0` until final `0.9.0` is adopted as latest
+stable by the CLI. `migrate` instead targets `0.9.0`, using its maintained
 default, currently RC.3, unless an exact supported selector is requested.
 
-Use `--to-version` on `dump`, `convert`, and `migrate` to choose the output format:
+Use `--to-version` on `dump` to choose the output format:
 
 ```bash
 # Stable output by default
-mcpcontract convert legacy.json --output stable.yaml
-# Opt into 0.9.0 using its maintained default (currently RC.3)
-mcpcontract convert legacy.json --to-version 0.9.0 --output preview.yaml
+mcpcontract dump --config mcp.json --output stable.yaml
+# Explicitly migrate to the maintained destination (currently 0.9.0 RC.3)
+mcpcontract migrate stable.yaml --output preview.yaml
 # Pin exact preview rules as well as choosing the format
 mcpcontract dump --config mcp.json --to-version 0.9.0 \
   --selector 0.9.0-rc.3 --output preview.yaml
 ```
 
-`migrate --to-version 0.9.0` expresses a format upgrade. A selector alone is not
-a migration request. A `0.9.0` input must never be silently downgraded because
-the default destination is still `0.8.0`.
+Running `migrate` expresses an upgrade to the installed CLI's maintained
+destination. A selector pins its rules, not a different format. `migrate` no
+longer accepts `--to-version`; omit it to use the maintained target. A `0.9.0` input is validated
+under source and destination rules and reported unchanged; no conversion
+between preview snapshots is inferred.
 
 Reading or splitting a document preserves its authored identity. Generated or
 migrated schema identities reflect destination rules, with schema omission
@@ -118,9 +121,36 @@ current upstream packages; use a matching historical CLI to reproduce them.
 Native projection requires `0.9.0`.
 
 Pin the CLI version in automation. Add an explicit selector when exact rule
-behavior matters, particularly when a schema URI is shared. Local historical
-`0.7.0` validation and supported migration paths remain separate from upstream
-modern-format support.
+behavior matters, particularly when a schema URI is shared. This CLI rejects
+`0.7.0` inputs. Use CLI 1.2.4 for historical processing or CLI 2.0.5 to convert
+0.7.0 to 0.8.0:
+
+```bash
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert \
+  old.yaml --output stable.yaml
+mcpcontract migrate stable.yaml --output preview.yaml
+```
+
+Commands reading 0.8.0 recommend that preview migration on stderr,
+without upgrading input or changing success status. `migrate` does not repeat
+the recommendation. Quiet mode suppresses progress, not this recommendation.
+
+## Parsing and Normalized YAML
+
+Modern MCP Description readers share core's JSON scalar recognition with a
+string fallback. Plain `0o12`, `0x12`, `012`, `TRUE`, and `~` remain strings;
+actual nulls, booleans, and numbers must use JSON spellings. Unresolved tags,
+non-finite numbers, overflow, and duplicate keys produce parse errors. The same
+rules apply to enrichment and migration-fix files. Unrelated configuration and
+analysis formats keep their own parsing.
+
+YAML document output uses core's Section 15.9 normalized presentation, separate
+from specification selection and validation. This does not add an RC.4 selector.
+`normalize --key-order document|preserve|sorted` selects ordering independently.
+`migrate` supports the same policies, defaulting to `preserve`; use
+`--key-order document` to combine migration and document-oriented ordering.
+Ordering does not alter values or migration patches. Other commands preserve
+their existing ordering choices.
 
 For shared-identity resolution, upstream `schemaPins` behavior, command contracts,
 and retirement rationale, read the

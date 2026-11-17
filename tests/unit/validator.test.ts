@@ -135,7 +135,7 @@ describe('Validator mcpdesc dispatch', () => {
     }
   });
 
-  it('retains local validation for legacy v0.7 documents', async () => {
+  it('redirects legacy v0.7 documents instead of validating locally', async () => {
     const validator = new Validator();
     const result = await validator.validateData(
       {
@@ -152,8 +152,12 @@ describe('Validator mcpdesc dispatch', () => {
       'mcpdesc',
     );
 
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
     expect(result.schemaVersion).toBe('0.7.0');
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      keyword: 'unsupported-format-version',
+      message: expect.stringContaining('CLI 2.0.5'),
+    }));
   });
 
   it('rejects unknown mcpdesc versions instead of falling back', async () => {

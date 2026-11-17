@@ -8,7 +8,7 @@
 
 import Handlebars from 'handlebars';
 import { readFile } from 'fs/promises';
-import { parse as yamlParse } from 'yaml';
+import { parseMcpDescriptionInput } from './mcpdesc-io.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {
@@ -555,17 +555,11 @@ export class Renderer {
   ): Promise<string> {
     const fileContent = await readFile(filePath, 'utf-8');
     
-    // Auto-detect format and parse
-    let data: any;
-    try {
-      data = JSON.parse(fileContent);
-    } catch {
-      try {
-        data = yamlParse(fileContent);
-      } catch (yamlError) {
-        throw new Error(`Failed to parse MCP description as JSON or YAML: ${(yamlError as Error).message}`);
-      }
+    const parsed = parseMcpDescriptionInput(fileContent, filePath);
+    if (typeof parsed.value !== 'object' || parsed.value === null || Array.isArray(parsed.value)) {
+      throw new Error('Input is not an MCP description (mcpdesc) document');
     }
+    let data: Record<string, unknown> = parsed.value;
 
     // Require mcpdesc format (legacy capability dumps are no longer supported)
     if (!isMcpDescDocument(data)) {

@@ -374,7 +374,7 @@ function formatCompatibilityTable(data: CompatibilityData, displayMode: string):
   }
   
   lines.push('Usage Guidelines:');
-  lines.push('- New output defaults to stable 0.8.0; --to-version 0.9.0 opts into preview rules');
+  lines.push('- Dump defaults to stable 0.8.0; migrate targets 0.9.0 preview rules');
   lines.push('- Input rules: explicit selector, recognized same-format schema, maintained format default');
   lines.push('- Compare matching effective MCP protocol revisions; migrate explicitly when needed');
   lines.push('- Use a matching former CLI release for retired drafts/RCs or historical processing');

@@ -4,14 +4,11 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output defaults to stable MCP Description. Legacy v0.7 documents and
- * x-cisco-metadata remain readable for migration.
+ * New output defaults to stable MCP Description.
  */
 
 import {
-  migrateMcpDescription07To08 as migrateMcpDescription07To08Core,
   projectEffectiveProtocolView,
-  type CoreDiagnostic,
   type SupportedCoreSpecification,
 } from '@mcpdesc/core';
 import {
@@ -25,7 +22,6 @@ import type {
   ClientCapabilities,
   Icon,
 } from './types.js';
-import { Validator } from './validator.js';
 import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
 import {
   DEFAULT_OUTPUT_VERSION,
@@ -492,49 +488,6 @@ export function isMcpDescDocument(data: Record<string, unknown>): boolean {
  */
 export function isContractDump(data: Record<string, unknown>): boolean {
   return data.dumpDetails !== undefined && data.serverInfo !== undefined && data.version !== undefined;
-}
-
-export interface McpDescriptionMigrationResult {
-  document: McpDescDocument;
-  diagnostics: readonly CoreDiagnostic[];
-}
-
-/**
- * Validate a legacy MCP Description against its frozen schema, then migrate it
- * to the current 0.8 specification using the shared core semantics.
- */
-export async function migrateMcpDescription07To08(
-  document: McpDescDocument,
-  sourceName: string = 'data',
-  selector: '0.8.0' | '0.8.0-rev.20261021' = resolveOutputSelection('0.8.0').selector as '0.8.0' | '0.8.0-rev.20261021',
-): Promise<McpDescriptionMigrationResult> {
-  if (document.mcpdesc !== '0.7.0') {
-    throw new Error(`Migration requires MCP Description 0.7.0, received ${document.mcpdesc}`);
-  }
-
-  const sourceValidation = await new Validator().validateData(document, 'mcpdesc', sourceName);
-  if (!sourceValidation.valid) {
-    const details = sourceValidation.errors
-      .map((issue) => `${issue.path}: ${issue.message}`)
-      .join('; ');
-    throw new Error(`MCP Description 0.7.0 validation failed: ${details}`);
-  }
-
-  const migration = migrateMcpDescription07To08Core(document, {
-    selector,
-    sourceValidated: true,
-  });
-  if (!migration.ok) {
-    const details = migration.diagnostics
-      .map(formatMcpDescriptionDiagnostic)
-      .join('; ');
-    throw new Error(`Cannot migrate MCP Description 0.7.0: ${details}`);
-  }
-
-  return {
-    document: migration.value as unknown as McpDescDocument,
-    diagnostics: migration.diagnostics,
-  };
 }
 
 /**

@@ -7,7 +7,7 @@
  */
 
 import { Command } from 'commander';
-import { CLI_MCPDESC_SELECTORS } from '../lib/mcpdesc-target.js';
+import { CLI_MCPDESC_SELECTORS, DEFAULT_MIGRATION_VERSION } from '../lib/mcpdesc-target.js';
 
 export function completionCommand(): Command {
   const cmd = new Command('completion');
@@ -71,7 +71,8 @@ function detectShell(): string | null {
  * Generate completion script for the specified shell
  */
 function generateCompletionScript(shell: string): string {
-    const selectors = CLI_MCPDESC_SELECTORS.join(' ');
+  const selectors = CLI_MCPDESC_SELECTORS.join(' ');
+  const migrationSelectors = CLI_MCPDESC_SELECTORS.filter((selector) => selector.startsWith(DEFAULT_MIGRATION_VERSION)).join(' ');
   if (shell === 'bash') {
     return `# mcpcontract completion for bash
 _mcpcontract_completion() {
@@ -110,7 +111,11 @@ _mcpcontract_completion() {
             return
             ;;
         --to-version)
-            COMPREPLY=( $(compgen -W "0.8.0 0.9.0" -- "\${cur}") )
+            if [[ "\${cmd}" == migrate ]]; then
+                COMPREPLY=()
+            else
+                COMPREPLY=( $(compgen -W "0.8.0 0.9.0" -- "\${cur}") )
+            fi
             return
             ;;
         --format|-f)
@@ -150,7 +155,11 @@ _mcpcontract_completion() {
             return
             ;;
         --selector)
-            COMPREPLY=( $(compgen -W "${selectors}" -- "\${cur}") )
+            if [[ "\${cmd}" == migrate ]]; then
+                COMPREPLY=( $(compgen -W "${migrationSelectors}" -- "\${cur}") )
+            else
+                COMPREPLY=( $(compgen -W "${selectors}" -- "\${cur}") )
+            fi
             return
             ;;
         --key-order)
@@ -158,7 +167,7 @@ _mcpcontract_completion() {
                 project)
                     COMPREPLY=( $(compgen -W "preserve document" -- "\${cur}") )
                     ;;
-                normalize)
+                normalize|migrate)
                     COMPREPLY=( $(compgen -W "document preserve sorted" -- "\${cur}") )
                     ;;
             esac
@@ -310,7 +319,7 @@ _mcpcontract_completion() {
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     migrate)
-                        local opts="--to-version --selector --fixes --output --report --patch --format --compact --quiet --help"
+                        local opts="--selector --fixes --output --report --patch --format --key-order --compact --quiet --help"
                         COMPREPLY=( $(compgen -W "\${opts}" -- "\${cur}") )
                         ;;
                     validate)
@@ -447,7 +456,7 @@ _mcp_contract() {
     commands=(
         'dump:Extract capabilities from a live MCP server'
         'split:Split large MCP description into focused subsets'
-        'convert:Convert legacy dumps to the active MCP Description format'
+        'convert:Show historical CLI conversion guidance'
         'project:Create an effective view or native MCP value'
         'normalize:Normalize MCP Description key order and serialization'
         'migrate:Convert MCP Description versions with explicit fixes'
@@ -563,12 +572,15 @@ _mcp_contract() {
                 migrate)
                     _arguments \\
                         '1:Input MCP Description:_files' \\
-                        '--to-version[Target format version]:version:(0.8.0 0.9.0)' \\
-                        '--selector[Destination rule selector]:selector:(${selectors})' \\
+                        '--selector[Destination rule selector]:selector:(${migrationSelectors})' \\
                         '--fixes[Explicit fixes file]:file:_files' \\
                         '(-o --output)'{-o,--output}'[Converted document]:file:_files' \\
                         '--report[Conversion report]:file:_files' \\
                         '--patch[JSON Patch output]:file:_files' \\
+                        '(-f --format)'{-f,--format}'[Output format]:format:(json yaml)' \\
+                        '--key-order[Key order]:order:(preserve document sorted)' \\
+                        '--compact[Compact JSON output]' \\
+                        '(-q --quiet)'{-q,--quiet}'[Suppress status messages]' \\
                         '(-h --help)'{-h,--help}'[Show help]'
                     ;;
                 validate)
@@ -746,7 +758,7 @@ _mcp_contract
 # Commands
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "dump" -d "Extract capabilities from a live MCP server"
 complete -c mcpcontract -n "__fish_use_subcommand" -a "split" -d "Split large MCP description into focused subsets"
-complete -c mcpcontract -n "__fish_use_subcommand" -a "convert" -d "Convert legacy dumps to the active MCP Description format"
+complete -c mcpcontract -n "__fish_use_subcommand" -a "convert" -d "Show historical CLI conversion guidance"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "project" -d "Project an effective view or native MCP value"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "normalize" -d "Normalize MCP Description key order and serialization"
 complete -c mcpcontract -f -n "__fish_use_subcommand" -a "migrate" -d "Convert MCP Description versions with explicit fixes"
@@ -832,12 +844,15 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l output -d 
 complete -c mcpcontract -n "__fish_seen_subcommand_from normalize" -l quiet -d "Suppress status messages"
 
 # migrate command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l to-version -d "Target format version" -a "0.8.0 0.9.0"
-complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l selector -d "Destination rule selector" -a "${selectors}"
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l selector -d "Destination rule selector" -a "${migrationSelectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l fixes -d "Explicit fixes file" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l output -d "Converted document output" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l report -d "Conversion report" -F
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l patch -d "JSON Patch output" -F
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -s f -l format -d "Output format" -a "json yaml"
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l key-order -d "Key order" -a "preserve document sorted"
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l compact -d "Compact JSON output"
+complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -s q -l quiet -d "Suppress status messages"
 
 # validate command options
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc dump diff diff-breaking dump-split"

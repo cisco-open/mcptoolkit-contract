@@ -41,6 +41,6 @@ describe('MCP Description selector policy', () => {
     expect(() => resolveMcpDescriptionSelection({ mcpdesc: '0.9.0' }, '0.8.0')).toThrow();
     expect(() => resolveMcpDescriptionSelection({ mcpdesc: '0.9.0', $schema: schema('0.9.0-rc.2') })).toThrow('supported selector');
     expect(() => resolveMcpDescriptionSelection({ mcpdesc: '0.8.0', $schema: schema('0.8.0-rc.4') })).toThrow('supported selector');
-    expect(() => resolveMcpDescriptionSelection({ mcpdesc: '0.7.0' })).toThrow('CLI 1.2.4');
+    expect(() => resolveMcpDescriptionSelection({ mcpdesc: '0.7.0' })).toThrow('CLI 2.0.5');
   });
 });
