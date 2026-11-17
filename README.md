@@ -5,7 +5,7 @@ The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you cre
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Status: release](https://img.shields.io/badge/status-2.2.0-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
-[![mcpdesc: 0.8.0 + 0.9.0](https://img.shields.io/badge/mcpdesc-0.8.0%20%2B%200.9.0-blue.svg)](https://mcpdesc.org)
+[![mcpdesc](https://img.shields.io/badge/mcpdesc-0.9.0-blue.svg)](https://mcpdesc.org)
 
 - **Getting Started:** jump to the [Quick Start](#-quick-start) — install and run your first dump
 - **Backward Compatibility:** [backward compatibility](#-backward-compatibility-analysis) for MCP servers - spot breaking changes
@@ -20,9 +20,9 @@ identities, then maintained defaults. See [Versions and Selectors](docs/versions
 
 | MCP Description Version | Latest Matching CLI | Status |
 | --- | --- | --- |
-| `0.7.0` | [`1.2.4`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/1.2.4) | Historical format; 1.x maintenance line |
-| `0.8.0` | `2.2.0` | Supported previous stable format. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
 | `0.9.0` | `2.2.0` | Stable specification; default for dumps and migration |
+| `0.8.0` | `2.2.0` | Supported previous stable format. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
+| `0.7.0` | [`1.2.4`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/1.2.4) | Historical format; 1.x maintenance line |
 
 Install an exact historical CLI without changing your global installation:
 
