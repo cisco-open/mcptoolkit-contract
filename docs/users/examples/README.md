@@ -2,6 +2,10 @@
 
 Sample artifacts demonstrating `mcpcontract` output formats. Each example is real or representative output that can be used as reference when building your own workflows.
 
+MCP Description examples use the current stable `0.9.0` format. Historical server
+snapshots retain their original server versions while using this current document
+format.
+
 ## Files
 
 | File | Demonstrates |

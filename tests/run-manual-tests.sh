@@ -283,7 +283,7 @@ test ${#COMPREPLY[@]} -eq 3 || exit 1  # json, yaml, markdown
 COMP_WORDS=(mcpcontract validate --schema "")
 COMP_CWORD=3
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 6 || exit 1  # mcpdesc, mcp-description, dump, diff, diff-breaking, dump-split
+test ${#COMPREPLY[@]} -eq 5 || exit 1  # mcpdesc, mcp-description, diff, diff-breaking, dump-split
 
 # Test 10: Enum value completion for --protocol
 COMP_WORDS=(mcpcontract dump --protocol "")

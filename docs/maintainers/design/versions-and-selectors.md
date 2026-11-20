@@ -1,7 +1,7 @@
 # Versions and Selectors: CLI Policy & Design
 
-Status: implemented in the 2.1.0 development branch, 2026-11-05. This document
-is the source of truth for the CLI's version and selector policy. Historical
+Status: implemented in CLI 2.2.0 and unchanged in 2.2.1. This document is the
+source of truth for the CLI's version and selector policy. Historical
 CLI releases retain their documented behavior.
 
 For the user-facing summary, see [Versions and Selectors](../../versions-and-selectors.md).

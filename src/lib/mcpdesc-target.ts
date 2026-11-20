@@ -8,10 +8,13 @@ import {
 
 export const DEFAULT_OUTPUT_VERSION = '0.9.0';
 export const DEFAULT_MIGRATION_VERSION = '0.9.0';
+export const CLI_MCPDESC_FORMATS = ['0.8.0', '0.9.0'] as const;
+export const LEGACY_CONVERSION_CLI_VERSION = '2.0.5';
+export const HISTORICAL_PROCESSING_CLI_VERSION = '1.2.4';
 export const LEGACY_CONVERSION_GUIDANCE =
-  'Use CLI 2.0.5 to convert legacy capability dumps or MCP Description 0.7.0 to 0.8.0:\n' +
-  'npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert <input> --output <output>\n' +
-  'Use the latest v1 CLI (1.2.4) only for historical 0.7.0 processing; it does not produce 0.8.0.';
+  `Use CLI ${LEGACY_CONVERSION_CLI_VERSION} to convert legacy capability dumps or MCP Description 0.7.0 to 0.8.0:\n` +
+  `npx --package=@cisco_open/mcptoolkit-contract@${LEGACY_CONVERSION_CLI_VERSION} mcpcontract convert <input> --output <output>\n` +
+  `Use the latest v1 CLI (${HISTORICAL_PROCESSING_CLI_VERSION}) only for historical 0.7.0 processing; it does not produce 0.8.0.`;
 export const UNSUPPORTED_07_GUIDANCE =
   `MCP Description 0.7.0 is no longer supported by this CLI. ${LEGACY_CONVERSION_GUIDANCE}`;
 export const CLI_MCPDESC_SELECTORS: readonly McpDescriptionSelector[] = [
@@ -57,7 +60,8 @@ export function resolveMcpDescriptionSelection(document: unknown, requested?: st
   if (!input || typeof input !== 'object' || Array.isArray(input) || typeof input.mcpdesc !== 'string') {
     return selectionError('missing-format-version', 'A string mcpdesc format version is required', ['mcpdesc']);
   }
-  if (input.mcpdesc !== '0.8.0' && input.mcpdesc !== '0.9.0') {
+  const format = CLI_MCPDESC_FORMATS.find((supported) => supported === input.mcpdesc);
+  if (!format) {
     return selectionError('unsupported-format-version', input.mcpdesc === '0.7.0'
       ? UNSUPPORTED_07_GUIDANCE
       : `Unsupported MCP Description version: ${input.mcpdesc}`, ['mcpdesc']);
@@ -76,7 +80,7 @@ export function resolveMcpDescriptionSelection(document: unknown, requested?: st
     const candidates = Object.entries(specificationProvenance)
       .filter(([, provenance]) => provenance.schemaUri === input.$schema)
       .map(([candidate]) => candidate as McpDescriptionSelector);
-    const maintained = defaultSpecifications[input.mcpdesc]!.selector;
+    const maintained = defaultSpecifications[format]!.selector;
     if (candidates.length === 1) selector = candidates[0];
     else if (candidates.includes(maintained)) selector = maintained;
     else return selectionError('unsupported-schema-selector',

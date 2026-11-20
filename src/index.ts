@@ -61,7 +61,7 @@ program.addCommand(breakingCommand);
 program.addCommand(changelogCommand);
 program.addCommand(compareCommand);
 program.addCommand(rulesCommand());
-program.addCommand(validateCommand());
+program.addCommand(validateCommand(version));
 program.addCommand(completionCommand());
 program.addCommand(agentsCommand());
 

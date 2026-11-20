@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.2.1] - 2026-11-20](#221---2026-11-20)
 - [[2.2.0] - 2026-11-17](#220---2026-11-17)
 - [[2.1.0-rc.2] - 2026-11-05](#210-rc2---2026-11-05)
 - [[2.1.0-rc.1] - 2026-11-02](#210-rc1---2026-11-02)
@@ -38,6 +39,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.2.1] - 2026-11-20
+
+### Changed
+
+- `validate --show-compatibility` now summarizes the installed CLI by default.
+  It highlights stable CLI versions for historical processing and conversion.
+  Use `--display full` for curated history, including prereleases. The history
+  adds 2.0.5 and 1.2.4 without changing the JSON format or filtering rules.
+
+### Fixed
+
+- Corrected agent guide examples and shell completion candidates to match supported commands and options.
+- Updated tutorials and refreshed the bundled documentation examples for stable MCP Description 0.9.0.
 
 ## [2.2.0] - 2026-11-17
 

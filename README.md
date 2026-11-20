@@ -3,7 +3,7 @@
 The `mcpcontract` CLI dumps capabilities from live MCP servers, and lets you create changelogs, detect breaking changes, and generate documentation.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Status: release](https://img.shields.io/badge/status-2.2.0-brightgreen.svg)](CHANGELOG.md)
+[![Status: release](https://img.shields.io/badge/status-2.2.1-brightgreen.svg)](CHANGELOG.md)
 [![Node.js: >=22.x](https://img.shields.io/badge/Node.js-%3E%3D22.x-brightgreen.svg)](https://nodejs.org/)
 [![mcpdesc](https://img.shields.io/badge/mcpdesc-0.9.0-blue.svg)](https://mcpdesc.org)
 
@@ -20,9 +20,14 @@ identities, then maintained defaults. See [Versions and Selectors](docs/versions
 
 | MCP Description Version | Latest Matching CLI | Status |
 | --- | --- | --- |
-| `0.9.0` | `2.2.0` | Stable specification; default for dumps and migration |
-| `0.8.0` | `2.2.0` | Supported previous stable format. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
+| `0.9.0` | `2.2.1` | Stable specification; default for dumps and migration |
+| `0.8.0` | `2.2.1` | Supported previous stable format. Published 0.8-only CLI: [`2.0.5`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/2.0.5) |
 | `0.7.0` | [`1.2.4`](https://www.npmjs.com/package/@cisco_open/mcptoolkit-contract/v/1.2.4) | Historical format; 1.x maintenance line |
+
+Run `mcpcontract validate --show-compatibility` to check the installed CLI's
+format support, defaults, and selectors without an input file. Add
+`--display full` for curated release history, or use `--display full --format json`
+for the complete history in machine-readable form.
 
 Install an exact historical CLI without changing your global installation:
 
@@ -397,6 +402,14 @@ Check a document is compliant with the MCP Description specification.
 # Validate an MCP description
 mcpcontract validate dump.yaml --schema mcpdesc --strict
 mcpcontract validate upgraded.yaml --selector 0.9.0 --format json
+```
+
+### CLI Help And Completion
+
+```bash
+mcpcontract agents --command validate  # Focused command guide
+mcpcontract agents --workflows         # End-to-end examples
+mcpcontract completion bash            # Generate a script for bash, zsh, or fish
 ```
 
 ## 🏗️ Project Structure

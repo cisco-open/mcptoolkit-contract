@@ -37,7 +37,7 @@ Legacy single-file aliases in this directory (e.g. `diff-schema.json`, `split-co
 
 ```bash
 # Validate a file against a specific schema
-mcpcontract validate --file my-server-dump.yaml --schema mcp-description
+mcpcontract validate my-server-dump.yaml --schema mcp-description
 
 # List available schema versions
 cat schemas/latest.json

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Inventory MCP Server v2.9.0</title>
+  <title>Example Catalog MCP Server v1.2.0</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -236,17 +236,20 @@
     <!-- Info Card -->
     <div class="card info-card">
       <div class="title-row">
-        <h1>API Inventory MCP Server</h1>
-        <span class="badge version">v2.9.0</span>
+        <h1>Example Catalog MCP Server</h1>
+        <span class="badge version">v1.2.0</span>
         <span class="badge protocol">MCP 2025-06-18</span>
       </div>
-      
+      <div class="description"><p>Sample MCP server exposing a generic catalog of items with search, detail
+retrieval, and subscription prompts. Used to demonstrate mcpcontract
+documentation generation (card-view template).</p>
+</div>
       <div class="meta">
-        <span class="meta-item"><strong>Name:</strong>&nbsp;mcp-inventory</span>
-        
-        
-        
-        
+        <span class="meta-item"><strong>Name:</strong>&nbsp;com.example/catalog-server</span>
+
+
+
+
       </div>
     </div>
 
@@ -259,8 +262,8 @@
       </div>
       <div class="transport-item">
         <span class="badge transport">streamable-http</span>
-        <span class="transport-url">http://localhost:3000/mcp</span>
-        
+        <span class="transport-url">https://catalog.example.com/mcp</span>
+
       </div>
     </div>
 
@@ -273,45 +276,28 @@
           <div class="section-header">
             <span class="section-icon">🔧</span>
             <h2>Tools</h2>
-            <span class="count">(6)</span>
+            <span class="count">(4)</span>
           </div>
         </summary>
         <details class="item-detail" open>
           <summary>
             <span class="badge tool">tool</span>
             <span class="name">search</span>
-            
-            
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">query</span>
-            </div>
-            <div class="description"><p>Search and filter Cisco&#39;s API/SDK inventory. Supports filtering by kind (API/SDK/GROUP), organization (CN, SBG, CTG, CX, etc.), and name with partial matching. Returns paginated results with optional field selection.</p>
-<p>Common Usage Patterns:</p>
+            <div class="description"><p>Search the catalog by name, category, or tag.</p>
+<p>Common patterns:</p>
 <ol>
-<li>Search by name: {&quot;name&quot;: &quot;Nexus Dashboard&quot;, &quot;partial&quot;: true}</li>
-<li>Filter by organization: {&quot;organization&quot;: &quot;SBG&quot;}</li>
-<li>Find APIs only: {&quot;kind&quot;: &quot;API&quot;}</li>
-<li>Combine filters: {&quot;kind&quot;: &quot;API&quot;, &quot;organization&quot;: &quot;SBG&quot;, &quot;name&quot;: &quot;defense&quot;}</li>
-<li>Get specific details: {&quot;name&quot;: &quot;API name&quot;, &quot;details&quot;: &quot;contacts&quot;}</li>
-<li>Pagination: {&quot;pageSize&quot;: 20, &quot;cursor&quot;: &quot;previous_cursor&quot;}</li>
+<li>Find by name: <code>{&quot;name&quot;: &quot;widget&quot;, &quot;partial&quot;: true}</code></li>
+<li>Filter by category: <code>{&quot;category&quot;: &quot;hardware&quot;}</code></li>
+<li>Paginate: <code>{&quot;pageSize&quot;: 20, &quot;cursor&quot;: &quot;prev_cursor&quot;}</code></li>
 </ol>
-<p>Parameter Details:</p>
+<p>Error codes:</p>
 <ul>
-<li>name: Search card names (case-insensitive, partial matching by default)</li>
-<li>kind: API, SDK, or GROUP</li>
-<li>organization: CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales</li>
-<li>partial: true (default) for substring match, false for exact match</li>
-<li>details: contacts, releases, api_quality, api_insights, info</li>
-<li>pageSize: 1-100 (default: 10)</li>
-<li>cursor: from previous response for next page</li>
-</ul>
-<p>Related Prompts: Use &quot;search&quot; prompt for guided API discovery</p>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32602 (InvalidParams) for invalid parameters with detailed validation errors</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
+<li><code>-32602</code> InvalidParams — missing or invalid parameter</li>
+<li><code>-32603</code> InternalError — server-side failure</li>
 </ul>
 </div>
             <div class="schema-section">
@@ -321,131 +307,99 @@
                   <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                   <tbody>
                     <tr>
-                      <td><code>kind</code></td>
-                      <td>
-                        <span class="type-pill">string</span>
-                        
-                      </td>
-                      <td></td>
-                      <td>
-                        Filter by card type: API (REST, gRPC, GraphQL, etc.), SDK (JavaScript, Python, Swift, etc.), MCP (Model Context Protocol servers), or GROUP (logical collections). **Required when using organization filter**.
-                        
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><code>audience</code></td>
-                      <td>
-                        <span class="type-pill">string</span>
-                         &quot;EXTERNAL&quot; | &quot;INTERNAL&quot;
-                      </td>
-                      <td></td>
-                      <td>
-                        Filter by target audience: EXTERNAL (public customer/partner facing) or INTERNAL (Cisco-internal). Default: EXTERNAL. GROUP cards are automatically included if they contain any matching API/SDK/MCP cards.
-                         <em>Default: EXTERNAL</em>
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><code>organization</code></td>
-                      <td>
-                        <span class="type-pill">string</span>
-                        
-                      </td>
-                      <td></td>
-                      <td>
-                        Filter by organization code (CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales). **Requires kind to be &quot;API&quot;, &quot;SDK&quot;, or &quot;MCP&quot;**. GROUP cards do not have organization. Supports partial matching when partial&#x3D;true
-                        
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                    <tr>
                       <td><code>name</code></td>
                       <td>
                         <span class="type-pill">string</span>
-                        
+
                       </td>
                       <td></td>
                       <td>
-                        Filter by card name or alternate names. Case-insensitive with partial matching by default. Example: &quot;defense&quot; matches &quot;AI Defense API&quot;
-                        
-                        
-                        
-                        
-                        
+                        Filter by item name (case-insensitive, partial match by default)
+
+
+
+
+
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>category</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by category slug (e.g. &#x60;hardware&#x60;, &#x60;software&#x60;, &#x60;service&#x60;)
+
+
+
+
+
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>tag</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+
+                      </td>
+                      <td></td>
+                      <td>
+                        Filter by tag (exact match)
+
+
+
+
+
                       </td>
                     </tr>
                     <tr>
                       <td><code>partial</code></td>
                       <td>
                         <span class="type-pill">boolean</span>
-                        
+
                       </td>
                       <td></td>
                       <td>
-                        Enable partial/substring matching for name and organization (default: true). Set to false for exact matches only
+                        When true, &#x60;name&#x60; and &#x60;category&#x60; use substring matching
                          <em>Default: true</em>
-                        
-                        
-                        
-                        
+
+
+
+
                       </td>
                     </tr>
                     <tr>
-                      <td><code>details</code></td>
+                      <td><code>pageSize</code></td>
                       <td>
-                        <span class="type-pill">string</span>
-                        
+                        <span class="type-pill">integer</span>
+
                       </td>
                       <td></td>
                       <td>
-                        Return only specific section: contacts (team info), releases (versions/phase and reviews; note: deprecated &#x60;status&#x60; field mirrors &#x60;phase&#x60; for backward compatibility), api_quality (metrics), api_insights (org mapping), or info (basic metadata)
-                        
-                        
-                        
-                        
-                        
+                        Results per page (1–100, default 10)
+                         <em>Default: 10</em>
+
+                         <em>Range: 1-100</em>
+
+
                       </td>
                     </tr>
                     <tr>
                       <td><code>cursor</code></td>
                       <td>
                         <span class="type-pill">string</span>
-                        
+
                       </td>
                       <td></td>
                       <td>
-                        Pagination cursor from previous response. Use the &quot;cursor&quot; value returned in results to fetch next page
-                        
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><code>pageSize</code></td>
-                      <td>
-                        <span class="type-pill">number</span>
-                        
-                      </td>
-                      <td></td>
-                      <td>
-                        Number of results per page. Default is from config (typically 10), maximum 100. Returns hasMore&#x3D;true if more results available
-                        
-                         <em>Range: 1-100</em>
-                        
-                        
-                        
+                        Pagination cursor from a previous response
+
+
+
+
+
                       </td>
                     </tr>
                   </tbody>
@@ -457,203 +411,14 @@
         <details class="item-detail">
           <summary>
             <span class="badge tool">tool</span>
-            <span class="name">refresh-cache</span>
-            
-            
+            <span class="name">get-item</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>Manually trigger an inventory refresh from the remote URL. The server automatically refreshes every 15 minutes, but this tool allows on-demand updates. Returns the new version number and update status. Note: Updates only occur if the remote version is different from the cached version.</p>
-<p>Common Usage Pattern:</p>
-<ol>
-<li>Check for updates: {} (no parameters needed)</li>
-</ol>
-<p>Parameter Details:</p>
-<ul>
-<li>No parameters required</li>
-</ul>
-<p>Returns:</p>
-<ul>
-<li>success: true/false</li>
-<li>message: Status description</li>
-<li>version: Current inventory version</li>
-</ul>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32001 (ServiceUnavailable) if remote inventory URL is unreachable (retryable)</li>
-<li>Returns -32603 (InternalError) for other server-side issues</li>
-</ul>
-</div>
-            <div class="schema-section">
-              <details open>
-                <summary class="schema-toggle">Input Schema</summary>
-                <table class="schema-table">
-                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                  <tbody>
-                  </tbody>
-                </table>
-              </details>
-            </div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge tool">tool</span>
-            <span class="name">stats</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>Generate statistical analysis of the inventory with optional grouping. Get aggregate counts and distributions grouped by: organization (CN, SBG, CTG, etc.), status (ACTIVE, EOL, ONBOARDING), kind (API, SDK, GROUP), deployment (Cloud, On-prem), or lifecycle (Product-led, API-led, etc.). Without grouping, returns overall counts.</p>
-<p>Common Usage Patterns:</p>
-<ol>
-<li>Overall statistics: {} (no parameters)</li>
-<li>By organization: {&quot;groupBy&quot;: &quot;organization&quot;}</li>
-<li>By status: {&quot;groupBy&quot;: &quot;status&quot;}</li>
-<li>By kind: {&quot;groupBy&quot;: &quot;kind&quot;}</li>
-<li>By deployment: {&quot;groupBy&quot;: &quot;deployment&quot;}</li>
-<li>By lifecycle: {&quot;groupBy&quot;: &quot;lifecycle&quot;}</li>
-</ol>
-<p>Parameter Details:</p>
-<ul>
-<li>groupBy (optional): organization, status, kind, deployment, lifecycle</li>
-<li>Omit groupBy for overall totals</li>
-</ul>
-<p>Related Prompts: Use &quot;organization-report&quot; prompt for detailed org analysis</p>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32602 (InvalidParams) for invalid groupBy values</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
-</div>
-            <div class="schema-section">
-              <details open>
-                <summary class="schema-toggle">Input Schema</summary>
-                <table class="schema-table">
-                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                  <tbody>
-                    <tr>
-                      <td><code>groupBy</code></td>
-                      <td>
-                        <span class="type-pill">string</span>
-                        
-                      </td>
-                      <td></td>
-                      <td>
-                        Group statistics by: organization (CN, SBG, CTG, etc.), status (ACTIVE, EOL, ONBOARDING), kind (API, SDK, MCP), deployment (Cloud, On-prem), lifecycle (Product-led, API-led, etc.), or audience (EXTERNAL, INTERNAL). Omit to get default grouping by kind. Returns total count and breakdown with counts per group
-                        
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><code>audience</code></td>
-                      <td>
-                        <span class="type-pill">string</span>
-                         &quot;EXTERNAL&quot; | &quot;INTERNAL&quot;
-                      </td>
-                      <td></td>
-                      <td>
-                        Filter statistics by target audience: EXTERNAL (public customer/partner facing) or INTERNAL (Cisco-internal). Default: EXTERNAL. GROUP cards are always excluded from statistics as they do not have an audience field.
-                         <em>Default: EXTERNAL</em>
-                        
-                        
-                        
-                        
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </details>
-            </div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge tool">tool</span>
-            <span class="name">list-organizations</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>List all Cisco organizations present in the inventory. Returns an array of organization codes (e.g., CN, SBG, CTG, CX, Operations, CSDI, Splunk, Sales). Useful for agent discoverability and UI dropdowns.</p>
-</div>
-            <div class="schema-section">
-              <details open>
-                <summary class="schema-toggle">Input Schema</summary>
-                <table class="schema-table">
-                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                  <tbody>
-                  </tbody>
-                </table>
-              </details>
-            </div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge tool">tool</span>
-            <span class="name">schema-version</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>Get information about inventory schema version compatibility. Returns the supported schema version, current inventory version, and compatibility status. Use this to check if the loaded inventory is compatible with the MCP server.</p>
-</div>
-            <div class="schema-section">
-              <details open>
-                <summary class="schema-toggle">Input Schema</summary>
-                <table class="schema-table">
-                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                  <tbody>
-                  </tbody>
-                </table>
-              </details>
-            </div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge tool">tool</span>
-            <span class="name">get-card</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">query</span>
-            </div>
-            <div class="description"><p>Retrieve detailed information for a specific card by its ID. This tool provides the same functionality as the card:/// resource but is compatible with MCP clients that do not support resource fetching (e.g., GitHub Copilot). Returns complete card metadata including name, description, contacts, releases, and quality metrics.</p>
-<p>Common Usage Patterns:</p>
-<ol>
-<li>Get full card details: {&quot;id&quot;: &quot;cisco-secure-network-analytics-api&quot;}</li>
-<li>Get specific section: {&quot;id&quot;: &quot;card-id&quot;, &quot;details&quot;: &quot;contacts&quot;}</li>
-<li>Check releases: {&quot;id&quot;: &quot;card-id&quot;, &quot;details&quot;: &quot;releases&quot;}</li>
-</ol>
-<p>Parameter Details:</p>
-<ul>
-<li>id: Card identifier (use search tool to find IDs)</li>
-<li>details (optional): contacts, releases, api_quality, api_insights, info</li>
-</ul>
-<p>Note: For MCP clients with resource support, use card:///{id} resource instead.</p>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32602 (InvalidParams) for invalid parameters</li>
-<li>Returns -32603 (InternalError) if card not found or server error</li>
-</ul>
+            <div class="description"><p>Retrieve full details for a single catalog item by its ID.</p>
+<p>Returns all fields including description, tags, category, contacts,
+and release history.</p>
 </div>
             <div class="schema-section">
               <details open>
@@ -665,32 +430,142 @@
                       <td><code>id</code></td>
                       <td>
                         <span class="type-pill">string</span>
-                        
+
                       </td>
                       <td><span class="badge required">required</span></td>
                       <td>
-                        The unique identifier of the card to retrieve (e.g., &quot;cisco-secure-network-analytics-api&quot;)
-                        
-                        
-                        
-                        
-                        
+                        Unique item identifier
+
+
+
+
+
                       </td>
                     </tr>
                     <tr>
-                      <td><code>details</code></td>
+                      <td><code>fields</code></td>
                       <td>
-                        <span class="type-pill">string</span>
-                        
+                        <span class="type-pill">array</span>
+
                       </td>
                       <td></td>
                       <td>
-                        Return only specific section: contacts (team info), releases (versions/phase and reviews; note: deprecated &#x60;status&#x60; field mirrors &#x60;phase&#x60; for backward compatibility), api_quality (metrics), api_insights (org mapping), or info (basic metadata)
-                        
-                        
-                        
-                        
-                        
+                        Optional subset of fields to return (all returned by default)
+
+
+
+
+
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">list-categories</span>
+
+
+          </summary>
+          <div class="item-body">
+            <div class="description"><p>List all available categories with item counts.</p>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><code>includeEmpty</code></td>
+                      <td>
+                        <span class="type-pill">boolean</span>
+
+                      </td>
+                      <td></td>
+                      <td>
+                        Include categories that contain no items
+
+
+
+
+
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
+          </div>
+        </details>
+        <details class="item-detail">
+          <summary>
+            <span class="badge tool">tool</span>
+            <span class="name">subscribe-updates</span>
+
+
+          </summary>
+          <div class="item-body">
+            <div class="description"><p>Register a webhook to receive change notifications for matching items.</p>
+<p>The server POSTs a JSON payload to <code>callbackUrl</code> whenever a matching
+item is created, updated, or deleted.</p>
+</div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Input Schema</summary>
+                <table class="schema-table">
+                  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><code>callbackUrl</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+
+                      </td>
+                      <td><span class="badge required">required</span></td>
+                      <td>
+                        HTTPS endpoint to receive change notifications
+
+
+
+                         <em>Format: uri</em>
+
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>filter</code></td>
+                      <td>
+                        <span class="type-pill">object</span>
+
+                      </td>
+                      <td></td>
+                      <td>
+                        Same filter fields as &#x60;search&#x60; — only matching changes trigger callbacks
+
+
+
+
+
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>secret</code></td>
+                      <td>
+                        <span class="type-pill">string</span>
+
+                      </td>
+                      <td></td>
+                      <td>
+                        HMAC-SHA256 signing secret; if provided, notifications include an &#x60;X-Signature&#x60; header
+
+
+
+
+
                       </td>
                     </tr>
                   </tbody>
@@ -709,82 +584,61 @@
           <div class="section-header">
             <span class="section-icon">💬</span>
             <h2>Prompts</h2>
-            <span class="count">(5)</span>
+            <span class="count">(2)</span>
           </div>
         </summary>
         <details class="item-detail" open>
           <summary>
             <span class="badge prompt">prompt</span>
-            <span class="name">search</span>
-            
-            
+            <span class="name">guided-search</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">query</span>
-            </div>
-            <div class="description"><p>Guided API discovery with intelligent filtering. Find APIs by organization (CN, SBG, CTG, CX, etc.), style (REST, gRPC, GraphQL), deployment type (Cloud, On-prem), or status (ACTIVE, EOL, ONBOARDING). Returns a curated summary with names, descriptions, and key characteristics. Use this for exploratory API searches when you need context and recommendations.</p>
+            <div class="description"><p>Interactive prompt that helps users compose an effective search query.
+Asks clarifying questions and returns a ready-to-use <code>search</code> tool call.</p>
 </div>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Arguments</summary>
+                <ul class="arg-list">
+                  <li>
+                    <span class="arg-name">intent</span>
+                    <span class="badge required">required</span>
+                     — What the user is looking for in natural language
+                  </li>
+                </ul>
+              </details>
+            </div>
           </div>
         </details>
         <details class="item-detail">
           <summary>
             <span class="badge prompt">prompt</span>
-            <span class="name">api-quality-metrics</span>
-            
-            
+            <span class="name">summarize-item</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">governance</span>
-            </div>
-            <div class="description"><p>Comprehensive API quality analysis with metrics and governance insights. Analyzes quality champions, initiative enrollments, approval thresholds, and DevX reviews. Provides actionable recommendations for quality improvements. Use this for API governance, quality audits, and continuous improvement planning.</p>
+            <div class="description"><p>Summarize a catalog item in one paragraph for non-technical audiences.</p>
 </div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge prompt">prompt</span>
-            <span class="name">list-deprecated-apis</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">governance</span>
+            <div class="schema-section">
+              <details open>
+                <summary class="schema-toggle">Arguments</summary>
+                <ul class="arg-list">
+                  <li>
+                    <span class="arg-name">item_id</span>
+                    <span class="badge required">required</span>
+                     — ID of the item to summarize
+                  </li>
+                  <li>
+                    <span class="arg-name">audience</span>
+
+                     — Target audience: &#x60;technical&#x60; or &#x60;executive&#x60; (default: &#x60;technical&#x60;)
+                  </li>
+                </ul>
+              </details>
             </div>
-            <div class="description"><p>Track deprecated and end-of-life APIs with sunset timelines and migration paths. Identifies APIs with DEPRECATED or EOL status, provides sunset timeline information from releases, and suggests migration alternatives. Essential for API lifecycle management, customer communication, and technical debt planning.</p>
-</div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge prompt">prompt</span>
-            <span class="name">organization-report</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">governance</span>
-            </div>
-            <div class="description"><p>Comprehensive organization analysis across the API Inventory. Provides statistical breakdown of API styles, deployment types, lifecycle stages, and status distribution. Optionally includes SDK information with platform and language analysis. Highlights key APIs, notable trends, and strategic focus areas. Perfect for portfolio reviews, strategic planning, and stakeholder reporting.</p>
-</div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge prompt">prompt</span>
-            <span class="name">getting-started</span>
-            
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">query</span>
-            </div>
-            <div class="description"><p>Complete guide to using the API Inventory MCP Server effectively. Explains available tools, their parameters, common workflows, and best practices. Shows real examples for each tool and how to combine them for complex queries. Perfect for first-time users or when you need a refresher on capabilities. Use this prompt when you&#39;re unsure which tool to use or how to structure your query.</p>
-</div>
           </div>
         </details>
       </details>
@@ -797,147 +651,35 @@
           <div class="section-header">
             <span class="section-icon">📦</span>
             <h2>Resources</h2>
-            <span class="count">(4)</span>
+            <span class="count">(2)</span>
           </div>
         </summary>
         <details class="item-detail" open>
           <summary>
             <span class="badge resource">resource</span>
-            <span class="name">schema://API</span>
-            <span class="title-text">— API Card Schema</span>
-            
+            <span class="name">catalog-stats</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>JSON Schema for API cards (REST, gRPC, GraphQL, etc.)</p>
-<p>Retrieve the JSON Schema for API card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
-<p>Usage Pattern:</p>
-<ul>
-<li>URI: schema://API</li>
-<li>Schema version: 2.0.1</li>
-</ul>
-<p>Use Cases:</p>
-<ul>
-<li>Validate custom inventory data</li>
-<li>Generate types for other programming languages</li>
-<li>Understand card structure and validation rules</li>
-<li>Reference for developing inventory producers</li>
-</ul>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32000 (NotFound) if schema file is missing</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
+            <div class="description"><p>Aggregate statistics — total item count, category breakdown, last-updated timestamp.</p>
 </div>
-            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://API</span></div>
-            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">catalog://stats</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/json</code></div>
           </div>
         </details>
         <details class="item-detail">
           <summary>
             <span class="badge resource">resource</span>
-            <span class="name">schema://SDK</span>
-            <span class="title-text">— SDK Card Schema</span>
-            
+            <span class="name">categories</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>JSON Schema for SDK cards (JavaScript, Python, Swift, etc.)</p>
-<p>Retrieve the JSON Schema for SDK card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
-<p>Usage Pattern:</p>
-<ul>
-<li>URI: schema://SDK</li>
-<li>Schema version: 2.0.1</li>
-</ul>
-<p>Use Cases:</p>
-<ul>
-<li>Validate custom inventory data</li>
-<li>Generate types for other programming languages</li>
-<li>Understand card structure and validation rules</li>
-<li>Reference for developing inventory producers</li>
-</ul>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32000 (NotFound) if schema file is missing</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
+            <div class="description"><p>Complete list of categories with slugs, display names, and item counts.</p>
 </div>
-            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://SDK</span></div>
-            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge resource">resource</span>
-            <span class="name">schema://MCP</span>
-            <span class="title-text">— MCP Card Schema</span>
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>JSON Schema for MCP cards (Model Context Protocol servers)</p>
-<p>Retrieve the JSON Schema for MCP card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
-<p>Usage Pattern:</p>
-<ul>
-<li>URI: schema://MCP</li>
-<li>Schema version: 2.0.1</li>
-</ul>
-<p>Use Cases:</p>
-<ul>
-<li>Validate custom inventory data</li>
-<li>Generate types for other programming languages</li>
-<li>Understand card structure and validation rules</li>
-<li>Reference for developing inventory producers</li>
-</ul>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32000 (NotFound) if schema file is missing</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
-</div>
-            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://MCP</span></div>
-            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
-          </div>
-        </details>
-        <details class="item-detail">
-          <summary>
-            <span class="badge resource">resource</span>
-            <span class="name">schema://GROUP</span>
-            <span class="title-text">— GROUP Card Schema</span>
-            
-          </summary>
-          <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">operations</span>
-            </div>
-            <div class="description"><p>JSON Schema for GROUP cards (logical collections)</p>
-<p>Retrieve the JSON Schema for GROUP card type. Returns the official JSON Schema definition used to validate inventory data structure.</p>
-<p>Usage Pattern:</p>
-<ul>
-<li>URI: schema://GROUP</li>
-<li>Schema version: 2.0.1</li>
-</ul>
-<p>Use Cases:</p>
-<ul>
-<li>Validate custom inventory data</li>
-<li>Generate types for other programming languages</li>
-<li>Understand card structure and validation rules</li>
-<li>Reference for developing inventory producers</li>
-</ul>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32000 (NotFound) if schema file is missing</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
-</div>
-            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">schema://GROUP</span></div>
-            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/schema+json</code></div>
+            <div style="margin-bottom:0.5rem;"><strong>URI:</strong> <span class="uri">catalog://categories</span></div>
+            <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/json</code></div>
           </div>
         </details>
       </details>
@@ -956,35 +698,14 @@
         <details class="item-detail" open>
           <summary>
             <span class="badge template">template</span>
-            <span class="name">card</span>
-            <span class="title-text">— Card Resource</span>
-            
+            <span class="name">item-detail</span>
+
+
           </summary>
           <div class="item-body">
-            <div class="tags">
-              <span class="badge tag">query</span>
-            </div>
-            <div class="description"><p>Retrieve comprehensive details for a specific card by its numeric ID. Returns complete metadata including: name, description, organization, contacts (roles, emails), releases (versions, status, documentation), quality metrics (champions, initiatives), and insights (organization mapping). Works for all card types: API (REST, gRPC, GraphQL, etc.), SDK (JavaScript, Python, Swift, etc.), and GROUP (logical collections).</p>
-<p>Usage Pattern:</p>
-<ul>
-<li>URI format: card:///{id} where {id} is a numeric card ID</li>
-<li>Example: card:///52 returns full details for card ID 52</li>
-<li>Use search tool first to find card IDs</li>
-</ul>
-<p>Workflow:</p>
-<ol>
-<li>Search for cards: search tool with {&quot;name&quot;: &quot;API name&quot;}</li>
-<li>Get ID from search results</li>
-<li>Fetch full details: card:///{id} resource</li>
-</ol>
-<p>Error Handling:</p>
-<ul>
-<li>Returns -32602 (InvalidParams) if ID is not a valid number</li>
-<li>Returns -32000 (NotFound) if card with specified ID does not exist</li>
-<li>Returns -32603 (InternalError) for server-side issues</li>
-</ul>
+            <div class="description"><p>Full detail record for the item with the given <code>id</code>.</p>
 </div>
-            <div style="margin-bottom:0.5rem;"><strong>URI Template:</strong> <span class="uri">card:///{id}</span></div>
+            <div style="margin-bottom:0.5rem;"><strong>URI Template:</strong> <span class="uri">catalog://items/{id}</span></div>
             <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:#6b7280;">MIME: <code>application/json</code></div>
           </div>
         </details>
@@ -992,24 +713,12 @@
     </div>
 
     <!-- Tags -->
-    <div class="card">
-      <div class="section-header">
-        <span class="section-icon">🏷️</span>
-        <h2>Tags</h2>
-        <span class="count">(3)</span>
-      </div>
-      <div class="tags" style="margin-top: 0.5rem;">
-        <span class="badge tag" style="font-size:0.75rem;" title="Quality, lifecycle, and compliance">governance</span>
-        <span class="badge tag" style="font-size:0.75rem;" title="Server management, schemas, and statistics">operations</span>
-        <span class="badge tag" style="font-size:0.75rem;" title="Search, browse, and onboarding">query</span>
-      </div>
-    </div>
 
     <!-- Extraction Details (CORS, Session, etc.) -->
 
     <!-- Footer -->
     <div class="footer">
-      Generated by <a href="https://github.com/cisco-open/mcp-contract">mcp-contract</a> v0.26.1 · 2026-03-18
+      Generated by <a href="https://github.com/cisco-open/mcptoolkit-contract">mcpcontract</a>
     </div>
 
   </div>

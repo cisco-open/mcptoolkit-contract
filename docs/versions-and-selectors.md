@@ -1,6 +1,6 @@
 # Versions and Selectors User Guide
 
-Applies to the 2.1.0 development CLI. Historical releases retain their documented
+Applies to CLI 2.2.1. Historical releases retain their documented
 behavior. Check your installed CLI's `--help` and release compatibility guidance
 before relying on an option or supported selector.
 

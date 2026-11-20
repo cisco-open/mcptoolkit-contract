@@ -16,6 +16,7 @@ If you are looking for usage docs, see [../users/](../users/).
 
 ### `implementation/`
 
+- [CLI Compatibility Display](implementation/36-cli-compatibility-display.md) - installed support, curated history, and JSON compatibility
 - [`mcp-auth-explained.md`](implementation/mcp-auth-explained.md) — MCP authorization primer (OAuth 2.1 flows)
 - [`33-oauth-best-practices.md`](implementation/33-oauth-best-practices.md) — OAuth implementation guidance for the CLI
 - [`34-wsl-oauth-browser.md`](implementation/34-wsl-oauth-browser.md) — OAuth browser handshake from WSL2

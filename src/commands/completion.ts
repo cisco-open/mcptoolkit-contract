@@ -38,11 +38,10 @@ export function completionCommand(): Command {
           console.error(`# source ~/.bashrc`);
           console.error(`# (or start a new terminal)`);
         } else if (detectedShell === 'zsh') {
-          console.error(`# echo 'eval "$(mcpcontract completion zsh)"' >> ~/.zshrc`);
-          console.error(`#`);
-          console.error(`# Then reload your shell:`);
-          console.error(`# source ~/.zshrc`);
-          console.error(`# (or start a new terminal)`);
+                    console.error(`# mkdir -p ~/.zfunc`);
+                    console.error(`# mcpcontract completion zsh > ~/.zfunc/_mcpcontract`);
+                    console.error(`# Add fpath=(~/.zfunc $fpath) to ~/.zshrc before compinit.`);
+                    console.error(`# If needed, add autoload -Uz compinit && compinit, then start a new shell.`);
         } else if (detectedShell === 'fish') {
           console.error(`# mcpcontract completion fish > ~/.config/fish/completions/mcpcontract.fish`);
           console.error(`#`);
@@ -174,11 +173,11 @@ _mcpcontract_completion() {
             return
             ;;
         --schema)
-            COMPREPLY=( $(compgen -W "mcpdesc mcp-description dump diff diff-breaking dump-split" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "mcpdesc mcp-description diff diff-breaking dump-split" -- "\${cur}") )
             return
             ;;
         --type)
-            COMPREPLY=( $(compgen -W "mcpdesc dump auto" -- "\${cur}") )
+            COMPREPLY=( $(compgen -W "mcpdesc auto" -- "\${cur}") )
             return
             ;;
         --category)
@@ -587,12 +586,12 @@ _mcp_contract() {
                     _arguments \\
                         '1:file:_files' \\
                         '--selector[Validation selector]:selector:(${selectors})' \\
-                        '--schema[Schema type]:type:(mcpdesc mcp-description dump diff diff-breaking dump-split)' \\
+                        '--schema[Schema type]:type:(mcpdesc mcp-description diff diff-breaking dump-split)' \\
                         '--strict[Treat warnings as errors]' \\
                         '(-f --format)'{-f,--format}'[Output format]:format:(text json)' \\
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '--show-compatibility[Display schema-CLI compatibility matrix]' \\
-                        '--display[Display mode]:mode:(short full)' \\
+                        '--show-compatibility[Show installed CLI compatibility or release history]' \\
+                        '--display[Compatibility mode]:mode:(short full)' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
                     ;;
@@ -604,7 +603,7 @@ _mcp_contract() {
                         '(-r --rendering)'{-r,--rendering}'[Rendering mode]:mode:(full reference)' \\
                         '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '(-o --output)'{-o,--output}'[Output file]:file:_files' \\
-                        '--type[Input type]:type:(mcpdesc dump auto)' \\
+                        '--type[Input type]:type:(mcpdesc auto)' \\
                         '--list[List templates]' \\
                         '--show-extraction-details[Show session, CORS, and extraction info]' \\
                         '--markdown-engine[Markdown engine for HTML templates]:engine:(marked markdown-it snarkdown)' \\
@@ -619,7 +618,7 @@ _mcp_contract() {
                         '--to[Target MCP description]:file:_files' \\
                         '--protocol-version[Effective MCP protocol view]:version:(2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28)' \
                         '--output[Output file]:file:_files' \\
-                        '--detect-renames[Detect renames]' \\
+                        '--detect-renames[Rename detection (not yet implemented)]' \\
                         '--quiet[Suppress output]' \\
                         '(-h --help)'{-h,--help}'[Show help]' \\
                         '*:file:_files'
@@ -855,13 +854,13 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -l compact -d "
 complete -c mcpcontract -n "__fish_seen_subcommand_from migrate" -s q -l quiet -d "Suppress status messages"
 
 # validate command options
-complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc dump diff diff-breaking dump-split"
+complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l schema -d "Schema type" -a "mcpdesc mcp-description diff diff-breaking dump-split"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l strict -d "Treat warnings as errors"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s f -l format -d "Output format" -a "text json"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l show-compatibility -d "Display schema-CLI compatibility matrix"
-complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l display -d "Display mode" -a "short full"
+complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l show-compatibility -d "Show installed CLI compatibility or release history"
+complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -l display -d "Compatibility mode" -a "short full"
 complete -c mcpcontract -n "__fish_seen_subcommand_from validate" -s h -l help -d "Show help"
 
 # document command options
@@ -870,7 +869,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s r -l render
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -s o -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "mcpdesc dump auto"
+complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l type -d "Input type" -a "mcpdesc auto"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l list -d "List templates"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l show-extraction-details -d "Show session, CORS, and extraction info"
 complete -c mcpcontract -n "__fish_seen_subcommand_from document" -l markdown-engine -d "Markdown engine for HTML templates" -a "marked markdown-it snarkdown"
@@ -883,7 +882,7 @@ complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l to -d "Target M
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l protocol-version -d "Effective MCP protocol view" -a "2024-11-05 2025-03-26 2025-06-18 2025-11-25 2026-07-28"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l selector -d "MCP Description selector" -a "${selectors}"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l output -d "Output file" -F
-complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Detect renames"
+complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l detect-renames -d "Rename detection (not yet implemented)"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -l quiet -d "Suppress output"
 complete -c mcpcontract -n "__fish_seen_subcommand_from diff" -s h -l help -d "Show help"
 

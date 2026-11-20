@@ -1,9 +1,8 @@
-mcpdesc: 0.7.0
+mcpdesc: 0.9.0
 info:
   name: com.example/catalog-server
   title: Example Catalog MCP Server
   version: 1.2.0
-  protocolVersion: "2025-06-18"
   description: |-
     Sample MCP server exposing a generic catalog of items with search, detail
     retrieval, and subscription prompts. Used to demonstrate mcpcontract
@@ -12,13 +11,13 @@ transports:
   - type: streamable-http
     url: https://catalog.example.com/mcp
 capabilities:
-  completions: {}
-  prompts:
-    listChanged: false
-  resources:
-    listChanged: false
-  tools:
-    listChanged: false
+  - completions: {}
+    prompts:
+      listChanged: false
+    resources:
+      listChanged: false
+    tools:
+      listChanged: false
 tools:
   - name: search
     description: |-
@@ -47,7 +46,7 @@ tools:
         partial:
           type: boolean
           default: true
-          description: "When true, `name` and `category` use substring matching"
+          description: When true, `name` and `category` use substring matching
         pageSize:
           type: integer
           minimum: 1
@@ -58,7 +57,6 @@ tools:
           type: string
           description: Pagination cursor from a previous response
       additionalProperties: false
-
   - name: get-item
     description: |-
       Retrieve full details for a single catalog item by its ID.
@@ -84,7 +82,6 @@ tools:
               - description
           description: Optional subset of fields to return (all returned by default)
       additionalProperties: false
-
   - name: list-categories
     description: List all available categories with item counts.
     inputSchema:
@@ -95,7 +92,6 @@ tools:
           default: false
           description: Include categories that contain no items
       additionalProperties: false
-
   - name: subscribe-updates
     description: |-
       Register a webhook to receive change notifications for matching items.
@@ -124,7 +120,6 @@ tools:
           type: string
           description: HMAC-SHA256 signing secret; if provided, notifications include an `X-Signature` header
       additionalProperties: false
-
 prompts:
   - name: guided-search
     description: |-
@@ -134,7 +129,6 @@ prompts:
       - name: intent
         description: What the user is looking for in natural language
         required: true
-
   - name: summarize-item
     description: Summarize a catalog item in one paragraph for non-technical audiences.
     arguments:
@@ -144,20 +138,20 @@ prompts:
       - name: audience
         description: "Target audience: `technical` or `executive` (default: `technical`)"
         required: false
-
 resources:
   - name: catalog-stats
     uri: catalog://stats
     description: Aggregate statistics — total item count, category breakdown, last-updated timestamp.
     mimeType: application/json
-
   - name: categories
     uri: catalog://categories
     description: Complete list of categories with slugs, display names, and item counts.
     mimeType: application/json
-
 resourceTemplates:
   - name: item-detail
     uriTemplate: catalog://items/{id}
     description: Full detail record for the item with the given `id`.
     mimeType: application/json
+$schema: https://mcpdesc.org/schema/mcp-description/0.9.0.json
+protocolVersions:
+  - "2025-06-18"

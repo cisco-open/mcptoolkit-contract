@@ -32,13 +32,13 @@ mcpcontract dump \
 
 Add `--verbose` to debug connection issues. The output is an
 [mcpdesc](users/reference/schemas.md) document describing every tool the server
-exposes.
+exposes, using stable mcpdesc `0.9.0` by default.
 
 ## 2. Validate
 
 ```bash
 mcpcontract validate ms-learn-dump.yaml          # auto-detects schema + version
-mcpcontract validate --show-compatibility        # CLI ↔ schema matrix
+mcpcontract validate --show-compatibility        # What the installed CLI supports
 ```
 
 ## 3. Generate documentation

@@ -3,6 +3,18 @@
   "description": "Maps CLI versions to compatible schema versions - append new entries on release",
   "compatibility": [
     {
+      "cliVersion": "2.2.1",
+      "releaseDate": "2026-11-20",
+      "schemas": {
+        "mcp-description": "0.9.0",
+        "x-cisco-metadata": "read-only 0.2.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0"
+      },
+      "notes": "Same format and schema support as CLI 2.2.0. Compatibility output highlights installed support and the stable releases for legacy workflows."
+    },
+    {
       "cliVersion": "2.2.0",
       "releaseDate": "2026-11-17",
       "schemas": {
@@ -38,6 +50,18 @@
         "split": "1.0.0"
       },
       "notes": "Active processing targets Draft 4 only. Historical 0.7.0/0.8.0 validation and chained migration remain supported; use CLI 1.2.4/2.0.5 for historical processing."
+    },
+    {
+      "cliVersion": "2.0.5",
+      "releaseDate": "2026-10-27",
+      "schemas": {
+        "mcp-description": "0.8.0",
+        "x-cisco-metadata": "read-only 0.2.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0"
+      },
+      "notes": "Stable 0.8.0 CLI and recommended bridge for converting legacy capability dumps or MCP Description 0.7.0 to 0.8.0."
     },
     {
       "cliVersion": "2.0.0",
@@ -86,6 +110,18 @@
         "split": "1.0.0"
       },
       "notes": "Emits MCP Description 0.8.0 RC.1; validates and migrates 0.7.0; no generated Cisco metadata."
+    },
+    {
+      "cliVersion": "1.2.4",
+      "releaseDate": "2026-09-07",
+      "schemas": {
+        "mcp-description": "0.7.0",
+        "x-cisco-metadata": "0.2.0",
+        "diff": "1.0.0",
+        "breaking": "2.0.0",
+        "split": "1.0.0"
+      },
+      "notes": "Recommended for processing historical MCP Description 0.7.0 without upgrading. Does not emit 0.8.0."
     },
     {
       "cliVersion": "1.0.0-rc1",

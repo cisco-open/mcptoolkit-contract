@@ -151,7 +151,7 @@ describe('Agents Command Integration Tests', () => {
         const stderr = error.stderr.toString();
         expect(stderr).toContain('Unknown command: invalidcommand');
         expect(stderr).toContain('Available commands:');
-        expect(stderr).toContain('dump, split, validate');
+        expect(stderr).toContain('dump, split, convert, project, normalize, migrate, validate');
         expect(stderr).toContain('Usage: mcpcontract agents --command <name>');
       }
     });

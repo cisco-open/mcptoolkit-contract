@@ -9,7 +9,10 @@
 import { Command } from 'commander';
 import { writeFile, readFile } from 'node:fs/promises';
 import { type McpDescriptionSelector } from '@mcpdesc/validator';
-import { CLI_MCPDESC_SELECTORS } from '../lib/mcpdesc-target.js';
+import {
+  CLI_MCPDESC_FORMATS, CLI_MCPDESC_SELECTORS, DEFAULT_MIGRATION_VERSION,
+  DEFAULT_OUTPUT_VERSION, HISTORICAL_PROCESSING_CLI_VERSION, LEGACY_CONVERSION_CLI_VERSION,
+} from '../lib/mcpdesc-target.js';
 import { Validator, ValidationError, detectSchemaType, type SchemaType, type ValidationResult } from '../lib/validator.js';
 
 interface ValidateCommandOptions {
@@ -40,7 +43,7 @@ function diagnosticPath(path: readonly (string | number)[]): string {
     .join('/')}`;
 }
 
-export function validateCommand(): Command {
+export function validateCommand(cliVersion: string): Command {
   const cmd = new Command('validate');
 
   cmd
@@ -51,22 +54,22 @@ export function validateCommand(): Command {
     .option('--selector <selector>', 'Pin MCP Description validation rules, e.g. 0.9.0 (overrides a recognized same-format schema)')
     .option('--strict', 'Treat warnings as errors', false)
     .option('-f, --format <format>', 'Output format: text or json', 'text')
-    .option('-o, --output <path>', 'Write validation report to file')
-    .option('--show-compatibility', 'Display schema-CLI compatibility matrix and exit')
-    .option('--display <mode>', 'Display mode for compatibility: short (changes only) or full (all versions)', 'short')
+    .option('-o, --output <path>', 'Write validation or compatibility output to file')
+    .option('--show-compatibility', 'Show installed CLI compatibility or release history and exit')
+    .option('--display <mode>', 'Compatibility mode: short (text summary or JSON schema changes) or full (recorded history)', 'short')
     .addHelpText('after', '\nWithout an input file: mcpcontract validate --show-compatibility')
     .action(async (file: string | undefined, options: ValidateCommandOptions) => {
       try {
         // Handle compatibility display
         if (options.showCompatibility) {
-          await displayCompatibility(options);
+          await displayCompatibility(options, cliVersion);
           return;
         }
 
         // Regular validation requires file and schema
         if (!file) {
           console.error('❌ Error: file argument is required for validation');
-          console.error('   Use --show-compatibility to display version compatibility matrix');
+          console.error('   Use --show-compatibility to display version compatibility');
           process.exit(2);
         }
 
@@ -304,80 +307,59 @@ function filterSchemaChanges(data: CompatibilityData): CompatibilityData {
 /**
  * Display schema-CLI compatibility matrix
  */
-async function displayCompatibility(options: ValidateCommandOptions): Promise<void> {
-  // Load compatibility matrix
-  const compatPath = new URL('../../schemas/cli-schema-compatibility.json', import.meta.url).pathname;
-  const compatContent = await readFile(compatPath, 'utf-8');
-  let compatData: CompatibilityData = JSON.parse(compatContent);
-
-  // Filter to show only versions with schema changes (default)
+async function displayCompatibility(options: ValidateCommandOptions, cliVersion: string): Promise<void> {
   const displayMode = options.display || 'short';
-  if (displayMode === 'short') {
-    compatData = filterSchemaChanges(compatData);
-  }
-
-  if (options.format === 'json') {
-    // JSON output
-    const output = JSON.stringify(compatData, null, 2);
-    if (options.output) {
-      await writeFile(options.output, output, 'utf-8');
-      console.log(`✅ Compatibility matrix written to: ${options.output}`);
-    } else {
-      console.log(output);
-    }
+  let output: string;
+  if (options.format !== 'json' && displayMode === 'short') {
+    output = formatCompatibilitySummary(cliVersion);
   } else {
-    // Text table output
-    const output = formatCompatibilityTable(compatData, displayMode);
-    if (options.output) {
-      await writeFile(options.output, output, 'utf-8');
-      console.log(`✅ Compatibility matrix written to: ${options.output}`);
-    } else {
-      console.log(output);
-    }
+    const compatPath = new URL('../../schemas/cli-schema-compatibility.json', import.meta.url);
+    const data: CompatibilityData = JSON.parse(await readFile(compatPath, 'utf-8'));
+    output = options.format === 'json'
+      ? JSON.stringify(displayMode === 'short' ? filterSchemaChanges(data) : data, null, 2)
+      : formatCompatibilityHistory(data);
   }
 
-  process.exit(0);
+  if (options.output) {
+    await writeFile(options.output, output, 'utf-8');
+    const label = options.format !== 'json' && displayMode === 'short' ? 'Compatibility summary' : 'Compatibility matrix';
+    console.log(`✅ ${label} written to: ${options.output}`);
+  } else {
+    console.log(output);
+  }
 }
 
 /**
- * Format compatibility matrix as text table
+ * Show what this installed CLI supports independently of the release history.
  */
-function formatCompatibilityTable(data: CompatibilityData, displayMode: string): string {
-  const lines: string[] = [];
-  
-  lines.push('Schema-CLI Compatibility Matrix\n');
-  lines.push('CLI Version/Date   mcpdesc  Dump   Diff   Breaking  Split   Notes');
-  lines.push('─'.repeat(100));
-  
-  for (const entry of data.compatibility) {
-    const versionDate = `${entry.cliVersion}/${entry.releaseDate.substring(0, 10)}`;
-    const mcpdesc = (entry.schemas as Record<string, string>)['mcp-description'] || 'n/a';
-    const dump = entry.schemas.dump || 'n/a';
-    const diff = entry.schemas.diff || 'n/a';
-    const breaking = entry.schemas.breaking || 'n/a';
-    const split = entry.schemas.split || 'n/a';
-    const notes = entry.notes ? entry.notes.substring(0, 25) : '';
-    
-    lines.push(
-      `${versionDate.padEnd(18)} ${mcpdesc.padEnd(8)} ${dump.padEnd(6)} ${diff.padEnd(6)} ${breaking.padEnd(9)} ${split.padEnd(7)} ${notes}`
-    );
-  }
-  
-  lines.push('');
-  
-  // Add note about display mode
-  if (displayMode === 'short') {
-    lines.push('Note: Showing only CLI versions that introduced schema changes.');
-    lines.push('      Subsequent versions use the same schemas until the next change.');
-    lines.push('      Use --display full to show all versions.');
-    lines.push('');
-  }
-  
-  lines.push('Usage Guidelines:');
-  lines.push('- Dump and migrate default to stable MCP Description 0.9.0');
-  lines.push('- Input rules: explicit selector, recognized same-format schema, maintained format default');
-  lines.push('- Compare matching effective MCP protocol revisions; migrate explicitly when needed');
-  lines.push('- Use a matching former CLI release for retired drafts/RCs or historical processing');
-  
-  return lines.join('\n');
+function formatCompatibilitySummary(cliVersion: string): string {
+  const alternatives = CLI_MCPDESC_FORMATS.filter((format) => format !== DEFAULT_OUTPUT_VERSION);
+  return [
+    `MCP Description Compatibility (mcpcontract ${cliVersion})`,
+    '',
+    `Validate and process: ${CLI_MCPDESC_FORMATS.join(', ')}`,
+    `Dump output: ${DEFAULT_OUTPUT_VERSION} by default${alternatives.map((format) => `; use --to-version ${format} to emit ${format}`).join('')}`,
+    `Migration target: ${DEFAULT_MIGRATION_VERSION}`,
+    'Native projection: requires MCP Description 0.9.0',
+    `Supported selectors: ${CLI_MCPDESC_SELECTORS.join(', ')}`,
+    'Input rules: explicit selector, then recognized same-format $schema, then maintained format default.',
+    '',
+    'Which CLI to use:',
+    `- ${cliVersion} (installed): use for the supported formats above.`,
+    `- ${LEGACY_CONVERSION_CLI_VERSION}: convert legacy dumps or 0.7.0 to 0.8.0.`,
+    `- ${HISTORICAL_PROCESSING_CLI_VERSION}: process 0.7.0 without upgrading.`,
+    `  Convert with: npx --package=@cisco_open/mcptoolkit-contract@${LEGACY_CONVERSION_CLI_VERSION} mcpcontract convert <input> --output <output>`,
+    '',
+    'Use --display full for recorded release history, including prereleases.',
+    'Use --format json for machine-readable history.',
+  ].join('\n');
+}
+
+function formatCompatibilityHistory(data: CompatibilityData): string {
+  const rows = data.compatibility.map((entry) => [
+    `${entry.cliVersion} (${entry.releaseDate})`,
+    ...Object.entries(entry.schemas).map(([name, version]) => `  ${name}: ${version}`),
+    ...(entry.notes ? [`  Notes: ${entry.notes}`] : []),
+  ].join('\n'));
+  return ['Schema-CLI Compatibility History (curated, not a complete release index)', ...rows].join('\n\n');
 }

@@ -146,7 +146,7 @@ printf '%s\\n' "\${COMPREPLY[@]}"
   it('should support enum value completion for --schema', () => {
     const script = generateCompletion();
     expect(script).toContain('--schema)');
-    expect(script).toContain('"mcpdesc mcp-description dump diff diff-breaking dump-split"');
+    expect(script).toContain('"mcpdesc mcp-description diff diff-breaking dump-split"');
   });
 
   it('should support enum value completion for --category', () => {
@@ -164,7 +164,7 @@ printf '%s\\n' "\${COMPREPLY[@]}"
   it('should support enum value completion for --type', () => {
     const script = generateCompletion();
     expect(script).toContain('--type)');
-    expect(script).toContain('"mcpdesc dump auto"');
+    expect(script).toContain('"mcpdesc auto"');
   });
 });
 
