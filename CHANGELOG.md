@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- toc -->
 
 - [[Unreleased]](#unreleased)
+- [[2.2.1] - 2026-11-20](#221---2026-11-20)
+- [[2.2.0] - 2026-11-17](#220---2026-11-17)
+- [[2.1.0-rc.2] - 2026-11-05](#210-rc2---2026-11-05)
+- [[2.1.0-rc.1] - 2026-11-02](#210-rc1---2026-11-02)
 - [[2.0.5] - 2026-10-27](#205---2026-10-27)
 - [[2.0.4] - 2026-10-27](#204---2026-10-27)
 - [[2.0.3] - 2026-10-22](#203---2026-10-22)
@@ -35,6 +39,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- tocstop -->
 
 ## [Unreleased]
+
+## [2.2.1] - 2026-11-20
+
+### Changed
+
+- `validate --show-compatibility` now summarizes the installed CLI by default.
+  It highlights stable CLI versions for historical processing and conversion.
+  Use `--display full` for curated history, including prereleases. The history
+  adds 2.0.5 and 1.2.4 without changing the JSON format or filtering rules.
+
+### Fixed
+
+- Corrected agent guide examples and shell completion candidates to match supported commands and options.
+- Updated tutorials and refreshed the bundled documentation examples for stable MCP Description 0.9.0.
+
+## [2.2.0] - 2026-11-17
+
+### Added
+
+- Adopted stable MCP Description 0.9.0 with `@mcpdesc/core` 0.13.0 and
+  `@mcpdesc/validator` 0.14.0, including native document-order projection
+  and the validator's structured diagnostic detail and related locations.
+- Added `normalize` for document-oriented JSON/YAML serialization, plus
+  `project --key-order document` for native declaration output.
+- Added `migrate --key-order preserve|document|sorted` to control serialization,
+  including document-oriented ordering in the migration step.
+
+### Changed
+
+- 0.9.0 processing now uses the final schema and selector; upstream-retired
+  drafts and RC snapshots are no longer selectable in this CLI. Validation text
+  output retains structured diagnostic details and related component-definition
+  locations.
+- Stable 0.9.0 is now the default dump format. Upstream finalization may change
+  diagnostic paths, rule attribution, or validity from RC.3; unknown members in
+  Tool Interaction Example elicitation responses are rejected by the validator.
+- MCP Description YAML output from `normalize`, `dump`, `split`, `migrate`,
+  and `project` uses core's Section 15.9 normalized presentation, including
+  safe scalar/key quoting, quoted protocol versions, lossless multiline values,
+  and exactly one final LF. `normalize --key-order sorted` remains supported.
+  JSON formatting and command-specific ordering defaults are unchanged.
+- **Breaking:** modern MCP Description readers consistently use core's JSON
+  scalar recognition with string fallback. Plain `0o12`, `0x12`, `012`,
+  `TRUE`, and `~` are strings; use JSON scalar spellings for intended numbers,
+  booleans, and nulls. Unsupported tags and non-finite numbers are rejected.
+  Enrichment and migration-fix files use the same scalar rules; unrelated
+  configuration, catalog, and analysis formats retain their existing parsing.
+- MCP Description 0.8.0 inputs receive a non-blocking migration recommendation
+  on stderr, except in `migrate`. No input is silently upgraded.
+- **Breaking:** `migrate` now targets stable MCP Description 0.9.0 rules by
+  default rather than stable 0.8.0. The `migrate` `--to-version` option has
+  been removed; `dump` now defaults to stable 0.9.0.
+  Already-current inputs are validated and reported unchanged.
+
+### Removed
+
+- **Breaking:** local 0.7.0 validation and migration, and active legacy-dump
+  conversion. `convert` remains a guidance-only command: normal invocations
+  fail without writing files; `--guide` succeeds. All 0.7.0 inputs redirect
+  to CLI 2.0.5 for conversion to 0.8.0. CLI 1.2.4 remains the historical
+  0.7.0 processing release, not a 0.8.0 converter. Archived schemas remain.
+
+## [2.1.0-rc.2] - 2026-11-05
+
+### Added
+
+- Adopted MCP Description RC.1 with `@mcpdesc/core` 0.13.0-rc.5 and
+  `@mcpdesc/validator` 0.14.0-rc.5, preserving RC.1 validation result format
+  1.3.0, protocol-version rule identities, diagnostics, and per-rule results.
+- Added `--to-version` and exact output selector support to `dump` and `convert`.
+- Documented the implemented versions-and-selectors policy and user guide,
+  including schema-derived pins, maintained defaults, and CLI snapshot retirement.
+
+### Changed
+
+- Stable 0.8.0 is the default output and migration destination. Request 0.9.0
+  explicitly for maintained preview rules, currently RC.1. No implicit downgrades.
+- Input rules now follow explicit selector, recognized same-format schema, then
+  maintained format default. Shared 0.8.0 schema identities use the maintained
+  revision; original stable and unique Draft 4 pins remain available.
+- Modern processing accepts 0.8.0 and 0.9.0; native projection requires 0.9.0.
+  CLI selector support is intentionally narrower than underlying library support.
+- Validation and migration reports distinguish explicit, schema-derived, and
+  default selections. Migration source and destination selectors are independent.
+
+### Fixed
+
+- Reused the split selector when validating generated subsets and enabled native
+  RC.1 projection without a draft-only guard. Wizard output choices are forwarded.
+
+## [2.1.0-rc.1] - 2026-11-02
+
+### Added
+
+- Added MCP Description `0.9.0` Draft 4 capture and validation using
+  `@mcpdesc/core` `0.13.0-rc.4` and `@mcpdesc/validator` `0.14.0-rc.4`.
+- Added `project` for exporting Effective Protocol Views and native MCP
+  declarations, plus `migrate` for reviewed, chained `0.7.0` to `0.8.0` to `0.9.0`
+  upgrades with reports, explicit fixes, and original-input JSON Patch output.
+- Added rule identities and per-rule results to validation reports; failed
+  reports can now be saved with `--output`.
+
+### Changed
+
+- **Processing policy change:** `dump`, `project`, `document`, `diff`, `compare`,
+  and `split` target `0.9.0-draft.4` only. Schema-less 0.9.0 documents use this
+  pinned selector; historical processing uses CLI 1.2.4 for 0.7.0 or 2.0.5 for
+  0.8.0. Historical validation and migration remain supported.
+- `convert` is no longer deprecated and now only converts legacy capability
+  dumps to active mcpdesc. MCP Description upgrades belong to `migrate`;
+  reverse dump export is removed.
+- `migrate` defaults to the active target; `--to-version 0.8.0` can explicitly
+  stop a 0.7.0 upgrade at its intermediate format. No command silently upgrades
+  a processing input.
+
+### Fixed
+
+- Simplified the main help command list by omitting repetitive `[options]`
+  markers; individual command help retains its full usage.
+- Aligned top-level and command help usage to show required input files and
+  options explicitly, while preserving file-free informational modes and
+  genuinely optional arguments such as the completion shell.
+- Corrected help for legacy dump handling, output serialization inference,
+  unimplemented rename detection, protocol selection, native projection,
+  migration fixes files, and nested rules commands.
 
 ## [2.0.5] - 2026-10-27
 
@@ -545,3 +674,8 @@ This release consolidates pre-1.0 development into a single, stable v1.0 line. P
 - Binary: `mcpcontract`
 - License: Apache-2.0
 - Repository: `github.com/cisco-open/mcptoolkit-contract`
+
+[Unreleased]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.2...v2.2.0
+[2.1.0-rc.2]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.1.0-rc.1...v2.1.0-rc.2
+[2.1.0-rc.1]: https://github.com/cisco-open/mcptoolkit-contract/compare/v2.0.5...v2.1.0-rc.1

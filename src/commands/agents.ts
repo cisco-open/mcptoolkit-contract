@@ -45,7 +45,7 @@ mcpcontract agents --workflows
 
 ### Get Complete Reference
 \`\`\`bash
-# Get all commands in one document (~7,367 tokens)
+# Get all commands in one document
 mcpcontract agents --all
 \`\`\`
 
@@ -58,20 +58,14 @@ mcpcontract agents --all
 mcpcontract agents --command changelog
 
 # Gets: ~639 tokens of focused help with examples
-# AI responds with exact commands from the guide
-\`\`\`
-
-### Pattern 2: User Wants Complete Workflow
-\`\`\`bash
 # User: "Show me the full version upgrade process"
-# AI runs:
 mcpcontract agents --workflows
 
 # Gets: All workflows with step-by-step examples
 # AI walks user through Version Upgrade Check workflow
 \`\`\`
 
-### Pattern 3: User Needs Parameter Details
+### Pattern 2: User Needs Parameter Details
 \`\`\`bash
 # User: "What parameters does breaking take?"
 # AI runs:
@@ -84,7 +78,7 @@ mcpcontract agents --command breaking
 ## Key Parameters
 
 - \`--command <name>\` - Get help for specific command
-  - Available: dump, split, validate, diff, breaking, changelog, compare, document, rules, completion
+  - Available: dump, split, convert, project, normalize, migrate, validate, diff, breaking, changelog, compare, document, rules, completion
 - \`--workflows\` - Show all end-to-end workflows
 - \`--all\` - Output complete reference in single document
 
@@ -96,7 +90,19 @@ mcpcontract agents --command breaking
 **split** - Split large MCP descriptions into focused subsets
 → Use when: You have a large federation MCP description and need to organize it by category
 
-**validate** - Validate files against JSON schemas (mcpdesc, dump, diff)
+**convert** - Show historical conversion guidance (no conversion)
+→ Use when: Finding CLI 2.0.5 to convert legacy input to 0.8.0
+
+**project** - Export an effective protocol view or native MCP declaration
+→ Use when: You need a version-specific MCP Description document or MCP-native declaration
+
+**normalize** - Normalize MCP Description member order and serialization
+→ Use when: You want document-oriented JSON/YAML output without changing values
+
+**migrate** - Upgrade mcpdesc to the maintained destination
+→ Use when: Explicitly upgrading 0.8.0 to stable 0.9.0
+
+**validate** - Validate MCP descriptions, diffs, and split configs or show CLI compatibility
 → Use when: You want to verify schema compliance before publication
 
 **diff** - Compare two versions and generate structural diff
@@ -183,7 +189,7 @@ mcpcontract compare --from old-dump.json --to new-dump.json --output CHANGELOG.m
 mcpcontract compare --from old-dump.json --to new-dump.json --exit-zero
 \`\`\`
 
-## Workflow 2: Quick Validation Pipeline
+## Workflow 3: Quick Validation Pipeline
 
 \`\`\`bash
 # Dump → Validate in one pipeline
@@ -349,6 +355,8 @@ Choose either \`--config\` (with \`--mcp-server\` when needed) or direct transpo
 ### Output and Diagnostics
 - \`--output <file>\` - Output file (default: stdout)
 - \`--format <type>\` - json, yaml, or markdown (default: json)
+- \`--to-version <version>\` - mcpdesc: 0.9.0 (default), 0.8.0
+- \`--selector <id>\` - Pin output rules
 - \`--compact\` - Emit single-line JSON
 - \`--info <file>\` - Add contact, license, security, and other metadata from JSON/YAML
 - \`--quiet\` - Suppress progress messages on stderr
@@ -615,30 +623,29 @@ mcpcontract validate dump.json --schema mcpdesc
 mcpcontract validate diff.json --schema diff
 \`\`\`
 
-### Validate from stdin
+### Check the Installed CLI's Compatibility
 \`\`\`bash
-mcpcontract dump --config mcp.json | mcpcontract validate --schema mcpdesc -
-\`\`\`
-
-### Quiet Validation (Exit Code Only)
-\`\`\`bash
-if mcpcontract validate dump.json --quiet; then
-  echo "Valid!"
-fi
+mcpcontract validate --show-compatibility
+mcpcontract validate --show-compatibility --display full --format json
 \`\`\`
 
 ## Key Parameters
 
 ### Required
-- \`<file>\` - File to validate (or \`-\` for stdin)
+- \`<file>\` - File to validate; omit it with \`--show-compatibility\`
 
 ### Optional
-- \`--schema <type>\` - Schema type: mcpdesc, dump, diff, diff-breaking, dump-split
-- \`--quiet\` - Suppress output (exit code only)
+- \`--schema <type>\` - Auto-detected by default; see schema types below
+- \`--selector <selector>\` - Pin MCP Description validation rules
+- \`--strict\` - Treat warnings as errors
+- \`--format <format>\` - Text (default) or JSON
+- \`--output <file>\` - Write validation or compatibility output to a file
+- \`--show-compatibility\` - Show installed support in text or release history in JSON
+- \`--display full\` - Show all recorded history in either format
 
 ## Schema Types
 
-- \`dump\` or \`mcpdesc\` - Validates capability dumps / MCP descriptions
+- \`mcpdesc\` or \`mcp-description\` - Validates MCP descriptions
 - \`diff\` - Validates structural diff files
 - \`diff-breaking\` - Validates breaking change analysis files
 - \`dump-split\` - Validates split configuration files
@@ -647,6 +654,7 @@ fi
 
 - \`0\` - Validation passed
 - \`1\` - Validation failed
+- \`2\` - Input or processing error (Commander may report usage errors separately)
 
 ## Next Steps After Validation
 
@@ -765,7 +773,7 @@ A diff file containing changes in these categories:
 ## Next Steps After Diff
 
 1. **Analyze for breaking changes**: \`mcpcontract breaking --diff diff.json\`
-2. **Generate changelog**: \`mcpcontract changelog --diff diff-breaking.json\`
+2. **Generate changelog**: \`mcpcontract changelog --diff diff.json --output CHANGELOG.md\`
 3. **Review changes manually**: Open diff.json and inspect
 
 ## Troubleshooting
@@ -879,7 +887,7 @@ Analysis file containing:
 
 ## Next Steps After Analysis
 
-1. **Generate changelog**: \`mcpcontract changelog --diff diff-breaking.json\`
+1. **Generate changelog**: \`mcpcontract changelog --diff diff-breaking.json --output CHANGELOG.md\`
 2. **Review breaking changes**: Open diff-breaking.json and assess impact
 3. **Update version**: Use suggestedVersion in package.json
 
@@ -933,26 +941,26 @@ mcpcontract changelog \\
   --output RELEASE_NOTES.md
 \`\`\`
 
-### From Piped Analysis
+### From a Structural Diff Without Breaking Analysis
 \`\`\`bash
-mcpcontract breaking --diff diff.json --suggest-version | \\
-  mcpcontract changelog --diff - --format release
+mcpcontract changelog --diff diff.json --output CHANGELOG.md
 \`\`\`
 
-### Complete Pipeline
+### Complete Staged Workflow
 \`\`\`bash
-mcpcontract diff --from old.json --to new.json | \\
-  mcpcontract breaking --diff - --suggest-version | \\
-  mcpcontract changelog --diff - --format release --output CHANGELOG.md
+mcpcontract diff --from old.json --to new.json --output diff.json
+# Exit 1 means breaking changes found; the analysis file is still written.
+mcpcontract breaking --diff diff.json --suggest-version --output diff-breaking.json
+mcpcontract changelog --diff diff-breaking.json --format release --output CHANGELOG.md
 \`\`\`
 
 ## Key Parameters
 
 ### Required
-- \`--diff <file>\` - Diff from \`diff\`, or annotated diff from \`breaking\` (or \`-\` for stdin)
+- \`--diff <file>\` - Diff from \`diff\`, or annotated diff from \`breaking\`
+- \`--output <file>\` - Output file
 
 ### Optional
-- \`--output <file>\` - Output file (default: stdout)
 - \`--format <type>\` - Template: release, compact (default: release)
 - \`--template <file>\` - Custom Handlebars template
 - \`--omit-zeros\` - Hide categories with 0 entries from summary
@@ -1122,13 +1130,11 @@ Add \`--emit-diff diff.json --emit-breaking diff-breaking.json\` to your \`compa
 ### compare says "not an MCP description document"
 Input files must be mcpdesc format. Convert legacy dumps first:
 \`\`\`bash
-mcpcontract convert old-dump.json --to-format mcpdesc --output converted.json
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert old-dump.json --output converted.json
 \`\`\`
 `;
 
-const DOCUMENT_GUIDE = `# document - Generate Documentation [EXPERIMENTAL]
-
-⚠️ **EXPERIMENTAL**: This command is under active development and may change.
+const DOCUMENT_GUIDE = `# document - Generate Documentation
 
 ## Purpose
 Renders human-readable documentation from MCP descriptions using customizable templates.
@@ -1188,14 +1194,15 @@ mcpcontract document spec.yaml \\
 ## Key Parameters
 
 ### Required
-- \`[file]\` - MCP description file (or \`-\` for stdin, default: stdin)
+- \`<file>\` - MCP description file; omit it with \`--list\`
 
 ### Optional
 - \`--output <file>\` - Output file (default: stdout)
 - \`--template <name|file>\` - Built-in template name or path to custom .hbs file
 - \`--rendering <mode>\` - Rendering mode: \`full\` (detailed, default) or \`reference\` (concise)
 - \`--protocol-version <version>\` - Effective view to render; required for multi-version documents
-- \`--type <type>\` - Input file type: \`mcpdesc\`, \`dump\` (legacy), or \`auto\` (default)
+- \`--selector <selector>\` - Pin MCP Description validation rules
+- \`--type <type>\` - Input file type: \`mcpdesc\` or \`auto\` (default); convert legacy dumps first
 - \`--markdown-engine <engine>\` - Markdown engine for HTML templates: \`marked\` (default), \`markdown-it\`, \`snarkdown\`
 - \`--show-extraction-details\` - Show session, CORS, and extraction information sections
 - \`--list\` - List available built-in templates
@@ -1296,7 +1303,7 @@ Display detailed information about a specific rule.
 
 \`\`\`bash
 mcpcontract rules show tool-removed
-mcpcontract rules show parameter-required-added
+mcpcontract rules show parameter-added
 \`\`\`
 
 ### examples
@@ -1307,11 +1314,14 @@ mcpcontract rules examples parameter-type-changed
 \`\`\`
 
 ### validate
-Validate custom rules file syntax.
+Validate catalog completeness and schema compliance.
 
 \`\`\`bash
-mcpcontract rules validate custom-rules.yaml
+mcpcontract rules validate --rules custom-rules.yaml --catalog ./custom-catalog
 \`\`\`
+
+### list-catalogs
+Discover catalog directories with \`mcpcontract rules list-catalogs\`.
 
 ### export
 Export rules catalog as documentation.
@@ -1328,7 +1338,7 @@ mcpcontract rules export --format json --output rules.json
 
 ### list subcommand
 - \`--category <name>\` - Filter: tools, prompts, resources, resourceTemplates, serverInfo
-- \`--severity <level>\` - Filter: info, minor, major, critical
+- \`--severity <level>\` - Filter: info, major, critical
 - \`--catalog <dir>\` - Use custom catalog directory
 
 ### show subcommand
@@ -1340,10 +1350,11 @@ mcpcontract rules export --format json --output rules.json
 - \`--catalog <dir>\` - Use custom catalog directory
 
 ### validate subcommand
-- \`<file>\` - Rules YAML file to validate
+- \`--rules <file>\` - Rules YAML file used to check catalog completeness
+- \`--catalog <dir>\` - Catalog directory to validate
 
 ### export subcommand
-- \`--format <type>\` - Export format: markdown, json (default: markdown)
+- \`--format <type>\` - Export format: json (default), markdown
 - \`--output <file>\` - Output file (default: stdout)
 - \`--catalog <dir>\` - Use custom catalog directory
 
@@ -1358,7 +1369,6 @@ mcpcontract rules export --format json --output rules.json
 ## Rule Severity Levels
 
 - **info** - Informational, not breaking
-- **minor** - Small change, usually compatible
 - **major** - Breaking change
 - **critical** - Severe breaking change
 
@@ -1413,10 +1423,14 @@ mcpcontract completion bash > ~/.mcpcontract-completion.bash
 echo 'source ~/.mcpcontract-completion.bash' >> ~/.bashrc
 
 # Zsh
-mcpcontract completion zsh > ~/.mcpcontract-completion.zsh
-echo 'source ~/.mcpcontract-completion.zsh' >> ~/.zshrc
+mkdir -p ~/.zfunc
+mcpcontract completion zsh > ~/.zfunc/_mcpcontract
+# Put these lines in ~/.zshrc before the first compinit invocation:
+fpath=(~/.zfunc $fpath)
+autoload -Uz compinit && compinit
 
 # Fish
+mkdir -p ~/.config/fish/completions
 mcpcontract completion fish > ~/.config/fish/completions/mcpcontract.fish
 \`\`\`
 
@@ -1434,7 +1448,7 @@ mcpcontract completion zsh > "\${fpath[1]}/_mcpcontract"
 
 ### Output to File
 \`\`\`bash
-mcpcontract completion bash --output ~/.mcpcontract-completion.bash
+mcpcontract completion bash > ~/.mcpcontract-completion.bash
 \`\`\`
 
 ## Supported Shells
@@ -1462,6 +1476,100 @@ After setup, tab completion works for:
 - Generate for correct shell type
 `;
 
+const PROJECT_GUIDE = `# project - Project MCP Descriptions
+
+## Purpose
+Export an Effective Protocol View or a native MCP value for one protocol revision.
+
+## When to Use
+Export protocol-specific declarations from a supported 0.8.0 or 0.9.0 document.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract project server.yaml --view effective --protocol-version 2026-07-28 --output server-2026.yaml
+mcpcontract project server.yaml --view native --kind tool --identifier search --protocol-version 2026-07-28 --key-order document
+\`\`\`
+
+## Common Patterns
+- Effective views retain MCP Description metadata and select declarations for one protocol revision.
+- Native projection returns MCP declarations without MCP Description-only fields.
+- Effective: 0.8.0/0.9.0; native: 0.9.0 only.
+- Rules: selector > schema > default. Schema-less 0.9.0 uses stable rules; earlier drafts and RCs are retired.
+`;
+
+const NORMALIZE_GUIDE = `# normalize - Normalize MCP Description Serialization
+
+## Purpose
+Serialize a supported MCP Description with document-oriented key order by default.
+
+## When to Use
+Use it to produce consistent, review-friendly JSON or YAML without editing document values.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract normalize server.yaml --output normalized.yaml
+mcpcontract normalize server.json --key-order preserve --output server-preserved.json
+\`\`\`
+
+## Common Patterns
+- Supported key orders: \`document\` (default), \`preserve\`, and \`sorted\`.
+- \`--format\` selects JSON or YAML; otherwise the output path or input format is used.
+- Normalization changes member ordering and formatting, not document values.
+- Normalization does not validate specification compliance; use \`validate\` separately.
+- YAML uses core's Section 15.9 normalized presentation, including quoted protocol versions and lossless multiline values.
+- Plain \`0o12\`, \`0x12\`, \`012\`, \`TRUE\`, and \`~\` are strings under the shared input parser.
+- 0.7.0 requires historical CLI 2.0.5 for conversion; 0.8.0 input gets a non-blocking stderr recommendation to migrate explicitly.
+- Retired schema identities are rejected; use the matching historical CLI to process them.
+`;
+
+const CONVERT_GUIDE = `# convert - Historical Conversion Guidance
+
+## Purpose
+Show how to run a historical CLI. This command does not read or write files.
+
+## When to Use
+Legacy dumps or 0.7.0 inputs. Use CLI 2.0.5 to convert to 0.8.0.
+CLI 1.2.4 supports historical 0.7.0 processing but does not produce 0.8.0.
+
+## Basic Usage
+\`\`\`bash
+npx --package=@cisco_open/mcptoolkit-contract@2.0.5 mcpcontract convert old.yaml --output stable.yaml
+mcpcontract migrate stable.yaml --output upgraded.yaml
+\`\`\`
+
+## Common Patterns
+Normal invocation: guidance on stderr, exit 1, no converted output.
+\`--guide\`: guidance on stdout, exit 0.
+`;
+
+const MIGRATE_GUIDE = `# migrate - Migrate MCP Description Versions
+
+## Purpose
+Upgrade 0.8.0 to the installed CLI's maintained destination: stable 0.9.0.
+
+## When to Use
+Reviewed format upgrades, not ordinary 0.8.0 processing.
+
+## Basic Usage
+\`\`\`bash
+mcpcontract migrate stable.yaml --output upgraded.yaml --report migration.json
+mcpcontract migrate stable.yaml --key-order document --output normalized.yaml
+\`\`\`
+
+## Common Patterns
+Blockers stop output. Use \`--fixes file.json\` for reviewed fixes and \`--patch\` for JSON Patch output.
+
+\`\`\`json
+{ "fixes": [{ "fix": "remove-property", "path": ["tools", 0, "annotations", "customFlag"] }] }
+\`\`\`
+
+Fix paths and patches refer to the 0.8.0 input. Reports: steps and selectors. \`--selector\`: destination rules, not format. No guessed fixes.
+Key order: \`preserve\` (default), \`document\` (same as normalize), or \`sorted\`. Ordering does not alter patch values.
+Already-current inputs are validated and reported unchanged; no implicit RC-to-RC conversion.
+\`--to-version\` is not supported by migrate. Pin the CLI version for reproducibility.
+0.7.0 inputs require CLI 2.0.5's convert command first. No migration recommendation is printed by migrate itself.
+`;
+
 // ============================================================================
 // COMMAND IMPLEMENTATION
 // ============================================================================
@@ -1471,9 +1579,9 @@ export function agentsCommand(): Command {
   
   cmd
     .description('Agent-optimized help (for Copilot, Claude, ChatGPT, etc.)')
-    .option('--command <name>', 'Get help for specific command (dump, validate, diff, breaking, changelog, document, rules, completion)')
+    .option('--command <name>', 'Get help for a specific command')
     .option('--workflows', 'Show all end-to-end workflows')
-    .option('--all', 'Output all commands in single document (~7K tokens)')
+    .option('--all', 'Output all commands in single document')
     .action((options?: { command?: string; workflows?: boolean; all?: boolean }) => {
       // All mode: output complete reference
       if (options?.all) {
@@ -1486,6 +1594,10 @@ export function agentsCommand(): Command {
         const allGuides = [
           DUMP_GUIDE,
           SPLIT_GUIDE,
+          CONVERT_GUIDE,
+          PROJECT_GUIDE,
+          NORMALIZE_GUIDE,
+          MIGRATE_GUIDE,
           VALIDATE_GUIDE,
           DIFF_GUIDE,
           BREAKING_GUIDE,
@@ -1523,6 +1635,10 @@ export function agentsCommand(): Command {
         const guides: Record<string, string> = {
           dump: DUMP_GUIDE,
           split: SPLIT_GUIDE,
+          convert: CONVERT_GUIDE,
+          project: PROJECT_GUIDE,
+          normalize: NORMALIZE_GUIDE,
+          migrate: MIGRATE_GUIDE,
           validate: VALIDATE_GUIDE,
           diff: DIFF_GUIDE,
           breaking: BREAKING_GUIDE,
@@ -1540,8 +1656,7 @@ export function agentsCommand(): Command {
           console.error(`Unknown command: ${options.command}`);
           console.error('');
           console.error('Available commands:');
-          console.error('  dump, split, validate, diff, breaking,');
-          console.error('  changelog, compare, document, rules, completion');
+          console.error(`  ${Object.keys(guides).join(', ')}`);
           console.error('');
           console.error('Usage: mcpcontract agents --command <name>');
           console.error('       mcpcontract agents --workflows');

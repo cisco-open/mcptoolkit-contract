@@ -4,15 +4,11 @@
 
 /**
  * Bidirectional converter between the legacy internal ContractDump and mcpdesc.
- * New output targets MCP Description 0.8.0. Legacy v0.7 documents and
- * x-cisco-metadata remain readable for migration.
+ * New output defaults to stable MCP Description.
  */
 
 import {
-  V0_8_SCHEMA_URI,
-  migrateMcpDescription07To08 as migrateMcpDescription07To08Core,
   projectEffectiveProtocolView,
-  type CoreDiagnostic,
   type SupportedCoreSpecification,
 } from '@mcpdesc/core';
 import {
@@ -26,7 +22,12 @@ import type {
   ClientCapabilities,
   Icon,
 } from './types.js';
-import { Validator } from './validator.js';
+import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
+import {
+  DEFAULT_OUTPUT_VERSION,
+  resolveOutputSelection,
+  resolveMcpDescriptionSelection,
+} from './mcpdesc-target.js';
 
 // ============================================================================
 // mcpdesc Output Types
@@ -180,8 +181,6 @@ export interface XCiscoMetadataV1 {
 // Constants
 // ============================================================================
 
-const MCPDESC_VERSION = '0.8.0';
-const MCPDESC_SCHEMA = V0_8_SCHEMA_URI;
 const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
   'completions',
   'experimental',
@@ -195,6 +194,8 @@ const REPRESENTABLE_SERVER_CAPABILITIES = new Set([
 
 export interface ContractDumpConversionOptions {
   onUnsupportedServerCapabilities?: (capabilities: string[]) => void;
+  toVersion?: string;
+  selector?: SupportedCoreSpecification;
 }
 
 // ============================================================================
@@ -208,9 +209,11 @@ export function contractDumpToMcpDescription(
   dump: ContractDump,
   options: ContractDumpConversionOptions = {},
 ): McpDescDocument {
+  const version = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
+  const selection = resolveOutputSelection(version, options.selector);
   const doc: McpDescDocument = {
-    $schema: MCPDESC_SCHEMA,
-    mcpdesc: MCPDESC_VERSION,
+    $schema: selection.schemaUri,
+    mcpdesc: version,
     info: buildInfo(dump),
     protocolVersions: [dump.serverInfo.protocolVersion],
     transports: buildTransports(dump.dumpDetails.mcpServerConfig),
@@ -487,48 +490,6 @@ export function isContractDump(data: Record<string, unknown>): boolean {
   return data.dumpDetails !== undefined && data.serverInfo !== undefined && data.version !== undefined;
 }
 
-export interface McpDescriptionMigrationResult {
-  document: McpDescDocument;
-  diagnostics: readonly CoreDiagnostic[];
-}
-
-/**
- * Validate a legacy MCP Description against its frozen schema, then migrate it
- * to the current 0.8 specification using the shared core semantics.
- */
-export async function migrateMcpDescription07To08(
-  document: McpDescDocument,
-  sourceName: string = 'data'
-): Promise<McpDescriptionMigrationResult> {
-  if (document.mcpdesc !== '0.7.0') {
-    throw new Error(`Migration requires MCP Description 0.7.0, received ${document.mcpdesc}`);
-  }
-
-  const sourceValidation = await new Validator().validateData(document, 'mcpdesc', sourceName);
-  if (!sourceValidation.valid) {
-    const details = sourceValidation.errors
-      .map((issue) => `${issue.path}: ${issue.message}`)
-      .join('; ');
-    throw new Error(`MCP Description 0.7.0 validation failed: ${details}`);
-  }
-
-  const migration = migrateMcpDescription07To08Core(document, {
-    specification: '0.8.0',
-    sourceValidated: true,
-  });
-  if (!migration.ok) {
-    const details = migration.diagnostics
-      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
-      .join('; ');
-    throw new Error(`Cannot migrate MCP Description 0.7.0: ${details}`);
-  }
-
-  return {
-    document: migration.value as unknown as McpDescDocument,
-    diagnostics: migration.diagnostics,
-  };
-}
-
 /**
  * Parse an MCP description (mcpdesc) document into the internal ContractDump model.
  * The legacy on-disk capability-dump format is no longer accepted as input — use
@@ -536,13 +497,11 @@ export async function migrateMcpDescription07To08(
  */
 export function parseAsContractDump(
   data: Record<string, unknown>,
-  protocolVersion?: string
+  protocolVersion?: string,
+  selector?: SupportedCoreSpecification,
 ): ContractDump {
   if (isMcpDescDocument(data)) {
-    let document = data as unknown as McpDescDocument;
-    if (document.mcpdesc === '0.8.0') {
-      document = projectMcpDescriptionView(document, protocolVersion);
-    }
+    const document = projectMcpDescriptionView(data as unknown as McpDescDocument, protocolVersion, selector);
     return mcpDescriptionToContractDump(document);
   }
   if (isContractDump(data)) {
@@ -556,20 +515,14 @@ export function parseAsContractDump(
 
 export function projectMcpDescriptionView(
   document: McpDescDocument,
-  requestedProtocolVersion?: string
+  requestedProtocolVersion?: string,
+  requestedSelector?: SupportedCoreSpecification,
 ): McpDescDocument {
-  let specification: SupportedCoreSpecification;
-  if (document.$schema === V0_8_SCHEMA_URI) {
-    specification = '0.8.0';
-  } else {
-    throw new Error(
-      `MCP Description 0.8.0 processing requires $schema ${V0_8_SCHEMA_URI}`
-    );
-  }
+  const specification = getMcpDescriptionSelector(document, requestedSelector);
 
   const declaredVersions = document.protocolVersions;
   if (!Array.isArray(declaredVersions) || declaredVersions.length === 0) {
-    throw new Error('MCP Description 0.8.0 requires non-empty protocolVersions');
+    throw new Error(`MCP Description ${document.mcpdesc} requires non-empty protocolVersions`);
   }
 
   const selectedVersion = requestedProtocolVersion ?? (
@@ -585,16 +538,23 @@ export function projectMcpDescriptionView(
   }
 
   const projection = projectEffectiveProtocolView(document, {
-    specification,
+    selector: specification,
     protocolVersion: selectedVersion as SupportedProtocolVersion,
   });
   if (!projection.ok) {
     const details = projection.diagnostics
-      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+      .map(formatMcpDescriptionDiagnostic)
       .join('; ');
     throw new Error(`Cannot project MCP Description protocol view: ${details}`);
   }
   return projection.value as unknown as McpDescDocument;
+}
+
+export function getMcpDescriptionSelector(
+  document: McpDescDocument,
+  requestedSelector?: SupportedCoreSpecification,
+): SupportedCoreSpecification {
+  return resolveMcpDescriptionSelection(document, requestedSelector).selector;
 }
 
 // ============================================================================

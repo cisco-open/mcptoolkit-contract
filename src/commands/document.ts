@@ -7,8 +7,7 @@
  */
 
 import { Command } from 'commander';
-import { readFile, writeFile } from 'fs/promises';
-import { parse as yamlParse } from 'yaml';
+import { writeFile } from 'fs/promises';
 import { Renderer, type MarkdownEngine } from '../lib/renderer.js';
 
 export interface DocumentCommandOptions {
@@ -21,6 +20,7 @@ export interface DocumentCommandOptions {
   showExtractionDetails?: boolean;
   markdownEngine?: MarkdownEngine;
   protocolVersion?: string;
+  selector?: string;
 }
 
 export function createDocumentCommand(): Command {
@@ -28,16 +28,19 @@ export function createDocumentCommand(): Command {
 
   command
     .description('Generate documentation from an MCP description file')
-    .argument('[file]', 'Path to MCP description file')
+    .usage('[options] <file>')
+    .argument('[file]', 'Path to MCP description file (required unless using --list)')
     .option('-t, --template <name>', 'Template: mcpdesc-documentation, reference-documentation, card-view (or path to .hbs file)')
     .option('-r, --rendering <mode>', 'Rendering mode: full (detailed) or reference (concise)', 'full')
-    .option('--protocol-version <version>', 'Render one effective MCP protocol view')
+    .option('--protocol-version <version>', 'Render one effective MCP protocol view (required for multi-version input)')
+    .option('--selector <selector>', 'Pin the MCP Description selector')
     .option('-o, --output <path>', 'Output file path (prints to stdout if not specified)')
-    .option('--type <type>', 'Input file type: mcpdesc, dump (legacy), or auto (auto-detect)', 'auto')
+    .option('--type <type>', 'Input file type: mcpdesc or auto (auto-detect); convert legacy dumps first', 'auto')
     .option('--list', 'List available built-in templates')
     .option('--show-extraction-details', 'Show session, CORS, and extraction information sections', false)
     .option('--markdown-engine <engine>', 'Markdown engine for HTML templates: marked (default), markdown-it, snarkdown', 'marked')
     .option('-q, --quiet', 'Suppress progress messages', false)
+    .addHelpText('after', () => `\nWithout an input file: mcpcontract ${command.name()} --list`)
     .action(async (file: string | undefined, options: DocumentCommandOptions) => {
       try {
         await documentCommand(file, options);
@@ -87,38 +90,7 @@ async function documentCommand(file: string | undefined, options: DocumentComman
   // Auto-detect file type if needed
   let fileType = options.type;
   if (fileType === 'auto') {
-    try {
-      const content = await readFile(file, 'utf-8');
-      
-      // Try to parse as JSON or YAML
-      let data: any;
-      try {
-        data = JSON.parse(content);
-      } catch {
-        try {
-          data = yamlParse(content);
-        } catch (yamlError) {
-          throw new Error(`Failed to parse file as JSON or YAML: ${(yamlError as Error).message}`);
-        }
-      }
-
-      // Detect based on structure — mcpdesc only
-      if (data.mcpdesc) {
-        fileType = 'mcpdesc';
-        log(`  Detected: MCP description`);
-      } else if (data.dumpDetails && data.serverInfo && data.version) {
-        throw new Error(
-          'Legacy capability dumps are no longer supported. Convert first: mcpcontract convert <file>'
-        );
-      } else {
-        throw new Error('Unable to auto-detect file type. Please specify --type');
-      }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('parse')) {
-        throw error;
-      }
-      throw new Error(`Failed to read file: ${(error as Error).message}`);
-    }
+    fileType = 'mcpdesc';
   } else {
     log(`  Type: ${fileType}`);
   }
@@ -138,7 +110,7 @@ async function documentCommand(file: string | undefined, options: DocumentComman
     if (fileType === 'mcpdesc' || fileType === 'dump') {
       output = await renderer.renderMcpDescription(file, templateToUse, {
         showDumpInformation: options.showExtractionDetails || false,
-      }, options.protocolVersion);
+      }, options.protocolVersion, options.selector);
     } else {
       throw new Error(`Invalid file type: ${fileType}`);
     }

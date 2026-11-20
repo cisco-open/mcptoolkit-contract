@@ -18,6 +18,9 @@ import { rulesCommand } from './commands/rules.js';
 import { agentsCommand } from './commands/agents.js';
 import { splitCommand } from './commands/split.js';
 import { convertCommand } from './commands/convert.js';
+import { projectCommand } from './commands/project.js';
+import { migrateCommand } from './commands/migrate.js';
+import { normalizeCommand } from './commands/normalize.js';
 
 // Read version from package.json
 const packageJsonPath = new URL('../package.json', import.meta.url).pathname;
@@ -29,6 +32,14 @@ const program = new Command();
 program
   .name('mcpcontract')
   .usage('[command] [options]')
+  .configureHelp({
+    subcommandTerm: (command) => {
+      const usage = command.parent === program
+        ? command.usage().replace(/\s*\[options\]\s*/g, ' ').trim()
+        : command.usage();
+      return `${command.name()} ${usage}`.trim();
+    },
+  })
   .description('Comprehensive MCP server contract toolkit - dumps capabilities, generates changelogs and renders documentation')
   .version(version)
   .addHelpText('after', '\nFor AI coding assistants (Copilot, Claude, etc.): Use "mcpcontract agents" for optimized command reference');
@@ -37,6 +48,9 @@ program
 program.addCommand(dumpCommand());
 program.addCommand(splitCommand());
 program.addCommand(convertCommand());
+program.addCommand(projectCommand());
+program.addCommand(normalizeCommand());
+program.addCommand(migrateCommand());
 program.addCommand(createDocumentCommand());
 // Register 'render' as hidden alias for backward compatibility
 const renderAlias = createDocumentCommand();
@@ -47,14 +61,14 @@ program.addCommand(breakingCommand);
 program.addCommand(changelogCommand);
 program.addCommand(compareCommand);
 program.addCommand(rulesCommand());
-program.addCommand(validateCommand());
+program.addCommand(validateCommand(version));
 program.addCommand(completionCommand());
 program.addCommand(agentsCommand());
 
 // Check if dump should be the default command
 // If first argument is an option (starts with -) and not a known command, inject 'dump'
 // Exception: --help and --version should show main program help/version
-const commands = ['dump', 'split', 'convert', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'compare', 'completion', 'rules', 'agents'];
+const commands = ['dump', 'split', 'convert', 'project', 'normalize', 'migrate', 'validate', 'document', 'render', 'diff', 'breaking', 'changelog', 'compare', 'completion', 'rules', 'agents'];
 const firstArg = process.argv[2];
 const hasCommand = firstArg && commands.includes(firstArg);
 const hasOption = firstArg && firstArg.startsWith('-');

@@ -1,10 +1,18 @@
 import { describe, expect, it } from '@jest/globals';
+import { validateMcpDescription } from '@mcpdesc/validator';
 
 import { Validator } from '../../src/lib/validator.js';
 
 const v08Document = {
   $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
   mcpdesc: '0.8.0',
+  info: { name: 'validator-test', version: '1.0.0' },
+  protocolVersions: ['2026-07-28'],
+};
+
+const v09Document = {
+  $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
+  mcpdesc: '0.9.0',
   info: { name: 'validator-test', version: '1.0.0' },
   protocolVersions: ['2026-07-28'],
 };
@@ -71,7 +79,66 @@ describe('Validator mcpdesc dispatch', () => {
     expect(result.errors).toEqual([]);
   });
 
-  it('retains local validation for legacy v0.7 documents', async () => {
+  it('infers stable 0.9.0 from its schema identity and returns rule results', async () => {
+    const result = await new Validator().validateData(v09Document, 'mcpdesc');
+
+    expect(result.valid).toBe(true);
+    expect(result.selector).toBe('0.9.0');
+    expect(result.ruleResults?.length).toBeGreaterThan(0);
+  });
+
+  it('uses stable 0.9.0 by default and rejects retired selectors', async () => {
+    const document = { ...v09Document };
+    delete (document as { $schema?: string }).$schema;
+
+    const unpinned = await new Validator().validateData(document, 'mcpdesc');
+    expect(unpinned.valid).toBe(true);
+    expect(unpinned.selector).toBe('0.9.0');
+    expect(unpinned.defaulted).toBe(true);
+    expect(unpinned.selectionSource).toBe('default');
+
+    const retired = await new Validator().validateData(document, 'mcpdesc', 'data', '0.9.0-rc.1');
+    expect(retired.valid).toBe(false);
+    expect(retired.errors).toContainEqual(expect.objectContaining({ keyword: 'unsupported-selector' }));
+    const retiredRc3 = await new Validator().validateData(document, 'mcpdesc', 'data', '0.9.0-rc.3');
+    expect(retiredRc3.valid).toBe(false);
+    expect(retiredRc3.errors).toContainEqual(expect.objectContaining({ keyword: 'unsupported-selector' }));
+  });
+
+  it('distinguishes schema-derived selection from explicit overrides', async () => {
+    const validator = new Validator();
+    expect(await validator.validateData(v09Document, 'mcpdesc')).toMatchObject({
+      selector: '0.9.0', selectionSource: 'schema-derived', defaulted: false,
+    });
+    const result = await validator.validateData(v09Document, 'mcpdesc', 'data', '0.9.0');
+    expect(result).toMatchObject({ valid: true, selector: '0.9.0', selectionSource: 'explicit' });
+    expect(result.ruleResults).toContainEqual(expect.objectContaining({ rule: 'mcp.tool.output-schema.protocol-version' }));
+  });
+
+  it('requires a format even if a schema or selector is supplied', async () => {
+    const result = await new Validator().validateData({ $schema: v09Document.$schema }, 'mcpdesc', 'data', '0.9.0');
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(expect.objectContaining({ keyword: 'missing-format-version' }));
+  });
+
+  it('preserves stable 0.9.0 rule results and structured diagnostics', async () => {
+    for (const extra of [{}, { capabilities: [{ logging: {} }] }, { tools: [{ name: 'invalid', inputSchema: 42 }] }]) {
+      const document = { ...v09Document,
+        protocolVersions: ['2025-11-25', '2026-07-28'], ...extra,
+      };
+      const expected = validateMcpDescription(document, { selector: '0.9.0' });
+      const result = await new Validator().validateData(document, 'mcpdesc');
+      expect(result.diagnostics).toEqual(expected.diagnostics);
+      expect(result.ruleResults).toEqual(expected.results);
+      if ('tools' in extra) {
+        expect(result.diagnostics).toContainEqual(expect.objectContaining({
+          detail: expect.objectContaining({ kind: 'invalid-type' }),
+        }));
+      }
+    }
+  });
+
+  it('redirects legacy v0.7 documents instead of validating locally', async () => {
     const validator = new Validator();
     const result = await validator.validateData(
       {
@@ -88,22 +155,26 @@ describe('Validator mcpdesc dispatch', () => {
       'mcpdesc',
     );
 
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
     expect(result.schemaVersion).toBe('0.7.0');
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      keyword: 'unsupported-format-version',
+      message: expect.stringContaining('CLI 2.0.5'),
+    }));
   });
 
   it('rejects unknown mcpdesc versions instead of falling back', async () => {
     const validator = new Validator();
 
-    await expect(
-      validator.validateData(
+    const result = await validator.validateData(
         {
           mcpdesc: '9.9.9',
           info: { name: 'unknown', version: '1.0.0' },
         },
         'mcpdesc',
-      ),
-    ).rejects.toThrow('Unsupported MCP Description version');
+      );
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(expect.objectContaining({ keyword: 'unsupported-format-version' }));
   });
 
   it('rejects a non-canonical schema identity', async () => {

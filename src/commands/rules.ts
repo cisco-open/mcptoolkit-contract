@@ -707,7 +707,7 @@ export function rulesCommand(): Command {
         output += `${helper.commandDescription(cmd)}\n\n`;
         
         // Options section
-        const options = cmd.options;
+        const options = helper.visibleOptions(cmd);
         if (options.length > 0) {
           output += 'Options:\n';
           options.forEach(opt => {
@@ -717,7 +717,7 @@ export function rulesCommand(): Command {
         }
         
         // Subcommands section
-        const commands = cmd.commands;
+        const commands = helper.visibleCommands(cmd);
         if (commands.length > 0) {
           output += 'Subcommands:\n';
           commands.forEach(subCmd => {
@@ -731,7 +731,7 @@ export function rulesCommand(): Command {
     .addHelpText('after', `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-COMMON OPTIONS (available on all subcommands)
+COMMON OPTIONS (all subcommands except list-catalogs)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   --rules <file>                Custom rules YAML file

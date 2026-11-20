@@ -6,16 +6,58 @@
  * Unit tests for bash completion script
  */
 
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { describe, it, expect } from '@jest/globals';
 
 describe('Bash Completion', () => {
+  it.each(['bash', 'zsh', 'fish'])('offers supported selectors and output versions in %s', (shell) => {
+    const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
+    expect(script).toContain('0.8.0-rev.20261021');
+    expect(script).toContain('0.9.0');
+    expect(script).not.toContain('0.9.0-rc.3');
+    expect(script).not.toContain('0.9.0-rc.1');
+    expect(script).not.toContain('0.9.0-draft.4');
+    expect(script).toContain('normalize');
+    expect(script).not.toContain('0.9.0-draft.3');
+    expect(script).toContain(shell === 'fish' ? '-l to-version' : '--to-version');
+  });
+
+  it.each(['bash', 'zsh', 'fish'])('includes migration ordering and the maintained target in %s', (shell) => {
+    const script = execSync(`node build/index.js completion ${shell}`, { encoding: 'utf-8' });
+    if (shell === 'bash') {
+      expect(script).toContain('normalize|migrate)');
+      expect(script).toContain('migrate)\n                        local opts="--selector --fixes --output --report --patch --format --key-order');
+    } else if (shell === 'zsh') {
+      expect(script).not.toContain('--to-version[Deprecated target format version]');
+      expect(script).toContain('--key-order[Key order]:order:(preserve document sorted)');
+    } else {
+      expect(script).toContain('__fish_seen_subcommand_from migrate" -l key-order -d "Key order" -a "preserve document sorted"');
+      expect(script).not.toContain('__fish_seen_subcommand_from migrate" -l to-version');
+    }
+  });
+
   const generateCompletion = (): string => {
     return execSync('node build/index.js completion bash 2>/dev/null', {
       encoding: 'utf-8',
       cwd: process.cwd()
     });
   };
+
+  it('completes migration ordering and destination choices in bash', () => {
+    const script = generateCompletion();
+    const complete = (option: string) => execFileSync('bash', ['-s'], {
+      input: `${script}
+COMP_WORDS=(mcpcontract migrate ${option} "")
+COMP_CWORD=3
+_mcpcontract_completion
+printf '%s\\n' "\${COMPREPLY[@]}"
+`,
+      encoding: 'utf-8',
+    }).trim().split('\n');
+    expect(complete('--key-order')).toEqual(['document', 'preserve', 'sorted']);
+    expect(complete('--to-version')).toEqual(['']);
+    expect(complete('--selector')).toEqual(['0.9.0']);
+  });
 
   it('should generate bash completion script', () => {
     const script = generateCompletion();
@@ -25,7 +67,7 @@ describe('Bash Completion', () => {
 
   it('should include all commands in completion', () => {
     const script = generateCompletion();
-    const commands = ['dump', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
+    const commands = ['dump', 'normalize', 'validate', 'document', 'diff', 'breaking', 'changelog', 'completion', 'rules', 'agents'];
     
     for (const cmd of commands) {
       expect(script).toContain(cmd);
@@ -104,7 +146,7 @@ describe('Bash Completion', () => {
   it('should support enum value completion for --schema', () => {
     const script = generateCompletion();
     expect(script).toContain('--schema)');
-    expect(script).toContain('"mcpdesc mcp-description dump diff diff-breaking dump-split"');
+    expect(script).toContain('"mcpdesc mcp-description diff diff-breaking dump-split"');
   });
 
   it('should support enum value completion for --category', () => {
@@ -122,7 +164,7 @@ describe('Bash Completion', () => {
   it('should support enum value completion for --type', () => {
     const script = generateCompletion();
     expect(script).toContain('--type)');
-    expect(script).toContain('"mcpdesc dump auto"');
+    expect(script).toContain('"mcpdesc auto"');
   });
 });
 

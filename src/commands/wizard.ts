@@ -37,7 +37,7 @@ export interface WizardAnswers {
 /**
  * Main wizard execution (exported for use by dump command)
  */
-export async function runWizardInteractive(): Promise<void> {
+export async function runWizardInteractive(outputOptions: { toVersion?: string; selector?: string } = {}): Promise<void> {
   console.log(`\n${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`);
   console.log(`${BOLD}${CYAN}  MCP Contract Dump Wizard${RESET}`);
   console.log(`${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n`);
@@ -181,6 +181,8 @@ export async function runWizardInteractive(): Promise<void> {
   console.log(`${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n`);
   
   const cmdArgs = buildCommandArgs(answers);
+  if (outputOptions.toVersion) cmdArgs.push('--to-version', outputOptions.toVersion);
+  if (outputOptions.selector) cmdArgs.push('--selector', outputOptions.selector);
   const commandLine = formatCommand(cmdArgs);
   
   console.log(`${BOLD}Generated Command:${RESET}`);

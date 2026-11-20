@@ -30,7 +30,10 @@ Quick reference for AI agents and developers extending this CLI tool.
 **Commands**: 
 - `dump` - Extract capabilities from live MCP server
 - `split` - Split large dumps into focused subsets by filtering rules
-- `convert` - **[DEPRECATED]** Convert between the legacy capability-dump format and mcpdesc YAML (bidirectional); retained only to migrate older dumps
+- `convert` - Show historical CLI guidance only; no conversion is performed
+- `project` - Export an effective protocol view or native MCP declaration
+- `normalize` - Normalize MCP Description member order and JSON/YAML serialization
+- `migrate` - Upgrade MCP Description documents through reviewed steps (maintained 0.9.0 destination)
 - `validate` - Validate files against MCP schemas
 - `document` - Generate human-readable documentation
 - `diff` - Compare dumps and generate structural diff
@@ -49,7 +52,10 @@ mcpcontract/
 │   ├── commands/             # Command implementations
 │   │   ├── dump.ts          # ✅ Extract server capabilities
 │   │   ├── split.ts         # ✅ Split large dumps (Phase 1: tools)
-│   │   ├── convert.ts       # ✅ Convert between dump and mcpdesc formats
+│   │   ├── convert.ts       # ✅ Historical conversion guidance
+│   │   ├── project.ts       # ✅ Export effective/native protocol views
+│   │   ├── normalize.ts     # ✅ Document-oriented MCP Description serialization
+│   │   ├── migrate.ts       # ✅ Reviewed MCP Description version conversion
 │   │   ├── validate.ts      # ✅ Validate against schemas
 │   │   ├── document.ts      # ✅ Generate documentation
 │   │   ├── diff.ts          # ✅ Compare dumps, generate structural diff
@@ -63,6 +69,7 @@ mcpcontract/
 │       ├── dumper.ts         # Capability extraction
 │       ├── config.ts         # Config parser
 │       ├── formatters.ts     # JSON/YAML/Markdown output
+│       ├── mcpdesc-diagnostics.ts # Format structured MCP Description diagnostics
 │       ├── types.ts          # Type definitions
 │       ├── validator.ts      # ✅ Schema validation
 │       ├── renderer.ts       # ✅ Template rendering
@@ -131,6 +138,32 @@ mcpcontract/
 
 ## MCP Description Specification Ownership
 
+Selector policy and the CLI support set are centralized in
+`src/lib/mcpdesc-target.ts`. Required `mcpdesc` identifies input format;
+explicit selector wins over recognized same-format schema identity, then the
+maintained format default applies. Shared 0.8.0 identity selects the maintained
+revision; the 0.9.0 identity selects the stable specification. Core and
+validator are pinned at 0.13.0 / 0.14.0.
+
+Generation defaults to stable `0.9.0`; `dump --to-version 0.8.0` selects the
+previous stable format. Migration targets `0.9.0` using the maintained stable
+rules. Modern processing supports
+0.8.0 and 0.9.0; native projection requires 0.9.0. Reject 0.7.0 with guidance
+to use CLI 2.0.5's `convert` for migration to 0.8.0. CLI 1.2.4 only processes
+historical 0.7.0; it cannot emit 0.8.0. Current `convert` is guidance-only.
+Recommend `migrate` on stderr for 0.8.0 input outside
+`migrate`, including quiet mode. Processing never silently upgrades input. CLI support is
+narrower than library support; retired drafts and RC.1/RC.2 require a matching
+historical CLI. Modern document readers use core's JSON scalar recognition
+with string fallback. YAML document producers use `presentation: 'normalized'`;
+JSON and command-specific ordering defaults remain unchanged. `normalize`
+supports document, preserve, and sorted ordering. `migrate` supports the same
+orders, defaulting to preserve. Native
+projection can opt into document key order with `--key-order document`.
+Update the README compatibility table when defaults or support change. See the
+[selector design](docs/maintainers/design/versions-and-selectors.md) and
+[user guide](docs/versions-and-selectors.md).
+
 The MCP Description (`mcpdesc`) specification is published at
 [mcpdesc.org](https://mcpdesc.org/format/) and developed in the canonical
 [`mcpdesc/mcpdesc-specification`](https://github.com/mcpdesc/mcpdesc-specification)
@@ -139,7 +172,7 @@ there, not in this CLI repository.
 
 This repository retains the local [`spec/`](spec/) tree and
 [`schemas/mcp-description/`](schemas/mcp-description/) versions 0.1.0–0.7.0 as
-historical material for legacy validation and migration. Do not extend those
+historical material, not active validation or migration support. Do not extend those
 trees with new specification versions.
 
 ### Why it matters
@@ -156,10 +189,10 @@ silently redefine the format or patch a bundled historical schema.
 - **Track upstream spec releases.** Update the `@mcpdesc/*` dependencies and the
   CLI to emit and validate the released version, then refresh tests, templates,
   docs, and `schemas/cli-schema-compatibility.json`.
-- **Preserve backward compatibility whenever possible.** Keep older schema
-  versions in `schemas/mcp-description/` so `validate` and `diff` still accept
-  legacy documents authored against them. Only drop support when continued
-  maintenance is genuinely infeasible, and call it out in the CHANGELOG.
+- **Preserve backward compatibility whenever possible.** Retain archived schema
+  versions in `schemas/mcp-description/` as historical material. Active support
+  is explicitly narrower: 0.7.0 processing and conversion require historical
+  CLIs. Document support removals and actionable alternatives in the CHANGELOG.
 - **Do not silently diverge.** Report format defects upstream. Adopt a fixed,
   released schema or validator version rather than editing the format locally.
 

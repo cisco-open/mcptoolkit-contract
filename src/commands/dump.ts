@@ -20,8 +20,10 @@ import {
   type CLIOptions
 } from '../lib/types.js';
 import { contractDumpToMcpDescription, applyEnrichment, type EnrichmentInfo } from '../lib/mcpdesc-converter.js';
-import { parse as yamlParse } from 'yaml';
+import { parseDocumentSource } from '../lib/mcpdesc-io.js';
 import { validateMcpDescription } from '@mcpdesc/validator';
+import { DEFAULT_OUTPUT_VERSION, resolveOutputSelection } from '../lib/mcpdesc-target.js';
+import { formatMcpDescriptionDiagnostic } from '../lib/mcpdesc-diagnostics.js';
 
 // ANSI color codes
 const GREEN = '\x1b[32m';
@@ -113,6 +115,10 @@ function logImplicitAuthDefault(options: CLIOptions): void {
 /** * Main dump execution
  */
 async function runDump(options: CLIOptions): Promise<void> {
+  const toVersion = options.toVersion ?? DEFAULT_OUTPUT_VERSION;
+  const selection = resolveOutputSelection(toVersion, options.selector);
+  const selector = selection.selector;
+  log(`MCP Description ${toVersion}: ${selector} (${selection.source})`, options);
   // Show helpful message about --quiet flag when outputting to stdout
   if (!options.output && !options.quiet) {
     log('Tip: Use --quiet flag to suppress these messages when piping output', options);
@@ -211,6 +217,8 @@ async function runDump(options: CLIOptions): Promise<void> {
 
   // Convert to mcpdesc format
   const mcpdesc = contractDumpToMcpDescription(dump, {
+    toVersion,
+    selector,
     onUnsupportedServerCapabilities: (capabilities) => {
       console.error(
         `[WARN] Server capabilities not representable in MCP Description were omitted: ${capabilities.join(', ')}. ` +
@@ -223,34 +231,31 @@ async function runDump(options: CLIOptions): Promise<void> {
   if (options.info) {
     log(`Applying enrichment from: ${options.info}`, options);
     const infoContent = await readFile(options.info as string, 'utf-8');
-    let info: EnrichmentInfo;
-    try {
-      info = JSON.parse(infoContent);
-    } catch {
-      try {
-        info = yamlParse(infoContent) as EnrichmentInfo;
-      } catch (yamlError) {
-        throw new ConfigurationError(`Failed to parse info file as JSON or YAML: ${(yamlError as Error).message}`);
-      }
+    const { value: info } = parseDocumentSource(infoContent, options.info as string);
+    if (typeof info !== 'object' || info === null || Array.isArray(info)) {
+      throw new ConfigurationError('Info file must contain an enrichment object');
     }
-    applyEnrichment(mcpdesc, info);
+    applyEnrichment(mcpdesc, info as EnrichmentInfo);
     log('✓ Enrichment applied', options);
   }
 
-  const validation = validateMcpDescription(mcpdesc);
+  const validation = validateMcpDescription(
+    mcpdesc,
+    { selector },
+  );
   if (!validation.valid) {
     const diagnostics = validation.diagnostics
-      .map((diagnostic) => `${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`)
+      .map(formatMcpDescriptionDiagnostic)
       .join('\n');
     throw new MCPProtocolError(
-      `Captured server description is not valid MCP Description 0.8.0:\n${diagnostics}`,
+      `Captured server description is not valid MCP Description ${mcpdesc.mcpdesc}:\n${diagnostics}`,
       'INVALID_MCP_DESCRIPTION'
     );
   }
   for (const diagnostic of validation.diagnostics) {
     if (diagnostic.severity === 'warning') {
       console.error(
-        `[WARN] [${diagnostic.code}] at ${diagnostic.path.join('/') || '/'}: ${diagnostic.message}`
+        `[WARN] ${formatMcpDescriptionDiagnostic(diagnostic)}`
       );
     }
   }
@@ -284,7 +289,8 @@ async function runDump(options: CLIOptions): Promise<void> {
     log(`✓ Dump written to: ${options.output}`, options);
   } else {
     // Write to stdout (actual output, not stderr)
-    console.log(output);
+    const isYaml = format.toLowerCase() === 'yaml' || format.toLowerCase() === 'yml';
+    process.stdout.write(isYaml ? output : `${output}\n`);
   }
 
   log('', options);
@@ -325,6 +331,8 @@ export function dumpCommand(): Command {
     .option('--skip-cors-check', 'Skip CORS support detection for HTTP/SSE transports', false)
     .option('--cors-origin <origin>', 'Origin header for CORS preflight testing (default: http://localhost:3000)', 'http://localhost:3000')
     .option('--page-size <number>', 'Request specific page size for pagination (hint to server, not guaranteed)', parseNumber)
+    .option('--to-version <version>', 'Output MCP Description format: 0.9.0 (default) or 0.8.0', DEFAULT_OUTPUT_VERSION)
+    .option('--selector <selector>', 'Pin rules for the requested output format')
     .option('-i, --info <path>', 'Enrichment info file (JSON/YAML) — adds contact, license, security, and other metadata')
     .configureHelp({
       formatHelp: (cmd, helper) => {
@@ -353,6 +361,8 @@ CONNECTION
 OUTPUT
   -o, --output <path>           Output file path (default: stdout)
   -f, --format <format>         Output format: json, yaml, or markdown (default: "json")
+  --to-version <version>        MCP Description format: 0.9.0 or 0.8.0 (default: "0.9.0")
+  --selector <selector>         Pin output rules (default: maintained rules for the output format)
   --compact                     Emit compact JSON
   -i, --info <path>             Enrich output from a JSON/YAML metadata file
   -q, --quiet                   Suppress progress messages
@@ -390,7 +400,8 @@ For advanced workflows and behavior details:
         if (options.wizard || !hasAnyOption) {
           // Dynamically import wizard to avoid circular dependencies
           const { runWizardInteractive } = await import('./wizard.js');
-          await runWizardInteractive();
+          resolveOutputSelection(options.toVersion, options.selector);
+          await runWizardInteractive({ toVersion: options.toVersion, selector: options.selector });
           return;
         }
         

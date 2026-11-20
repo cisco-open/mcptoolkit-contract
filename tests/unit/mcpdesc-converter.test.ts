@@ -11,8 +11,8 @@ import { validateMcpDescription } from '@mcpdesc/validator';
 import {
   contractDumpToMcpDescription,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07To08,
   parseAsContractDump,
+  projectMcpDescriptionView,
   applyEnrichment,
   McpDescTag,
   type McpDescDocument,
@@ -71,14 +71,14 @@ describe('mcpdesc-converter', () => {
   });
 
   describe('contractDumpToMcpDescription', () => {
-    it('emits a valid v0.8 observed protocol view without vendor metadata', () => {
+    it('emits a stable observed protocol view without vendor metadata', () => {
       const dump = minimalDump();
       dump.serverInfo.instructions = 'Use tool_a for test operations.';
       const doc = contractDumpToMcpDescription(dump);
 
       expect(doc).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
-        mcpdesc: '0.8.0',
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
+        mcpdesc: '0.9.0',
         protocolVersions: ['2025-06-18'],
         instructions: 'Use tool_a for test operations.',
         capabilities: [{ tools: {} }],
@@ -89,7 +89,7 @@ describe('mcpdesc-converter', () => {
       const validation = validateMcpDescription(doc);
       expect(validation.diagnostics).toEqual([]);
       expect(validation.valid).toBe(true);
-      expect(validation.selector).toBe('0.8.0-rev.20261021');
+      expect(validation.selector).toBe('0.9.0');
       expect(validation.defaulted).toBe(true);
     });
 
@@ -113,6 +113,27 @@ describe('mcpdesc-converter', () => {
         'futureCapability',
         'protocolVersions',
       ]);
+    });
+
+    it('emits stable 0.9.0 by default and rejects retired selectors', () => {
+      const doc = contractDumpToMcpDescription(minimalDump(), { toVersion: '0.9.0' });
+      expect(doc).toMatchObject({
+        $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
+        mcpdesc: '0.9.0',
+      });
+      expect(validateMcpDescription(doc, { selector: '0.9.0' }).valid).toBe(true);
+      expect(() => contractDumpToMcpDescription(minimalDump(), {
+        toVersion: '0.9.0',
+        selector: '0.9.0-draft.4',
+      })).toThrow();
+      expect(contractDumpToMcpDescription(minimalDump()).mcpdesc).toBe('0.9.0');
+    });
+
+    it('uses stable 0.9.0 for requested output and rejects retired selectors', () => {
+      const doc = contractDumpToMcpDescription(minimalDump(), { toVersion: '0.9.0' });
+      expect(doc.$schema).toBe('https://mcpdesc.org/schema/mcp-description/0.9.0.json');
+      expect(validateMcpDescription(doc).valid).toBe(true);
+      expect(() => contractDumpToMcpDescription(minimalDump(), { selector: '0.9.0-rc.3' })).toThrow();
     });
 
     it('should not include root tags when dump has none', () => {
@@ -195,23 +216,53 @@ describe('mcpdesc-converter', () => {
       ],
     };
 
-    it('requires an explicit selection for a multi-version document', () => {
+    it('requires an MCP revision for multi-version processing', () => {
       expect(() => parseAsContractDump(multiVersionDocument)).toThrow(
-        /select one with --protocol-version/
+        /--protocol-version/
       );
     });
 
-    it('retains only declarations effective for the selected protocol revision', () => {
+    it('processes stable input using its maintained rules', () => {
       const dump = parseAsContractDump(multiVersionDocument, '2026-07-28');
-
       expect(dump.serverInfo.protocolVersion).toBe('2026-07-28');
-      expect(dump.tools).toEqual([
-        expect.objectContaining({
+      expect(dump.tools[0]).toMatchObject({ description: 'Modern behavior' });
+    });
+  });
+
+  describe('v0.9 stable protocol view projection', () => {
+    const rcDocument = {
+      $schema: 'https://mcpdesc.org/schema/mcp-description/0.9.0.json',
+      mcpdesc: '0.9.0',
+      info: { name: 'rc-server', version: '1.0.0' },
+      protocolVersions: ['2025-11-25', '2026-07-28'],
+      tools: [
+        {
+          name: 'run_job',
+          description: 'Legacy behavior',
+          protocolVersions: ['2025-11-25'],
+          inputSchema: { type: 'object' },
+        },
+        {
           name: 'run_job',
           description: 'Modern behavior',
-        }),
+          protocolVersions: ['2026-07-28'],
+          inputSchema: { type: 'object' },
+        },
+      ],
+    };
+
+    it('projects only the declaration effective for the selected revision', () => {
+      const view = projectMcpDescriptionView(rcDocument, '2026-07-28');
+      expect(view.protocolVersions).toEqual(['2026-07-28']);
+      expect(view.tools).toEqual([
+        expect.objectContaining({ name: 'run_job', description: 'Modern behavior' }),
       ]);
-      expect(dump.tools[0]).not.toHaveProperty('protocolVersions');
+    });
+
+    it('uses stable 0.9.0 rules for internal diff conversion', () => {
+      const dump = parseAsContractDump(rcDocument, '2025-11-25');
+      expect(dump.serverInfo.protocolVersion).toBe('2025-11-25');
+      expect(dump.tools[0]).toMatchObject({ description: 'Legacy behavior' });
     });
   });
 
@@ -228,28 +279,8 @@ describe('mcpdesc-converter', () => {
       tools: [{ name: 'search', inputSchema: { type: 'object' } }],
     };
 
-    it('validates the legacy source and delegates migration to core', async () => {
-      const result = await migrateMcpDescription07To08(legacyDocument, 'legacy.json');
-
-      expect(result.document).toMatchObject({
-        $schema: 'https://mcpdesc.org/schema/mcp-description/0.8.0.json',
-        mcpdesc: '0.8.0',
-        protocolVersions: ['2025-11-25'],
-        capabilities: [{ tools: { listChanged: true } }],
-      });
-      expect(result.document.info).not.toHaveProperty('protocolVersion');
-      expect(legacyDocument.info).toHaveProperty('protocolVersion', '2025-11-25');
-    });
-
-    it('rejects a legacy source that does not satisfy the frozen schema', async () => {
-      const invalid = {
-        ...legacyDocument,
-        info: { ...legacyDocument.info, name: '' },
-      };
-
-      await expect(migrateMcpDescription07To08(invalid, 'invalid.json')).rejects.toThrow(
-        /0\.7\.0 validation failed/
-      );
+    it('redirects legacy sources to the historical conversion CLI', () => {
+      expect(() => projectMcpDescriptionView(legacyDocument)).toThrow('CLI 2.0.5');
     });
   });
 });

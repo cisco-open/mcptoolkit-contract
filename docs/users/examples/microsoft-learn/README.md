@@ -5,6 +5,9 @@ Sample artifacts captured from the public **[Microsoft Learn MCP Server](https:/
 [complete workflow tutorial](../../tutorials/complete-workflow.md) so you can try
 the full pipeline without standing up your own server.
 
+All three dump files use stable mcpdesc `0.9.0`; the two dated files preserve
+earlier server states for comparison.
+
 | File | Role |
 |------|------|
 | `ms-learn-dump.yaml` | Current capability dump (mcpdesc) — 3 tools |

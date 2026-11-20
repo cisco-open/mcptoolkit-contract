@@ -10,8 +10,6 @@ import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { parse as yamlParse } from 'yaml';
 import {
-  V0_8_SCHEMA_URI,
-  parseMcpDescriptionSource,
   selectMcpDescriptionDeclarations,
   type McpDescriptionDocument,
   type SupportedCoreSpecification,
@@ -27,20 +25,28 @@ import type {
 import {
   isMcpDescDocument,
   mcpDescriptionToContractDump,
-  migrateMcpDescription07To08,
+  getMcpDescriptionSelector,
   type McpDescDocument,
 } from './mcpdesc-converter.js';
+import { formatMcpDescriptionDiagnostic } from './mcpdesc-diagnostics.js';
+import { parseMcpDescriptionInput } from './mcpdesc-io.js';
 
 export interface SplitOptions {
   mcpdescPath: string;
   configPath: string;
   format?: 'json' | 'yaml';
   includeUnmatched?: boolean;
+  selector?: string;
 }
 
 export class Splitter {
   private dump!: ContractDump;
   private document!: McpDescriptionDocument;
+  private selector!: SupportedCoreSpecification;
+
+  get selectedSelector(): SupportedCoreSpecification {
+    return this.selector;
+  }
   private config!: SplitConfig;
   private stats: SplitStats = {
     totalTools: 0,
@@ -53,16 +59,10 @@ export class Splitter {
   /**
    * Load MCP description file
    */
-  async loadMcpDescription(filePath: string): Promise<ContractDump> {
+  async loadMcpDescription(filePath: string, requestedSelector?: SupportedCoreSpecification): Promise<ContractDump> {
     const content = await readFile(filePath, 'utf-8');
 
-    const parsed = parseMcpDescriptionSource(content);
-    if (!parsed.ok) {
-      const details = parsed.diagnostics
-        .map((diagnostic) => diagnostic.message)
-        .join('; ');
-      throw new Error(`Failed to parse MCP description file as JSON or YAML: ${details}`);
-    }
+    const parsed = parseMcpDescriptionInput(content, filePath);
 
     if (
       typeof parsed.value !== 'object' ||
@@ -73,13 +73,8 @@ export class Splitter {
       throw new Error('Unrecognized input format: expected an MCP description (mcpdesc) document');
     }
 
-    let document = parsed.value as unknown as McpDescDocument;
-    if (document.mcpdesc === '0.7.0') {
-      document = (await migrateMcpDescription07To08(document, filePath)).document;
-    } else if (document.mcpdesc !== '0.8.0') {
-      throw new Error(`Unsupported MCP Description version: ${document.mcpdesc}`);
-    }
-
+    const document = parsed.value as unknown as McpDescDocument;
+    this.selector = getMcpDescriptionSelector(document, requestedSelector);
     this.document = document as unknown as McpDescriptionDocument;
     const dump = mcpDescriptionToContractDump(document);
 
@@ -89,20 +84,13 @@ export class Splitter {
   }
 
   private selectDocument(toolNames: readonly string[]): McpDescriptionDocument {
-    let specification: SupportedCoreSpecification;
-    if (this.document.$schema === V0_8_SCHEMA_URI) {
-      specification = '0.8.0';
-    } else {
-      throw new Error(`Unsupported MCP Description schema: ${String(this.document.$schema)}`);
-    }
-
     const selection = selectMcpDescriptionDeclarations(this.document, {
-      specification,
+      selector: this.selector,
       selections: { tools: toolNames },
     });
     if (!selection.ok) {
       const details = selection.diagnostics
-        .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
+        .map(formatMcpDescriptionDiagnostic)
         .join('; ');
       throw new Error(`Cannot select MCP Description declarations: ${details}`);
     }
@@ -285,7 +273,7 @@ export class Splitter {
     };
 
     // Load MCP description and config
-    await this.loadMcpDescription(options.mcpdescPath);
+    await this.loadMcpDescription(options.mcpdescPath, options.selector as SupportedCoreSpecification | undefined);
     await this.loadConfig(options.configPath);
 
     const results: SplitResult[] = [];

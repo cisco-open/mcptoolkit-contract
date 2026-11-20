@@ -38,6 +38,8 @@ mcpcontract dump \
 
 Add `--verbose` to debug connection problems. Use `--info enrichment.yaml` to embed contact, license, and distribution metadata at dump time.
 
+New dumps use stable mcpdesc `0.9.0` by default; see the [schema reference](../reference/schemas.md) for supported versions.
+
 **Other transport examples:**
 
 ```bash

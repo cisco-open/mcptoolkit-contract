@@ -8,21 +8,23 @@
 
 import { Command } from 'commander';
 import * as fs from 'fs';
-import * as yaml from 'yaml';
+import { parseMcpDescriptionInput } from '../lib/mcpdesc-io.js';
 import { Differ } from '../lib/differ.js';
 import { parseAsContractDump, isMcpDescDocument } from '../lib/mcpdesc-converter.js';
 
 export const diffCommand = new Command('diff')
   .description('Generate a structural diff between two MCP descriptions')
+  .usage('--from <file> --to <file> [options]')
   .requiredOption('--from <file>', 'Source version (MCP description, JSON/YAML)')
   .requiredOption('--to <file>', 'Target version (MCP description, JSON/YAML)')
-  .option('--protocol-version <version>', 'Compare one effective MCP protocol view')
+  .option('--protocol-version <version>', 'Compare one effective MCP protocol view (required for multi-version input)')
+  .option('--selector <selector>', 'Pin the MCP Description selector')
   .option('--output <file>', 'Structural diff output file (default: stdout)')
   .option('--detect-renames', 'Use similarity scoring to detect renames (not yet implemented)', false)
   .option('--quiet', 'Suppress informational messages', false)
   .configureHelp({
     formatHelp: (cmd, helper) => {
-      return `Usage: mcpcontract diff --from <file> --to <file> [options]
+      return `Usage: ${helper.commandUsage(cmd)}
 
 ${helper.commandDescription(cmd)}
 
@@ -30,8 +32,10 @@ Options:
   --from <file>                 Source version (MCP description, JSON/YAML) [required]
   --to <file>                   Target version (MCP description, JSON/YAML) [required]
   --protocol-version <version>  Compare one effective MCP protocol view
+                                (required for multi-version input)
+  --selector <selector>         Pin the MCP Description selector
   --output <file>               Structural diff output file (default: stdout)
-  --detect-renames              Use similarity scoring to detect renames (default: false)
+  --detect-renames              Rename detection (not yet implemented)
   --quiet                       Suppress informational messages (default: false)
   -h, --help                    Display help for command
 
@@ -51,7 +55,7 @@ EXAMPLES:
   })
   .action(async (options) => {
     try {
-      const { from: fromFile, to: toFile, protocolVersion, output, detectRenames, quiet } = options;
+      const { from: fromFile, to: toFile, protocolVersion, selector, output, detectRenames, quiet } = options;
 
       if (!quiet) {
         console.error(`🔍 Comparing ${fromFile} → ${toFile}...`);
@@ -77,22 +81,14 @@ EXAMPLES:
       let toData: any;
 
       try {
-        if (fromFile.endsWith('.yaml') || fromFile.endsWith('.yml')) {
-          fromData = yaml.parse(fromContent);
-        } else {
-          fromData = JSON.parse(fromContent);
-        }
+        fromData = parseMcpDescriptionInput(fromContent, fromFile).value;
       } catch (error) {
         console.error(`❌ Error parsing source file: ${(error as Error).message}`);
         process.exit(2);
       }
 
       try {
-        if (toFile.endsWith('.yaml') || toFile.endsWith('.yml')) {
-          toData = yaml.parse(toContent);
-        } else {
-          toData = JSON.parse(toContent);
-        }
+        toData = parseMcpDescriptionInput(toContent, toFile).value;
       } catch (error) {
         console.error(`❌ Error parsing target file: ${(error as Error).message}`);
         process.exit(2);
@@ -108,8 +104,8 @@ EXAMPLES:
           process.exit(2);
         }
       }
-      fromData = parseAsContractDump(fromData, protocolVersion);
-      toData = parseAsContractDump(toData, protocolVersion);
+      fromData = parseAsContractDump(fromData, protocolVersion, selector);
+      toData = parseAsContractDump(toData, protocolVersion, selector);
 
       // Create differ and compare
       const differ = new Differ({ detectRenames });

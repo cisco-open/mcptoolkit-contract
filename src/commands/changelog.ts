@@ -37,6 +37,7 @@ function groupByCapabilityName(changes: any[]): Array<{ name: string; changes: a
 
 export const changelogCommand = new Command('changelog')
   .description('Generate a human-readable changelog from a structural diff or annotated diff')
+  .usage('--diff <file> --output <file> [options]')
   .requiredOption('--diff <file>', 'Diff from \'diff\', or annotated diff from \'breaking\'')
   .requiredOption('--output <file>', 'Changelog output file')
   .option('--format <type>', 'Template format: release (default), compact', 'release')

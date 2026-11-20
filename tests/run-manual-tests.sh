@@ -65,6 +65,21 @@ echo "---------------------"
 node build/index.js --help > /dev/null 2>&1 && echo "✓ Main help working"
 node build/index.js dump --help > /dev/null 2>&1 && echo "✓ Dump help working"
 node build/index.js rules --help > /dev/null 2>&1 && echo "✓ Rules help working"
+node build/index.js convert --help > /dev/null 2>&1 && echo "✓ Convert help working"
+node build/index.js migrate --help > /dev/null 2>&1 && echo "✓ Migrate help working"
+node build/index.js project tests/fixtures/dumps/multi-protocol.mcpdesc.json \
+  --protocol-version 2026-07-28 --quiet > /dev/null && echo "✓ Protocol projection working"
+echo ""
+
+# Test 4: Selector precedence and output-version options (offline)
+echo "Test 4: Selector precedence and stable output options"
+echo "-----------------------------------------------------"
+node build/index.js dump --help | grep -q -- '--to-version'
+node build/index.js convert --help | grep -q -- '--to-version'
+node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --format json |
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0" || result.selectionSource!=="schema-derived") process.exit(1); console.log("Schema-derived stable 0.9.0 pin verified");'
+node build/index.js validate tests/fixtures/dumps/multi-protocol.mcpdesc.json --selector 0.9.0 --format json |
+  node --input-type=module -e 'let text=""; for await (const chunk of process.stdin) text+=chunk; const result=JSON.parse(text); if (!result.valid || result.selector!=="0.9.0" || result.selectionSource!=="explicit" || !result.ruleResults?.length) process.exit(1); console.log("Explicit stable 0.9.0 override and rule results verified");'
 echo ""
 
 # Test 5: Rules command - list with default catalog
@@ -268,7 +283,7 @@ test ${#COMPREPLY[@]} -eq 3 || exit 1  # json, yaml, markdown
 COMP_WORDS=(mcpcontract validate --schema "")
 COMP_CWORD=3
 _mcpcontract_completion
-test ${#COMPREPLY[@]} -eq 6 || exit 1  # mcpdesc, mcp-description, dump, diff, diff-breaking, dump-split
+test ${#COMPREPLY[@]} -eq 5 || exit 1  # mcpdesc, mcp-description, diff, diff-breaking, dump-split
 
 # Test 10: Enum value completion for --protocol
 COMP_WORDS=(mcpcontract dump --protocol "")

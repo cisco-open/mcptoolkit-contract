@@ -9,11 +9,11 @@
 import { Command } from 'commander';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-import { stringify as yamlStringify } from 'yaml';
 import { Splitter } from '../lib/splitter.js';
 import { Validator } from '../lib/validator.js';
-import { formatJSON } from '../lib/formatters.js';
+import { formatJSON, formatYAML } from '../lib/formatters.js';
 import type { SplitResult } from '../lib/types.js';
+import type { McpDescriptionSelector } from '@mcpdesc/validator';
 
 interface SplitCommandOptions {
   config: string;
@@ -23,6 +23,7 @@ interface SplitCommandOptions {
   dryRun?: boolean;
   validate?: boolean;
   quiet?: boolean;
+  selector?: string;
 }
 
 /**
@@ -47,7 +48,7 @@ function getOutputFormat(dumpPath: string, options: SplitCommandOptions): 'json'
  */
 function formatOutput(data: unknown, format: 'json' | 'yaml', pretty: boolean): string {
   if (format === 'yaml') {
-    return yamlStringify(data, { indent: 2 });
+    return formatYAML(data);
   }
   
   return formatJSON(data, pretty);
@@ -79,11 +80,11 @@ async function writeResult(
 /**
  * Validate a split dump
  */
-async function validateDump(filePath: string, quiet: boolean): Promise<boolean> {
+async function validateDump(filePath: string, quiet: boolean, selector: McpDescriptionSelector): Promise<boolean> {
   const validator = new Validator();
   
   try {
-    const result = await validator.validateFile(filePath, 'mcpdesc');
+    const result = await validator.validateFile(filePath, 'mcpdesc', selector);
     
     if (!result.valid) {
       console.error(`\n✗ Validation failed: ${filePath}`);
@@ -158,8 +159,10 @@ export function splitCommand(): Command {
 
   cmd
     .description('Split large MCP description into focused subsets based on filtering rules')
+    .usage('--config <path> [options] <mcpdesc>')
     .argument('<mcpdesc>', 'Input MCP description file (JSON or YAML)')
     .requiredOption('--config <path>', 'Split configuration file (JSON or YAML)')
+    .option('--selector <selector>', 'Pin the MCP Description selector')
     .option('--output-dir <path>', 'Output directory for split dumps', '.')
     .option('--format <format>', 'Output format (json or yaml, default: auto-detect from input)')
     .option('--pretty', 'Pretty-print JSON output', true)
@@ -200,6 +203,7 @@ export function splitCommand(): Command {
           mcpdescPath: mcpdescPath,
           configPath: options.config,
           includeUnmatched: true,
+          selector: options.selector,
         });
 
         if (!options.quiet) {
@@ -263,7 +267,7 @@ export function splitCommand(): Command {
           
           let allValid = true;
           for (const filePath of outputFiles) {
-            const valid = await validateDump(filePath, options.quiet || false);
+            const valid = await validateDump(filePath, options.quiet || false, splitter.selectedSelector);
             if (!valid) {
               allValid = false;
             }

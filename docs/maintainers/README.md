@@ -9,12 +9,14 @@ If you are looking for usage docs, see [../users/](../users/).
 ### `design/`
 
 - [`architecture.md`](design/architecture.md) — high-level architecture and module overview
+- [Versions and Selectors](design/versions-and-selectors.md) - CLI selection, output-default, and support-lifecycle policy
 - [`design-decisions.md`](design/design-decisions.md) — consolidated design rationale and arbitrations (pagination, CORS, rules engine, schema versioning, deferred designs)
 - [`workflow-examples.md`](design/workflow-examples.md) — end-to-end workflow examples (CI/CD, scripts)
 - [`compare-command.md`](design/compare-command.md) — **proposed (v1.1)** `compare` command + CI/CD guide plan (replaces `scripts/changelog.sh`)
 
 ### `implementation/`
 
+- [CLI Compatibility Display](implementation/36-cli-compatibility-display.md) - installed support, curated history, and JSON compatibility
 - [`mcp-auth-explained.md`](implementation/mcp-auth-explained.md) — MCP authorization primer (OAuth 2.1 flows)
 - [`33-oauth-best-practices.md`](implementation/33-oauth-best-practices.md) — OAuth implementation guidance for the CLI
 - [`34-wsl-oauth-browser.md`](implementation/34-wsl-oauth-browser.md) — OAuth browser handshake from WSL2
